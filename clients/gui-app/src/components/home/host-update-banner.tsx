@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { ArrowDownToLine, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { HostBusyForceDeferDialog } from "@/components/host/host-busy-force-defer-dialog";
 import { cn } from "@/lib/utils";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { useRunnerHost } from "@/providers/use-runner-host";
 import type {
   ActivateInstalledOk,
@@ -79,6 +81,7 @@ interface TerminalOutcomeState {
 
 function HostUpdateBannerInner(props: HostUpdateBannerInnerProps) {
   const { className } = props;
+  const { t } = useTranslation("common");
   const snoozeUntilByVersion = useHostUpdateBannerStore(
     (state) => state.snoozeUntilByVersion,
   );
@@ -101,7 +104,9 @@ function HostUpdateBannerInner(props: HostUpdateBannerInnerProps) {
       setBusy,
       setTerminalOutcome,
       onOk: (value) => {
-        toast.success(`Updated host to v${value.appliedVersion}`);
+        toast.success(
+          t("Updated host to v{{version}}", { version: value.appliedVersion }),
+        );
         useHostUpdateBannerStore.getState().clearSnooze(value.appliedVersion);
       },
     });
@@ -114,7 +119,7 @@ function HostUpdateBannerInner(props: HostUpdateBannerInnerProps) {
       setBusy,
       setTerminalOutcome,
       onOk: () => {
-        toast.success("Host activated");
+        toast.success(t("Host activated"));
       },
     });
   };
@@ -334,12 +339,14 @@ interface ForceDialogProps {
 
 function deriveForceDialogProps(busy: BusyState | null): ForceDialogProps {
   if (busy === null) {
-    return { message: "", forceLabel: "Force update" };
+    return { message: "", forceLabel: i18n.t("Force update") };
   }
   return {
     message: busy.message,
     forceLabel:
-      busy.continuation === "activate" ? "Force restart" : "Force update",
+      busy.continuation === "activate"
+        ? i18n.t("Force restart")
+        : i18n.t("Force update"),
   };
 }
 
@@ -348,9 +355,13 @@ function deriveBannerAriaLabel(
   offeredVersion: string | null,
 ): string {
   if (terminalOutcome !== null) {
-    return `Traycer host update failed: ${terminalOutcome.message}`;
+    return i18n.t("Traycer host update failed: {{message}}", {
+      message: terminalOutcome.message,
+    });
   }
-  return `Traycer host update available: ${offeredVersion ?? ""}`;
+  return i18n.t("Traycer host update available: {{version}}", {
+    version: offeredVersion ?? "",
+  });
 }
 
 function deriveBannerClassName(
@@ -390,6 +401,7 @@ interface TerminalOutcomeContentProps {
 }
 
 function TerminalOutcomeContent(props: TerminalOutcomeContentProps) {
+  const { t } = useTranslation("common");
   return (
     <>
       <span
@@ -406,13 +418,13 @@ function TerminalOutcomeContent(props: TerminalOutcomeContentProps) {
         onClick={props.onRetry}
         data-testid="host-update-banner-retry"
       >
-        Retry
+        {t("Retry")}
       </Button>
       <Button
         type="button"
         variant="ghost"
         size="icon-xs"
-        aria-label="Dismiss"
+        aria-label={t("Dismiss")}
         className="text-current hover:bg-destructive/15 hover:text-current"
         onClick={props.onDismiss}
       >
@@ -433,25 +445,25 @@ interface UpdateOrDebtContentProps {
 }
 
 function UpdateOrDebtContent(props: UpdateOrDebtContentProps) {
+  const { t } = useTranslation("common");
   return (
     <>
       <ArrowDownToLine className="size-3.5 shrink-0" aria-hidden />
       <span className="min-w-0 flex-1">
         {props.showUpdate ? (
           <>
-            A new Traycer host is available:{" "}
+            {t("A new Traycer host is available:")}{" "}
             <span className="font-mono">{props.offeredVersion}</span>
             {props.installedVersion !== null ? (
               <>
                 {" "}
-                (installed:{" "}
-                <span className="font-mono">{props.installedVersion}</span>)
+                {t("Installed:")}{" "}
+                <span className="font-mono">{props.installedVersion}</span>
               </>
             ) : null}
-            .
           </>
         ) : (
-          "Update installed — restart host to finish."
+          t("Update installed — restart host to finish.")
         )}
       </span>
       <Button
@@ -479,13 +491,13 @@ function UpdateOrDebtContent(props: UpdateOrDebtContentProps) {
             ) : null}
           </>
         ) : null}
-        {props.showUpdate ? "Update now" : "Restart host"}
+        {props.showUpdate ? t("Update now") : t("Restart host")}
       </Button>
       <Button
         type="button"
         variant="ghost"
         size="icon-xs"
-        aria-label="Remind me later"
+        aria-label={t("Remind me later")}
         data-testid="host-update-banner-snooze"
         className="text-current hover:bg-sky-500/15 hover:text-current"
         onClick={props.onSnooze}

@@ -1,4 +1,5 @@
 import { Check, Copy } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useClipboardCopy } from "@/hooks/ui/use-clipboard-copy";
 
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
@@ -15,6 +16,7 @@ export function CopyPathButton(props: {
   readonly path: string;
   readonly testId: string;
 }) {
+  const { t } = useTranslation("common");
   const { copied, copy } = useClipboardCopy({
     resetMs: 1500,
     onSuccess: null,
@@ -22,14 +24,14 @@ export function CopyPathButton(props: {
   });
   return (
     <TooltipWrapper
-      label="Copy path"
+      label={t("Copy path")}
       side="top"
       sideOffset={undefined}
       align={undefined}
     >
       <button
         type="button"
-        aria-label="Copy folder path"
+        aria-label={t("Copy folder path")}
         data-testid={props.testId}
         onClick={(event) => {
           event.stopPropagation();

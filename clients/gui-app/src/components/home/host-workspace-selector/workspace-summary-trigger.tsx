@@ -1,4 +1,5 @@
 import { useState, type ButtonHTMLAttributes, type Ref } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronDown, TriangleAlert } from "lucide-react";
 import {
   Popover,
@@ -163,8 +164,9 @@ export function WorkspaceSummaryTrigger(
 }
 
 function SummaryEmptyState(props: { readonly bindingResolved: boolean }) {
+  const { t } = useTranslation("common");
   if (props.bindingResolved) {
-    return <span className="text-current/70">No folder attached</span>;
+    return <span className="text-current/70">{t("No folder attached")}</span>;
   }
   return (
     <>
@@ -173,7 +175,7 @@ function SummaryEmptyState(props: { readonly bindingResolved: boolean }) {
         testId={undefined}
         variant="dots"
       />
-      <span className="text-current/70">Linking folder…</span>
+      <span className="text-current/70">{t("Linking folder…")}</span>
     </>
   );
 }

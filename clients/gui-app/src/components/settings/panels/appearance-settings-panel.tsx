@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { RotateCcw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { SettingsPanelShell } from "@/components/settings/settings-panel-shell";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsGroup } from "@/components/settings/settings-group";
@@ -121,23 +122,24 @@ export function AppearanceSettingsPanel() {
     (state) => state.resetArtifactIconColors,
   );
   const compact = useSettingsDensity() === "compact";
+  const { t } = useTranslation("settings");
 
   return (
     <SettingsPanelShell
-      title="Appearance"
-      description="Theme, typography, and focused visual customization."
+      title={t("Appearance")}
+      description={t("Theme, typography, and focused visual customization.")}
       bodyClassName="overflow-visible rounded-none border-none bg-transparent"
     >
       <div className={cn("flex flex-col", compact ? "gap-3.5" : "gap-5")}>
         <SettingsGroup
-          title="Theme"
+          title={t("Theme")}
           tone="default"
           dataTestId={undefined}
           fill={false}
         >
           <SettingsRow
-            label="Theme"
-            description="Use light, dark, or match your system."
+            label={t("Theme")}
+            description={t("Use light, dark, or match your system.")}
             control={
               <ThemeModeToggle
                 value={theme}
@@ -146,8 +148,10 @@ export function AppearanceSettingsPanel() {
             }
           />
           <SettingsRow
-            label="Preset"
-            description="Pick a named palette. Full-palette presets override the base surface."
+            label={t("Preset")}
+            description={t(
+              "Pick a named palette. Full-palette presets override the base surface.",
+            )}
             control={
               <ThemePresetPicker
                 value={themePreset}
@@ -161,15 +165,17 @@ export function AppearanceSettingsPanel() {
         </SettingsGroup>
 
         <SettingsGroup
-          title="Interface"
+          title={t("Interface")}
           tone="default"
           dataTestId={undefined}
           fill={false}
         >
           <DesktopZoomSettingsRow />
           <SettingsRow
-            label="Use pointer cursors"
-            description="Change the cursor to a pointer when hovering over interactive elements."
+            label={t("Use pointer cursors")}
+            description={t(
+              "Change the cursor to a pointer when hovering over interactive elements.",
+            )}
             control={
               <Switch
                 checked={pointerCursors}
@@ -177,13 +183,15 @@ export function AppearanceSettingsPanel() {
                   "pointerCursors",
                   setPointerCursors,
                 )}
-                aria-label="Use pointer cursors"
+                aria-label={t("Use pointer cursors")}
               />
             }
           />
           <SettingsRow
-            label="Minimap side"
-            description="Place chat and artifact minimaps on the left or right, or hide both."
+            label={t("Minimap side")}
+            description={t(
+              "Place chat and artifact minimaps on the left or right, or hide both.",
+            )}
             control={
               <Select
                 value={chatTurnMinimapSide}
@@ -201,15 +209,15 @@ export function AppearanceSettingsPanel() {
               >
                 <SelectTrigger
                   size="sm"
-                  aria-label="Minimap side"
+                  aria-label={t("Minimap side")}
                   className="w-[min(40vw,8rem)]"
                 >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="right">Right</SelectItem>
-                  <SelectItem value="left">Left</SelectItem>
-                  <SelectItem value="hide">Hide</SelectItem>
+                  <SelectItem value="right">{t("Right")}</SelectItem>
+                  <SelectItem value="left">{t("Left")}</SelectItem>
+                  <SelectItem value="hide">{t("Hide")}</SelectItem>
                 </SelectContent>
               </Select>
             }
@@ -217,14 +225,14 @@ export function AppearanceSettingsPanel() {
         </SettingsGroup>
 
         <SettingsGroup
-          title="Typography"
+          title={t("Typography")}
           tone="default"
           dataTestId={undefined}
           fill={false}
         >
           <SettingsRow
-            label="UI font"
-            description="Font and size used across the Traycer interface."
+            label={t("UI font")}
+            description={t("Font and size used across the Traycer interface.")}
             control={
               <div className="flex flex-col items-end gap-2">
                 <FontPicker
@@ -234,9 +242,9 @@ export function AppearanceSettingsPanel() {
                     setUiFontFamily,
                   )}
                   options={installedFonts}
-                  defaultLabel="Figtree (Default)"
-                  resetTooltip="Reset to default"
-                  ariaLabel="UI font"
+                  defaultLabel={t("Figtree (Default)")}
+                  resetTooltip={t("Reset to default")}
+                  ariaLabel={t("UI font")}
                 />
                 <SettingsNumberInput
                   value={uiFontSize}
@@ -247,16 +255,18 @@ export function AppearanceSettingsPanel() {
                   min={10}
                   max={20}
                   unit="px"
-                  ariaLabel="UI font size"
+                  ariaLabel={t("UI font size")}
                   defaultValue={DEFAULT_UI_FONT_SIZE}
-                  resetTooltip="Reset to default"
+                  resetTooltip={t("Reset to default")}
                 />
               </div>
             }
           />
           <SettingsRow
-            label="Code font"
-            description="Font and size used for code across agents and diffs."
+            label={t("Code font")}
+            description={t(
+              "Font and size used for code across agents and diffs.",
+            )}
             control={
               <div className="flex flex-col items-end gap-2">
                 <FontPicker
@@ -266,9 +276,9 @@ export function AppearanceSettingsPanel() {
                     setCodeFontFamily,
                   )}
                   options={installedFonts}
-                  defaultLabel="System Default"
-                  resetTooltip="Reset to default"
-                  ariaLabel="Code font"
+                  defaultLabel={t("System Default")}
+                  resetTooltip={t("Reset to default")}
+                  ariaLabel={t("Code font")}
                 />
                 <SettingsNumberInput
                   value={codeFontSize}
@@ -279,9 +289,9 @@ export function AppearanceSettingsPanel() {
                   min={10}
                   max={24}
                   unit="px"
-                  ariaLabel="Code font size"
+                  ariaLabel={t("Code font size")}
                   defaultValue={DEFAULT_CODE_FONT_SIZE}
-                  resetTooltip="Reset to default"
+                  resetTooltip={t("Reset to default")}
                 />
               </div>
             }
@@ -289,7 +299,7 @@ export function AppearanceSettingsPanel() {
         </SettingsGroup>
 
         <SettingsGroup
-          title="Terminal"
+          title={t("Terminal")}
           tone="default"
           dataTestId={undefined}
           fill={false}
@@ -298,8 +308,10 @@ export function AppearanceSettingsPanel() {
             <div className="grid grid-cols-1 @min-[32rem]:grid-cols-[7fr_5fr]">
               <div className="flex flex-col">
                 <SettingsRow
-                  label="Terminal font"
-                  description="Font and size used in the terminal. Follows the code font until you set them."
+                  label={t("Terminal font")}
+                  description={t(
+                    "Font and size used in the terminal. Follows the code font until you set them.",
+                  )}
                   control={
                     <div className="flex flex-col items-end gap-2">
                       <FontPicker
@@ -309,9 +321,9 @@ export function AppearanceSettingsPanel() {
                           setTerminalFontFamily,
                         )}
                         options={installedFonts}
-                        defaultLabel="Same as code font"
-                        resetTooltip="Use code font"
-                        ariaLabel="Terminal font"
+                        defaultLabel={t("Same as code font")}
+                        resetTooltip={t("Use code font")}
+                        ariaLabel={t("Terminal font")}
                       />
                       <NullableFontSizeInput
                         value={terminalFontSize}
@@ -322,15 +334,15 @@ export function AppearanceSettingsPanel() {
                         )}
                         min={10}
                         max={24}
-                        ariaLabel="Terminal font size"
-                        resetTooltip="Follow code size"
+                        ariaLabel={t("Terminal font size")}
+                        resetTooltip={t("Follow code size")}
                       />
                     </div>
                   }
                 />
                 <SettingsRow
-                  label="Terminal cursor"
-                  description="Shape of the cursor in the terminal."
+                  label={t("Terminal cursor")}
+                  description={t("Shape of the cursor in the terminal.")}
                   control={
                     <TerminalCursorStylePicker
                       value={terminalCursorStyle}
@@ -342,8 +354,10 @@ export function AppearanceSettingsPanel() {
                   }
                 />
                 <SettingsRow
-                  label="Blink cursor"
-                  description="Blink the terminal cursor while the terminal is focused."
+                  label={t("Blink cursor")}
+                  description={t(
+                    "Blink the terminal cursor while the terminal is focused.",
+                  )}
                   control={
                     <Switch
                       checked={terminalCursorBlink}
@@ -351,7 +365,7 @@ export function AppearanceSettingsPanel() {
                         "terminalCursorBlink",
                         setTerminalCursorBlink,
                       )}
-                      aria-label="Blink terminal cursor"
+                      aria-label={t("Blink terminal cursor")}
                     />
                   }
                 />
@@ -369,14 +383,16 @@ export function AppearanceSettingsPanel() {
         </SettingsGroup>
 
         <SettingsGroup
-          title="Artifact icons"
+          title={t("Artifact icons")}
           tone="default"
           dataTestId={undefined}
           fill={false}
         >
           <SettingsRow
-            label="Artifact icon colors"
-            description="Turn on type-specific colors, or leave node icons neutral."
+            label={t("Artifact icon colors")}
+            description={t(
+              "Turn on type-specific colors, or leave node icons neutral.",
+            )}
             control={
               <EpicNodeIconColorPicker
                 enabled={artifactIconColorMode === "byType"}
@@ -404,6 +420,7 @@ export function AppearanceSettingsPanel() {
 
 function DesktopZoomSettingsRow() {
   const zoom = useDesktopZoomBridge();
+  const { t } = useTranslation("settings");
   const zoomQuery = useRunnerZoomPercentQuery(zoom);
   const setMutation = useRunnerZoomSetMutation(zoom);
   const resetMutation = useRunnerZoomResetMutation(zoom);
@@ -416,8 +433,8 @@ function DesktopZoomSettingsRow() {
 
   return (
     <SettingsRow
-      label="Zoom"
-      description="Scales the whole app; font sizes only adjust typography."
+      label={t("Zoom")}
+      description={t("Scales the whole app; font sizes only adjust typography.")}
       control={
         <div className="flex items-center gap-2">
           <Select
@@ -431,17 +448,17 @@ function DesktopZoomSettingsRow() {
           >
             <SelectTrigger
               size="sm"
-              aria-label="Display zoom"
+              aria-label={t("Display zoom")}
               className="w-[min(40vw,8rem)]"
             >
               <span data-slot="select-value">
-                {percent === null ? "Loading" : formatZoomPercent(percent)}
+                {percent === null ? t("Loading") : formatZoomPercent(percent)}
               </span>
             </SelectTrigger>
             <SelectContent>
               {percent === null ? (
                 <SelectItem value="loading" disabled>
-                  Loading
+                  {t("Loading")}
                 </SelectItem>
               ) : null}
               {zoom.ladder.map((candidate) => (
@@ -461,7 +478,7 @@ function DesktopZoomSettingsRow() {
             }}
           >
             <RotateCcw aria-hidden="true" />
-            Reset
+            {t("Reset")}
             {resetMutation.isPending ? (
               <AgentSpinningDots
                 className="ml-1 text-current"

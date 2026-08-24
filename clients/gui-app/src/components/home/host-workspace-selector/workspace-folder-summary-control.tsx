@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { FolderPlus } from "lucide-react";
 import {
   Popover,
@@ -160,6 +161,7 @@ export function WorkspaceFolderSummaryControl(props: {
   readonly recentWorkspaceCount: number;
   readonly moveToRecent: boolean;
 }) {
+  const { t } = useTranslation("common");
   const itemCount = props.items.length;
   const [overlayState, setOverlayState] = useState<SummaryOverlayState>({
     workspacePopoverOpen: false,
@@ -297,7 +299,7 @@ export function WorkspaceFolderSummaryControl(props: {
       ) : (
         <FolderPlus className="size-4" aria-hidden />
       )}
-      <span>Add folder</span>
+      <span>{t("Add folder")}</span>
     </button>
   ) : (
     <WorkspaceSummaryTrigger
@@ -465,6 +467,7 @@ function WorkspaceRefreshFooter(props: {
   readonly retryBlocked: boolean;
   readonly onRefresh: () => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   // Failure takes priority over "Checking…": a settled error or the external
   // deadline leaves the footer in a recoverable state rather than a silent
   // return to the idle stamp (or an eternal spinner).
@@ -479,18 +482,18 @@ function WorkspaceRefreshFooter(props: {
             className="text-ui-xs text-muted-foreground"
             data-testid="workspace-folders-verify-failed"
           >
-            Couldn&apos;t verify —
+            {t("Couldn't verify —")}
           </span>
           <Button
             type="button"
             size="xs"
             variant="ghost"
-            aria-label="Retry verifying folder details"
+            aria-label={t("Retry verifying folder details")}
             disabled={!props.canRefresh || props.retryBlocked}
             onClick={props.onRefresh}
             data-testid="workspace-folders-refresh-retry"
           >
-            Retry
+            {t("Retry")}
           </Button>
         </div>
       </div>
@@ -510,7 +513,7 @@ function WorkspaceRefreshFooter(props: {
           type="button"
           size="xs"
           variant="ghost"
-          aria-label="Refresh folder details"
+          aria-label={t("Refresh folder details")}
           aria-keyshortcuts="R"
           disabled={!props.canRefresh || props.refreshing}
           onClick={props.onRefresh}
@@ -523,7 +526,7 @@ function WorkspaceRefreshFooter(props: {
               variant={undefined}
             />
           ) : null}
-          Refresh
+          {t("Refresh")}
           <Kbd className="ml-0.5 font-mono">R</Kbd>
         </Button>
       </div>
@@ -540,8 +543,13 @@ function WorkspaceCheckedAt(props: {
   readonly checkedAt: number | null;
   readonly refreshing: boolean;
 }): ReactNode {
+  const { t } = useTranslation("common");
   if (props.refreshing) {
-    return <span className="text-ui-xs text-muted-foreground">Checking…</span>;
+    return (
+      <span className="text-ui-xs text-muted-foreground">
+        {t("Checking…")}
+      </span>
+    );
   }
   if (props.checkedAt === null) return <span />;
   return <WorkspaceCheckedAtText checkedAt={props.checkedAt} />;
@@ -550,13 +558,14 @@ function WorkspaceCheckedAt(props: {
 function WorkspaceCheckedAtText(props: {
   readonly checkedAt: number;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const relative = useCompactRelativeTime(props.checkedAt);
   return (
     <span
       className="text-ui-xs whitespace-nowrap text-muted-foreground"
       data-testid="workspace-folders-checked-at"
     >
-      Workspace snapshot · {relative}
+      {t("Workspace snapshot ·")} {relative}
     </span>
   );
 }

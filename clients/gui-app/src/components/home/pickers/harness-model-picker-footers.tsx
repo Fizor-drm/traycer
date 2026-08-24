@@ -7,6 +7,7 @@ import {
 } from "@/components/home/data/landing-options";
 import { cn } from "@/lib/utils";
 import { Zap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   singleDigitLeaderDigitFor,
   usePickerReasoningLeaderForIndex,
@@ -47,6 +48,7 @@ interface ModelSettingsFooterProps {
 }
 
 function ModelSettingsFooter(props: ModelSettingsFooterProps) {
+  const { t } = useTranslation("common");
   const { reasoning, serviceTier } = props;
   const upgradeServiceTier =
     serviceTier === null
@@ -67,7 +69,7 @@ function ModelSettingsFooter(props: ModelSettingsFooterProps) {
       {upgradeServiceTier === null || serviceTier === null ? null : (
         <button
           type="button"
-          aria-label={`${upgradeServiceTier.label} mode`}
+          aria-label={t("{{label}} mode", { label: upgradeServiceTier.label })}
           aria-pressed={serviceTierActive}
           className={cn(
             "flex max-w-[min(34vw,8rem)] items-center gap-1.5 truncate rounded-md px-2 py-1 text-ui-xs text-muted-foreground transition-colors aria-[pressed=false]:hover:bg-accent/30 aria-[pressed=false]:hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/60",
@@ -100,6 +102,7 @@ interface ReasoningFooterGroupProps {
 }
 
 function ReasoningFooterGroup(props: ReasoningFooterGroupProps) {
+  const { t } = useTranslation("common");
   const { value, options, disabled, onChange } = props.config;
   const hasOptions = options.length > 0;
 
@@ -107,7 +110,7 @@ function ReasoningFooterGroup(props: ReasoningFooterGroupProps) {
 
   return (
     <fieldset
-      aria-label="Thinking effort"
+      aria-label={t("Thinking effort")}
       className="m-0 flex min-w-0 flex-1 items-center justify-around gap-1 border-0 p-0"
     >
       {options.map((option, index) => (

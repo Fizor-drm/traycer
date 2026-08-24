@@ -220,6 +220,7 @@ export type AnalyticsSetting =
   | "defaultSelection"
   | "defaultServiceTier"
   | "diffViewerPreferences"
+  | "locale"
   | "pinContextUsageBreakdown"
   | "pointerCursors"
   | "preventSleepWhileRunning"

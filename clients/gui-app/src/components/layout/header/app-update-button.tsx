@@ -1,4 +1,5 @@
 import { Check, Download, Terminal } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
@@ -25,6 +26,7 @@ import {
  * clean when there is no update.
  */
 export function AppUpdateHeaderButton() {
+  const { t } = useTranslation("shell");
   const { bridge, snapshot } = useDesktopAppUpdates();
   if (bridge === null) {
     return null;
@@ -37,8 +39,10 @@ export function AppUpdateHeaderButton() {
     const blockedReason = snapshot.installBlockedReason;
     const versionLabel =
       snapshot.latestVersion === null
-        ? "Download update"
-        : `Download update v${snapshot.latestVersion}`;
+        ? t("Download update")
+        : t("Download update v{{version}}", {
+            version: snapshot.latestVersion,
+          });
     const label = blockedReason === null ? versionLabel : blockedReason;
     return (
       <TooltipWrapper label={label} side="top" sideOffset={6} align={undefined}>
@@ -72,7 +76,9 @@ export function AppUpdateHeaderButton() {
   if (snapshot.status === "downloading") {
     const progress = snapshot.downloadProgress;
     const label =
-      progress === null ? "Downloading update" : `Downloading ${progress}%`;
+      progress === null
+        ? t("Downloading update")
+        : t("Downloading {{progress}}%", { progress });
     return (
       <TooltipWrapper label={label} side="top" sideOffset={6} align={undefined}>
         {/* Span trigger: the Button is always disabled here, so the tooltip
@@ -130,6 +136,7 @@ function AppUpdateReadyButton(props: {
   const openInstallGuidance = useDesktopDialogStore(
     (state) => state.openInstallGuidance,
   );
+  const { t } = useTranslation("shell");
   // Pending state is read from the snapshot, not latched locally: the quit that
   // installs drains in-flight work first, so this button (and the ready toast,
   // and both of them in every other window) stays on screen through it. Main
@@ -140,11 +147,13 @@ function AppUpdateReadyButton(props: {
     installBlockedReason === null && props.installGuidance !== null;
   const restartLabel =
     props.latestVersion === null
-      ? "Restart to update"
-      : `Restart to update to v${props.latestVersion}`;
+      ? t("Restart to update")
+      : t("Restart to update to v{{version}}", {
+          version: props.latestVersion,
+        });
   const label =
     installBlockedReason ??
-    (needsManualInstall ? "Finish update" : restartLabel);
+    (needsManualInstall ? t("Finish update") : restartLabel);
 
   return (
     <TooltipWrapper label={label} side="top" sideOffset={6} align={undefined}>
@@ -195,12 +204,13 @@ function AppUpdateReadyIcon(props: {
   readonly installInFlight: boolean;
   readonly needsManualInstall: boolean;
 }) {
+  const { t } = useTranslation("shell");
   if (props.installInFlight) {
     // The button only goes `disabled` here - nothing announces the state
     // change on its own, so the spinner carries a live region (the icons it
     // replaces are decorative and the accessible name stays the same).
     return (
-      <span role="status" aria-label="Restarting to install the update">
+      <span role="status" aria-label={t("Restarting to install the update")}>
         <AgentSpinningDots
           className={undefined}
           testId={undefined}

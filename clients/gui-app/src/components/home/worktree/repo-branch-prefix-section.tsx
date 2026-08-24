@@ -6,6 +6,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import type { RepoBranchPrefixState } from "@traycer/protocol/host/worktree-schemas";
 import type { HostClient } from "@traycer-clients/shared/host-client/host-client";
 import type { HostRpcRegistry } from "@/lib/host";
@@ -107,6 +109,7 @@ export function RepoBranchPrefixSection(props: {
     candidateBranchName: string | null,
   ) => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const globalPrefix = useSettingsStore((s) => s.worktreeBranchPrefix);
   const hostId = props.hostClient?.getActiveHostId() ?? null;
   const supported = useHostSupportsMethod(
@@ -167,7 +170,8 @@ export function RepoBranchPrefixSection(props: {
     repoState.status === "present" ? repoState.value : null;
   const dirty = currentSavedValue === null || draft !== currentSavedValue;
   const applyDisabled = draftError !== null || saveMutation.isPending || !dirty;
-  const globalDisplay = globalPrefix.length > 0 ? globalPrefix : "No prefix";
+  const globalDisplay =
+    globalPrefix.length > 0 ? globalPrefix : t("No prefix");
   // The truthful full-branch preview for every non-editing view (and the
   // invalid-draft fallback while editing): the active regeneration offer's
   // candidate while one is up (see `activeRegenerateCandidate`'s doc
@@ -188,8 +192,8 @@ export function RepoBranchPrefixSection(props: {
     props.activeRegenerateCandidate !== null ||
     props.currentProposedBranchName !== null;
   const viewingPreviewLabel = hasStagedBranchPreview
-    ? "Staged branch"
-    : "Example";
+    ? t("Staged branch")
+    : t("Example");
 
   const cancelEditing = useCallback((): void => {
     setPendingFocusRestore(true);
@@ -233,7 +237,9 @@ export function RepoBranchPrefixSection(props: {
         onSuccess: (data) => {
           if (!data.updated) {
             setSaveFailedNote(
-              "Couldn't save — this folder isn't a git repository (or is no longer one).",
+              t(
+                "Couldn't save — this folder isn't a git repository (or is no longer one).",
+              ),
             );
             return;
           }
@@ -266,7 +272,9 @@ export function RepoBranchPrefixSection(props: {
           setConfirmRemoveOpen(false);
           if (!data.updated) {
             setSaveFailedNote(
-              "Couldn't remove — this folder isn't a git repository (or is no longer one).",
+              t(
+                "Couldn't remove — this folder isn't a git repository (or is no longer one).",
+              ),
             );
             return;
           }
@@ -310,6 +318,7 @@ export function RepoBranchPrefixSection(props: {
         onOpenChangeConfirmRemove: setConfirmRemoveOpen,
         onConfirmRemove: handleRemove,
         enterEditing,
+        t,
       })}
     </BranchNamingShell>
   );
@@ -353,6 +362,7 @@ function selectBranchNamingBody(input: {
   readonly onOpenChangeConfirmRemove: (open: boolean) => void;
   readonly onConfirmRemove: () => void;
   readonly enterEditing: (seed: string) => void;
+  readonly t: TFunction<"common">;
 }): ReactNode {
   if (!input.supported) {
     return (
@@ -391,6 +401,7 @@ function selectBranchNamingBody(input: {
       hasStagedBranchPreview: input.hasStagedBranchPreview,
       draftPrefix: input.draft,
       currentPrefix: input.effectivePrefix,
+      t: input.t,
     });
     return (
       <EditingBranchNaming
@@ -452,6 +463,7 @@ function BranchNamingShell(props: {
   readonly repoLabel: string;
   readonly children: ReactNode;
 }): ReactNode {
+  const { t } = useTranslation("common");
   return (
     <div
       className="flex flex-col gap-2.5"
@@ -459,10 +471,10 @@ function BranchNamingShell(props: {
     >
       <div>
         <p className="text-ui-xs font-medium text-muted-foreground/70 uppercase tracking-wide">
-          Branch prefix
+          {t("Branch prefix")}
         </p>
         <p className="mt-0.5 truncate text-ui-sm font-medium text-foreground">
-          Repository · {props.repoLabel}
+          {t("Repository ·")} {props.repoLabel}
         </p>
       </div>
       <div className="flex flex-col gap-2.5" aria-live="polite">
@@ -478,6 +490,7 @@ function UnsupportedBranchNaming(props: {
   readonly previewBranch: string;
   readonly previewPrefix: string;
 }): ReactNode {
+  const { t } = useTranslation("common");
   return (
     <>
       <div className="flex items-center gap-2.5">
@@ -487,7 +500,7 @@ function UnsupportedBranchNaming(props: {
         />
         <div className="min-w-0">
           <span className="block text-ui-sm font-medium text-foreground">
-            Global default
+            {t("Global default")}
           </span>
           <span className="block font-mono text-ui-xs text-muted-foreground">
             {props.globalDisplay}
@@ -498,8 +511,9 @@ function UnsupportedBranchNaming(props: {
         className="text-ui-xs text-amber-950 dark:text-amber-100"
         data-testid="repo-branch-prefix-unsupported"
       >
-        Repository prefixes require a newer Traycer host. Branches continue
-        using the global default.
+        {t(
+          "Repository prefixes require a newer Traycer host. Branches continue using the global default.",
+        )}
       </p>
       <BranchPreviewRow
         label={props.previewLabel}
@@ -548,6 +562,7 @@ function InheritedBranchNaming(props: {
   readonly shouldFocusOnMount: boolean;
   readonly onChooseOverride: () => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const [focusOnMount] = useState(() => props.shouldFocusOnMount);
   const globalItemRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -559,7 +574,7 @@ function InheritedBranchNaming(props: {
     <>
       <RadioGroup
         value="global"
-        aria-label="Branch prefix source"
+        aria-label={t("Branch prefix source")}
         className="grid grid-cols-2 gap-2"
         onValueChange={(next) => {
           if (next === "override") props.onChooseOverride();
@@ -578,7 +593,7 @@ function InheritedBranchNaming(props: {
           />
           <div className="min-w-0">
             <span className="block text-ui-sm font-medium text-foreground">
-              Global default
+              {t("Global default")}
             </span>
             <span className="block truncate font-mono text-ui-xs text-muted-foreground">
               {props.globalDisplay}
@@ -589,8 +604,8 @@ function InheritedBranchNaming(props: {
           id={`${props.uid}-override`}
           value="override"
           active={false}
-          title="This repository"
-          detail="Custom prefix"
+          title={t("This repository")}
+          detail={t("Custom prefix")}
         />
       </RadioGroup>
       <BranchPreviewRow
@@ -618,6 +633,7 @@ function EditingBranchNaming(props: {
   readonly onApply: () => void;
   readonly onCancel: () => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const inputRef = useRef<HTMLInputElement>(null);
   // Imperative focus (not the `autoFocus` JSX prop, which jsx-a11y forbids).
   // This component only mounts when `mode` flips to "editing", so a
@@ -630,12 +646,12 @@ function EditingBranchNaming(props: {
     <>
       {props.editingFromExisting ? (
         <p className="text-ui-sm font-medium text-foreground">
-          This repository
+          {t("This repository")}
         </p>
       ) : (
         <RadioGroup
           value="override"
-          aria-label="Branch prefix source"
+          aria-label={t("Branch prefix source")}
           className="grid grid-cols-2 gap-2"
           onValueChange={(next) => {
             if (next === "global") props.onCancel();
@@ -645,15 +661,15 @@ function EditingBranchNaming(props: {
             id={`${props.uid}-global`}
             value="global"
             active={false}
-            title="Global default"
+            title={t("Global default")}
             detail={props.globalDisplay}
           />
           <ChoiceRow
             id={`${props.uid}-override`}
             value="override"
             active
-            title="This repository"
-            detail="Custom prefix"
+            title={t("This repository")}
+            detail={t("Custom prefix")}
           />
         </RadioGroup>
       )}
@@ -662,7 +678,7 @@ function EditingBranchNaming(props: {
           htmlFor={`${props.uid}-prefix-input`}
           className="text-ui-xs text-muted-foreground"
         >
-          Prefix
+          {t("Prefix")}
         </Label>
         <Input
           ref={inputRef}
@@ -672,7 +688,7 @@ function EditingBranchNaming(props: {
           aria-describedby={
             props.draftError !== null ? `${props.uid}-prefix-error` : undefined
           }
-          placeholder="traycer/"
+          placeholder={t("traycer/")}
           className="font-mono"
           onChange={(event) => props.onDraftChange(event.target.value)}
           onKeyDown={(event) => {
@@ -695,7 +711,7 @@ function EditingBranchNaming(props: {
         prefix={props.previewPrefix}
       />
       <p className="text-ui-xs text-muted-foreground">
-        Global default ·{" "}
+        {t("Global default ·")}{" "}
         <span className="font-mono">{props.globalDisplay}</span>
       </p>
       {props.saveFailedNote !== null ? (
@@ -711,7 +727,7 @@ function EditingBranchNaming(props: {
           disabled={props.isPending}
           onClick={props.onCancel}
         >
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button
           type="button"
@@ -727,7 +743,7 @@ function EditingBranchNaming(props: {
               variant={undefined}
             />
           ) : null}
-          Save prefix
+          {t("Save prefix")}
         </Button>
       </div>
     </>
@@ -753,6 +769,7 @@ function SavedBranchNaming(props: {
   readonly onEdit: () => void;
   readonly onConfirmRemove: () => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const [focusOnMount] = useState(() => props.shouldFocusOnMount);
   const editButtonRef = useRef<HTMLButtonElement>(null);
   // Focus "Edit prefix" after Cancel (from editing an existing override)
@@ -774,10 +791,12 @@ function SavedBranchNaming(props: {
         />
         <div className="min-w-0">
           <span className="block text-ui-sm font-medium text-foreground">
-            This repository
+            {t("This repository")}
           </span>
           <span className="block font-mono text-ui-xs text-muted-foreground">
-            {props.savedValue.length > 0 ? props.savedValue : "No prefix"}
+            {props.savedValue.length > 0
+              ? props.savedValue
+              : t("No prefix")}
           </span>
         </div>
       </div>
@@ -787,7 +806,7 @@ function SavedBranchNaming(props: {
         prefix={props.previewPrefix}
       />
       <p className="text-ui-xs text-muted-foreground">
-        Global default ·{" "}
+        {t("Global default ·")}{" "}
         <span className="font-mono">{props.globalDisplay}</span>
       </p>
       {props.warning !== null ? (
@@ -808,7 +827,7 @@ function SavedBranchNaming(props: {
           disabled={props.isPending}
           onClick={props.onOpenConfirmRemove}
         >
-          Remove prefix
+          {t("Remove prefix")}
         </Button>
         <Button
           ref={editButtonRef}
@@ -818,20 +837,24 @@ function SavedBranchNaming(props: {
           disabled={props.isPending}
           onClick={props.onEdit}
         >
-          Edit prefix
+          {t("Edit prefix")}
         </Button>
       </div>
       <ConfirmDestructiveDialog
         open={props.confirmRemoveOpen}
         onOpenChange={props.onOpenChangeConfirmRemove}
-        title="Remove repository prefix?"
-        description={`This repository will go back to using the global default${
-          props.globalPrefix.length > 0
-            ? ` ("${props.globalPrefix}")`
-            : " (no prefix)"
-        }.`}
+        title={t("Remove repository prefix?")}
+        description={t(
+          "This repository will go back to using the global default{{suffix}}.",
+          {
+            suffix:
+              props.globalPrefix.length > 0
+                ? ` ("${props.globalPrefix}")`
+                : t(" (no prefix)"),
+          },
+        )}
         cascadeSummary={null}
-        actionLabel="Remove"
+        actionLabel={t("Remove")}
         isPending={props.isPending}
         onConfirm={props.onConfirmRemove}
       />
@@ -951,6 +974,7 @@ function editingPreview(input: {
   readonly hasStagedBranchPreview: boolean;
   readonly draftPrefix: string;
   readonly currentPrefix: string;
+  readonly t: TFunction<"common">;
 }): {
   readonly label: string;
   readonly value: string;
@@ -959,14 +983,14 @@ function editingPreview(input: {
   if (input.draftError !== null) {
     return {
       label: input.hasStagedBranchPreview
-        ? "Current staged"
-        : "Current example",
+        ? input.t("Current staged")
+        : input.t("Current example"),
       value: input.currentEffectiveBranch,
       prefix: input.currentPrefix,
     };
   }
   return {
-    label: "Example",
+    label: input.t("Example"),
     value: input.draftCandidate ?? input.currentEffectiveBranch,
     prefix: input.draftPrefix,
   };

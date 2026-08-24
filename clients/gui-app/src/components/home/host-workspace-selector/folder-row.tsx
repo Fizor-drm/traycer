@@ -6,6 +6,7 @@ import {
   Trash2,
   TriangleAlert,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
@@ -35,6 +36,7 @@ export function FolderRow(props: {
   readonly readOnly: boolean;
   readonly moveToRecent: boolean;
 }) {
+  const { t } = useTranslation("common");
   const { item } = props;
   const runPath = workspaceRunPath(item);
 
@@ -69,7 +71,7 @@ export function FolderRow(props: {
         </TooltipWrapper>
         {item.missing ? (
           <TooltipWrapper
-            label="This bound folder is missing on disk."
+            label={t("This bound folder is missing on disk.")}
             side="top"
             sideOffset={undefined}
             align={undefined}
@@ -128,6 +130,7 @@ function FolderRowBody(props: {
   readonly onEditEnvironment: (workspacePath: string) => void;
   readonly moveToRecent: boolean;
 }) {
+  const { t } = useTranslation("common");
   const { item } = props;
 
   // Folder not available on the selected host (`presence: "absent"`, or no
@@ -153,7 +156,7 @@ function FolderRowBody(props: {
               data-testid="folder-row-locate"
               onClick={item.onLocate}
             >
-              Locate on this host…
+              {t("Locate on this host…")}
             </Button>
           )}
         </div>
@@ -182,7 +185,7 @@ function FolderRowBody(props: {
             testId={undefined}
             variant="dots"
           />
-          <span>Loading folder metadata…</span>
+          <span>{t("Loading folder metadata…")}</span>
         </div>
         <FolderRowActions
           item={item}
@@ -253,6 +256,7 @@ function PrimaryPinControl(props: {
   readonly item: WorkspaceRunItem;
   readonly readOnly: boolean;
 }) {
+  const { t } = useTranslation("common");
   const { item } = props;
   const primaryLocked = !item.canChangePrimary;
   if (item.isPrimary) {
@@ -260,8 +264,10 @@ function PrimaryPinControl(props: {
       <TooltipWrapper
         label={
           primaryLocked
-            ? "Primary folder. New agent commands and terminals start here. Primary cannot be changed after the agent starts."
-            : "Primary folder. New agent commands and terminals start here."
+            ? t(
+                "Primary folder. New agent commands and terminals start here. Primary cannot be changed after the agent starts.",
+              )
+            : t("Primary folder. New agent commands and terminals start here.")
         }
         side="top"
         sideOffset={undefined}
@@ -270,7 +276,7 @@ function PrimaryPinControl(props: {
         <button
           type="button"
           aria-disabled
-          aria-label="Primary folder information"
+          aria-label={t("Primary folder information")}
           className={cn(
             "inline-flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
             primaryLocked ? "cursor-not-allowed" : "cursor-help",
@@ -289,8 +295,8 @@ function PrimaryPinControl(props: {
     <TooltipWrapper
       label={
         item.canChangePrimary
-          ? "Primary cannot be changed from this view."
-          : "Primary cannot be changed after the agent starts."
+          ? t("Primary cannot be changed from this view.")
+          : t("Primary cannot be changed after the agent starts.")
       }
       side="top"
       sideOffset={undefined}
@@ -300,7 +306,7 @@ function PrimaryPinControl(props: {
         type="button"
         className="inline-flex size-6 shrink-0 cursor-not-allowed items-center justify-center rounded-md text-muted-foreground/45 outline-none focus-visible:ring-2 focus-visible:ring-ring/45"
         aria-disabled
-        aria-label="Not primary folder. Primary is locked"
+        aria-label={t("Not primary folder. Primary is locked")}
         data-testid="folder-secondary-pin"
       >
         <Pin className="size-3.5" aria-hidden />
@@ -314,9 +320,10 @@ function EnvironmentButton(props: {
   readonly item: WorkspaceRunItem;
   readonly onEdit: (workspacePath: string) => void;
 }) {
+  const { t } = useTranslation("common");
   return (
     <TooltipWrapper
-      label="Setup & teardown scripts"
+      label={t("Setup & teardown scripts")}
       side="top"
       sideOffset={undefined}
       align={undefined}
@@ -325,7 +332,7 @@ function EnvironmentButton(props: {
         type="button"
         variant="ghost"
         size="icon-sm"
-        aria-label="Edit setup and teardown scripts"
+        aria-label={t("Edit setup and teardown scripts")}
         data-testid="folder-scripts-trigger"
         onClick={() => props.onEdit(props.item.displayPath)}
         // Always visible (muted, brightening on hover/focus) - user decision:
@@ -347,6 +354,7 @@ function EnvironmentButton(props: {
  * reachable.
  */
 function MakePrimaryButton(props: { readonly item: WorkspaceRunItem }) {
+  const { t } = useTranslation("common");
   const { item } = props;
   // ONE tooltip, not one per concern: when the pin is disabled the reason is
   // strictly more informative than restating the action, and rendering both
@@ -354,7 +362,7 @@ function MakePrimaryButton(props: { readonly item: WorkspaceRunItem }) {
   const label =
     item.makePrimaryDisabled && item.makePrimaryDisabledReason !== null
       ? item.makePrimaryDisabledReason
-      : "Set as primary";
+      : t("Set as primary");
   return (
     <TooltipWrapper
       label={label}
@@ -364,7 +372,7 @@ function MakePrimaryButton(props: { readonly item: WorkspaceRunItem }) {
     >
       <button
         type="button"
-        aria-label="Set as primary"
+        aria-label={t("Set as primary")}
         aria-disabled={item.makePrimaryDisabled}
         data-testid="folder-make-primary"
         onClick={item.makePrimaryDisabled ? undefined : item.onMakePrimary}
@@ -380,6 +388,7 @@ function RemoveFolderButton(props: {
   readonly item: WorkspaceRunItem;
   readonly moveToRecent: boolean;
 }) {
+  const { t } = useTranslation("common");
   const { item } = props;
   const removeIcon = props.moveToRecent ? (
     <CircleMinus className="size-3.5" />
@@ -394,8 +403,8 @@ function RemoveFolderButton(props: {
       type="button"
       aria-label={
         props.moveToRecent
-          ? `Move ${item.displayName} to Recent`
-          : `Remove ${item.displayName}`
+          ? t("Move {{name}} to Recent", { name: item.displayName })
+          : t("Remove {{name}}", { name: item.displayName })
       }
       data-testid="folder-remove"
       disabled={
@@ -435,7 +444,7 @@ function RemoveFolderButton(props: {
   if (props.moveToRecent) {
     return (
       <TooltipWrapper
-        label="Move to Recent"
+        label={t("Move to Recent")}
         side="top"
         sideOffset={undefined}
         align={undefined}

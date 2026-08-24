@@ -5,6 +5,7 @@ import {
   type RefObject,
   type HTMLAttributes,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { tabCommandCoordinator } from "@/stores/tabs/tab-command-coordinator";
 
@@ -25,6 +26,7 @@ export interface SplitDividerProps {
  * write or persistence echo.
  */
 export function SplitDivider(props: SplitDividerProps) {
+  const { t } = useTranslation("shell");
   const originRef = useRef<number | null>(null);
   const commit = (ratio: number): void => {
     tabCommandCoordinator.resizeSplit({
@@ -83,12 +85,12 @@ export function SplitDivider(props: SplitDividerProps) {
   const separatorA11yProps = {
     role: "separator",
     tabIndex: 0,
-    "aria-label": "Resize split view",
+    "aria-label": t("Resize split view"),
     "aria-orientation": "vertical",
     "aria-valuemin": Math.round(MIN_RATIO * 100),
     "aria-valuemax": Math.round(MAX_RATIO * 100),
     "aria-valuenow": percentage,
-    "aria-valuetext": `Left view ${percentage}%`,
+    "aria-valuetext": t("Left view {{percent}}%", { percent: percentage }),
   } satisfies HTMLAttributes<HTMLDivElement>;
   const separatorInteractionProps = {
     onDoubleClick: (): void => commit(0.5),

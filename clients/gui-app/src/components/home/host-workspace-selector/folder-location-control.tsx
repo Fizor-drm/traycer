@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Check,
   ChevronDown,
@@ -86,12 +87,13 @@ export function FolderLocationControl(props: {
   readonly boundaryEl: HTMLElement | null;
   readonly readOnly: boolean;
 }) {
+  const { t } = useTranslation("common");
   const { item } = props;
   const value = folderLocationValue(item);
   const triggerDisabled = item.modeDisabled || !item.isGitRepo;
   const triggerDisabledReason = item.modeDisabled
     ? item.modeDisabledReason
-    : NON_GIT_LOCATION_DISABLED_REASON;
+    : t(NON_GIT_LOCATION_DISABLED_REASON);
   const importRows = useMemo(
     () =>
       item.summary === null
@@ -117,7 +119,7 @@ export function FolderLocationControl(props: {
       type="button"
       disabled={item.modeDisabled}
       aria-disabled={props.readOnly || triggerDisabled ? true : undefined}
-      aria-label="Choose run location"
+      aria-label={t("Choose run location")}
       data-testid="folder-location-trigger"
       className={cn(FOLDER_CONTROL_TRIGGER_CLASS)}
     >
@@ -130,10 +132,10 @@ export function FolderLocationControl(props: {
           aria-hidden
           className="invisible col-start-1 row-start-1 truncate"
         >
-          {locationLabel("import")}
+          {t(locationLabel("import"))}
         </span>
         <span className="col-start-1 row-start-1 truncate">
-          {locationLabel(value)}
+          {t(locationLabel(value))}
         </span>
       </span>
       <ChevronDown className="size-3.5 shrink-0 text-muted-foreground/60" />
@@ -183,6 +185,7 @@ function FolderLocationMenu(props: {
   readonly uncommittedByPath: ReadonlyMap<string, number>;
   readonly boundaryEl: HTMLElement | null;
 }) {
+  const { t } = useTranslation("common");
   const { item, value, importRows } = props;
   return (
     // Non-modal so the menu's focus scope doesn't trap focus back into the menu:
@@ -201,7 +204,7 @@ function FolderLocationMenu(props: {
           onSelect={() => item.onSelectMode("local")}
         >
           <Laptop className="size-4" aria-hidden />
-          <span className="flex-1">Local</span>
+          <span className="flex-1">{t("Local")}</span>
           {value === "local" ? (
             <Check className="size-4 text-primary" aria-hidden />
           ) : null}
@@ -211,7 +214,7 @@ function FolderLocationMenu(props: {
           onSelect={() => item.onSelectMode("worktree")}
         >
           <Split className="size-4 rotate-90" aria-hidden />
-          <span className="flex-1">New worktree</span>
+          <span className="flex-1">{t("New worktree")}</span>
           {value === "worktree" ? (
             <Check className="size-4 text-primary" aria-hidden />
           ) : null}
@@ -220,7 +223,7 @@ function FolderLocationMenu(props: {
           <DropdownMenuSub>
             <DropdownMenuSubTrigger data-testid="folder-location-existing">
               <Split className="size-4 rotate-90" aria-hidden />
-              <span className="flex-1">Existing worktree</span>
+              <span className="flex-1">{t("Existing worktree")}</span>
               {value === "import" ? (
                 <Check className="size-4 text-primary" aria-hidden />
               ) : null}
@@ -244,7 +247,7 @@ function FolderLocationMenu(props: {
           >
             <ChevronRight className="size-4 opacity-0" aria-hidden />
             <span className="flex-1 text-muted-foreground">
-              No existing worktrees
+              {t("No existing worktrees")}
             </span>
           </DropdownMenuItem>
         ) : null}
@@ -268,6 +271,7 @@ function ExistingWorktreeList(props: {
   readonly uncommittedByPath: ReadonlyMap<string, number>;
   readonly onSelect: (intent: WorktreeFolderIntent) => void;
 }) {
+  const { t } = useTranslation("common");
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const allowOpenFocusRecoveryRef = useRef(true);
@@ -336,8 +340,8 @@ function ExistingWorktreeList(props: {
             <InputGroupInput
               ref={inputRef}
               value={query}
-              placeholder="Search worktrees"
-              aria-label="Search worktrees"
+              placeholder={t("Search worktrees")}
+              aria-label={t("Search worktrees")}
               className="text-ui-sm"
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={(event) => {
@@ -373,7 +377,7 @@ function ExistingWorktreeList(props: {
       >
         {filtered.length === 0 ? (
           <div className="px-2 py-1.5 text-ui-sm text-muted-foreground">
-            No matching worktrees
+            {t("No matching worktrees")}
           </div>
         ) : (
           filtered.map((row) => {
@@ -399,7 +403,7 @@ function ExistingWorktreeList(props: {
                 </span>
                 {uncommitted !== undefined && uncommitted > 0 ? (
                   <span className="shrink-0 text-ui-xs text-muted-foreground">
-                    {uncommitted} uncommitted
+                    {uncommitted} {t("uncommitted")}
                   </span>
                 ) : null}
                 {row.selected ? (

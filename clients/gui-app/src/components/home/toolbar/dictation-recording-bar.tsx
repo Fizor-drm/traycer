@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Square, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { DictationWaveform } from "@/components/home/toolbar/dictation-waveform";
 import { MutedAgentSpinner } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
@@ -23,12 +24,13 @@ export function DictationRecordingBar(
   props: DictationRecordingBarProps,
 ): ReactNode {
   const { state, getStream, onStop, onCancel } = props;
+  const { t } = useTranslation("common");
   if (state === "transcribing") {
     return (
       <div className="flex w-full min-w-0 items-center gap-2">
         <span className="inline-flex items-center gap-2 text-ui-sm text-muted-foreground">
           <MutedAgentSpinner />
-          Transcribing…
+          {t("Transcribing…")}
         </span>
       </div>
     );
@@ -54,6 +56,7 @@ function RecordingControls({
   readonly onCancel: () => void;
 }): ReactNode {
   const elapsed = useElapsedSeconds();
+  const { t } = useTranslation("common");
   return (
     <>
       <span className="inline-flex shrink-0 items-center gap-1.5 text-ui-xs tabular-nums text-destructive">
@@ -67,7 +70,7 @@ function RecordingControls({
         <DictationWaveform getStream={getStream} className={undefined} />
       </div>
       <TooltipWrapper
-        label="Cancel (Esc)"
+        label={t("Cancel (Esc)")}
         side="top"
         sideOffset={undefined}
         align={undefined}
@@ -78,13 +81,13 @@ function RecordingControls({
           size="icon"
           className="size-7 shrink-0"
           onClick={onCancel}
-          aria-label="Cancel voice input"
+          aria-label={t("Cancel voice input")}
         >
           <X className="size-4" />
         </Button>
       </TooltipWrapper>
       <TooltipWrapper
-        label="Stop and insert"
+        label={t("Stop and insert")}
         side="top"
         sideOffset={undefined}
         align={undefined}
@@ -94,10 +97,10 @@ function RecordingControls({
           size="sm"
           className="h-7 shrink-0 gap-1.5"
           onClick={onStop}
-          aria-label="Stop and insert transcript"
+          aria-label={t("Stop and insert transcript")}
         >
           <Square className="size-3 fill-current" />
-          Stop
+          {t("Stop")}
         </Button>
       </TooltipWrapper>
     </>

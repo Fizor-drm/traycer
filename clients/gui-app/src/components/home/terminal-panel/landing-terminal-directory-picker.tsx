@@ -17,6 +17,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { InputGroupButton } from "@/components/ui/input-group";
+import { useTranslation } from "react-i18next";
 import { registerPrimaryFocusEndpoint } from "@/lib/focus/primary-focus-coordinator";
 import { workspaceFolderName } from "@/lib/worktree/workspace-folder-name";
 
@@ -35,6 +36,7 @@ export function LandingTerminalDirectoryPicker(
   props: LandingTerminalDirectoryPickerProps,
 ): ReactNode {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const { t } = useTranslation("common");
   const [selection, setSelection] = useState({
     primaryPath: props.primaryWorkspacePath,
     selectedPath: props.primaryWorkspacePath,
@@ -86,7 +88,7 @@ export function LandingTerminalDirectoryPicker(
             selectedPath: nextPath,
           });
         }}
-        label="Create terminal in workspace"
+        label={t("Create terminal in workspace")}
         aria-busy={props.isPending}
         loop
         onKeyDown={handleKeyDown}
@@ -94,12 +96,12 @@ export function LandingTerminalDirectoryPicker(
       >
         <CommandInput
           ref={inputRef}
-          aria-label="Create terminal in workspace"
-          placeholder="Create terminal in workspace"
+          aria-label={t("Create terminal in workspace")}
+          placeholder={t("Create terminal in workspace")}
           leading={
             <InputGroupButton
               size="icon-xs"
-              aria-label="Cancel terminal creation"
+              aria-label={t("Cancel terminal creation")}
               onClick={cancel}
               disabled={props.isPending}
             >
@@ -118,12 +120,12 @@ export function LandingTerminalDirectoryPicker(
               testId={undefined}
               variant={undefined}
             />
-            Opening terminal…
+            {t("Opening terminal…")}
           </div>
         ) : null}
         <CommandList className="max-h-none min-h-0 flex-1">
-          <CommandEmpty>No matching directories.</CommandEmpty>
-          <CommandGroup heading="Create terminal in workspace">
+          <CommandEmpty>{t("No matching directories.")}</CommandEmpty>
+          <CommandGroup heading={t("Create terminal in workspace")}>
             {props.workspacePaths.map((workspacePath) => (
               <CommandItem
                 key={workspacePath}
@@ -140,7 +142,7 @@ export function LandingTerminalDirectoryPicker(
                     </span>
                     {workspacePath === props.primaryWorkspacePath ? (
                       <Badge variant="outline" className="h-4 px-1">
-                        Primary
+                        {t("Primary")}
                       </Badge>
                     ) : null}
                   </span>

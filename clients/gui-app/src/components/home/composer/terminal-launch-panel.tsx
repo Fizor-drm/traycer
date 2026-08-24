@@ -1,4 +1,5 @@
 import { memo, useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
 import { Terminal } from "lucide-react";
 
@@ -60,6 +61,7 @@ interface TerminalLaunchPanelProps {
 // intentionally absent - terminal agents launch empty.
 function TerminalLaunchPanelImpl(props: TerminalLaunchPanelProps) {
   const { store, pending, disabledHint, hostId, onStart } = props;
+  const { t } = useTranslation("common");
   const activityEnabled = useSurfaceActivity();
   const selection = useStore(store, (s) => s.selection);
   const reasoning = useStore(store, (s) => s.reasoning);
@@ -134,7 +136,7 @@ function TerminalLaunchPanelImpl(props: TerminalLaunchPanelProps) {
     disabledHint ??
     (selectionIsTuiCapable
       ? null
-      : "Select a terminal-capable coding agent to start.") ??
+      : t("Select a terminal-capable coding agent to start.")) ??
     packPreparingHint;
   const startDisabled = pending || launchHint !== null;
 
@@ -184,9 +186,9 @@ function TerminalLaunchPanelImpl(props: TerminalLaunchPanelProps) {
           profileAdmission={null}
         />
         <Input
-          aria-label="Terminal interface CLI arguments"
+          aria-label={t("Terminal interface CLI arguments")}
           className="h-8 min-w-0 flex-1 font-mono text-ui-xs"
-          placeholder="CLI arguments (optional)"
+          placeholder={t("CLI arguments (optional)")}
           value={argsDraft}
           onChange={(event) =>
             setArgsState({
@@ -223,6 +225,7 @@ interface StartButtonProps {
 
 function StartButton(props: StartButtonProps) {
   const { hint, disabled, onStart } = props;
+  const { t } = useTranslation("common");
   // With a hint the button stays focusable (aria-disabled, not the native
   // `disabled` attr) so the tooltip is reachable - mirroring ComposerSendButton.
   const hasHint = hint !== null;
@@ -236,7 +239,7 @@ function StartButton(props: StartButtonProps) {
       // Traycer Green gives popovers and secondary buttons the same color, so
       // add dialog-local contrast without changing the landing-page treatment.
       className="h-8 in-data-[slot=dialog-content]:bg-input/60 in-data-[slot=dialog-content]:hover:bg-input/80"
-      aria-label="Start agent"
+      aria-label={t("Start agent")}
       aria-keyshortcuts="Meta+Enter Control+Enter"
       aria-disabled={hasHint || undefined}
       disabled={hasHint ? false : disabled}
@@ -245,7 +248,7 @@ function StartButton(props: StartButtonProps) {
         onStart();
       }}
     >
-      Start
+      {t("Start")}
       <PrimaryActionShortcutHint />
     </Button>
   );

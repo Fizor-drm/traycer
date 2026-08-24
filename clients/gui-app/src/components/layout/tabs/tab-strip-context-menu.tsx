@@ -10,6 +10,7 @@ import {
   SplitSquareHorizontal,
   X,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import {
   ContextMenuContent,
@@ -62,6 +63,7 @@ export function TabContextMenuContent(
     onEditTitle,
     onSetTaskPinned,
   } = props;
+  const { t } = useTranslation("shell");
 
   const showDuplicate = tab.canDuplicate;
   const showOpenInNewWindow = tab.canOpenInNewWindow;
@@ -76,7 +78,7 @@ export function TabContextMenuContent(
               data-testid={`tab-edit-title-${tab.kind}-${tab.id}`}
             >
               <Pencil />
-              Edit Title
+              {t("Edit Title")}
             </ContextMenuItem>
           ) : null}
           <ContextMenuItem
@@ -89,8 +91,8 @@ export function TabContextMenuContent(
           >
             <Pin className={taskPinned === true ? "fill-current" : undefined} />
             {taskPinned === true
-              ? "Unpin Task in History"
-              : "Pin Task in History"}
+              ? t("Unpin Task in History")
+              : t("Pin Task in History")}
             {taskPinned === null || isTaskPinPending ? (
               <AgentSpinningDots
                 className="ml-auto text-muted-foreground"
@@ -108,7 +110,7 @@ export function TabContextMenuContent(
           data-testid={`tab-duplicate-${tab.kind}-${tab.id}`}
         >
           <CopyPlus />
-          Duplicate Tab
+          {t("Duplicate Tab")}
           <span className="ml-auto text-ui-xs text-muted-foreground">⌘⇧K</span>
         </ContextMenuItem>
       ) : null}
@@ -120,7 +122,7 @@ export function TabContextMenuContent(
           data-testid={`tab-open-new-window-${tab.kind}-${tab.id}`}
         >
           <ExternalLink />
-          Open in New Window
+          {t("Open in New Window")}
         </ContextMenuItem>
       ) : null}
       {showOpenInNewWindow ? <ContextMenuSeparator /> : null}
@@ -132,7 +134,7 @@ export function TabContextMenuContent(
         data-testid={`tab-close-others-${tab.kind}-${tab.id}`}
       >
         <X />
-        Close Other Tabs
+        {t("Close Other Tabs")}
       </ContextMenuItem>
     </ContextMenuContent>
   );
@@ -149,6 +151,7 @@ function TabSplitMenuItems(props: {
   readonly onSplitCommand: (id: TabSplitCommandId, tab: HeaderTab) => void;
 }): React.ReactNode {
   const { tab, onSplitCommand } = props;
+  const { t } = useTranslation("shell");
   const splitAvailability = resolveTabSplitCommandAvailability({
     kind: tab.kind,
     id: tab.id,
@@ -167,14 +170,14 @@ function TabSplitMenuItems(props: {
         data-testid={`tab-add-split-${tab.kind}-${tab.id}`}
       >
         <SplitSquareHorizontal />
-        {TAB_SPLIT_COMMANDS.add.label}
+        {t(TAB_SPLIT_COMMANDS.add.label)}
       </ContextMenuItem>
       <ContextMenuItem
         disabled={!splitAvailability.pair}
         onSelect={() => onSplitCommand(TAB_SPLIT_COMMANDS.pair.id, tab)}
         data-testid={`tab-pair-current-${tab.kind}-${tab.id}`}
       >
-        {TAB_SPLIT_COMMANDS.pair.label}
+        {t(TAB_SPLIT_COMMANDS.pair.label)}
       </ContextMenuItem>
       {showsGroupCommands ? (
         <>
@@ -201,6 +204,7 @@ function TabSplitArrangeItems(props: {
   readonly onSplitCommand: (id: TabSplitCommandId, tab: HeaderTab) => void;
 }): React.ReactNode {
   const { tab, availability, onSplitCommand } = props;
+  const { t } = useTranslation("shell");
   return (
     <>
       <ContextMenuItem
@@ -209,7 +213,7 @@ function TabSplitArrangeItems(props: {
         data-testid={`tab-separate-split-${tab.kind}-${tab.id}`}
       >
         <Maximize2 />
-        {TAB_SPLIT_COMMANDS.separate.label}
+        {t(TAB_SPLIT_COMMANDS.separate.label)}
       </ContextMenuItem>
       <ContextMenuSeparator />
       <ContextMenuItem
@@ -218,7 +222,7 @@ function TabSplitArrangeItems(props: {
         data-testid={`tab-close-left-${tab.kind}-${tab.id}`}
       >
         <PanelLeftClose />
-        {TAB_SPLIT_COMMANDS.closeLeft.label}
+        {t(TAB_SPLIT_COMMANDS.closeLeft.label)}
       </ContextMenuItem>
       <ContextMenuItem
         disabled={availability.closeRight === null}
@@ -226,7 +230,7 @@ function TabSplitArrangeItems(props: {
         data-testid={`tab-close-right-${tab.kind}-${tab.id}`}
       >
         <PanelRightClose />
-        {TAB_SPLIT_COMMANDS.closeRight.label}
+        {t(TAB_SPLIT_COMMANDS.closeRight.label)}
       </ContextMenuItem>
       <ContextMenuSeparator />
       <ContextMenuItem
@@ -235,7 +239,7 @@ function TabSplitArrangeItems(props: {
         data-testid={`tab-swap-split-${tab.kind}-${tab.id}`}
       >
         <ArrowLeftRight />
-        {TAB_SPLIT_COMMANDS.swap.label}
+        {t(TAB_SPLIT_COMMANDS.swap.label)}
       </ContextMenuItem>
     </>
   );

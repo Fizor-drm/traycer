@@ -9,6 +9,7 @@ import {
 import { X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
 import {
@@ -189,6 +190,7 @@ export const TabItem = memo(function TabItem(props: TabItemProps) {
   const modifier = useTabLeaderModifierForIndex(index);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation("shell");
   const liveEpicTitle = useRegisteredEpicTitle(
     tab.kind === "epic" ? tab.epicId : null,
   );
@@ -253,11 +255,11 @@ export const TabItem = memo(function TabItem(props: TabItemProps) {
       if (client === null) {
         rollback();
         reportableErrorToast(
-          "Couldn't reach the host to rename the epic.",
+          t("Couldn't reach the host to rename the epic."),
           undefined,
           {
-            title: "Could not rename Epic",
-            message: "The host was unavailable.",
+            title: t("Could not rename Epic"),
+            message: t("The host was unavailable."),
             code: null,
             source: "Epic tabs",
           },
@@ -283,10 +285,10 @@ export const TabItem = memo(function TabItem(props: TabItemProps) {
           (error: unknown) => {
             rollback();
             if (error instanceof HostRpcError) {
-              toastFromHostError(error, "Couldn't rename epic.");
+              toastFromHostError(error, t("Couldn't rename epic."));
             } else {
-              reportableErrorToast("Couldn't rename epic.", undefined, {
-                title: "Could not rename Epic",
+              reportableErrorToast(t("Couldn't rename epic."), undefined, {
+                title: t("Could not rename Epic"),
                 message: null,
                 code: null,
                 source: "Epic tabs",
@@ -295,7 +297,7 @@ export const TabItem = memo(function TabItem(props: TabItemProps) {
           },
         );
     },
-    [resolvedTabName, queryClient, tab],
+    [resolvedTabName, queryClient, tab, t],
   );
   const rename = useInlineRename({
     // Bind to the RAW title, not `displayName` - editing must never seed the
@@ -408,7 +410,7 @@ export const TabItem = memo(function TabItem(props: TabItemProps) {
             {rename.isEditing ? (
               <input
                 {...rename.inputProps}
-                aria-label="Edit epic title"
+                aria-label={t("Edit epic title")}
                 data-testid={`tab-title-input-${tab.kind}-${tab.id}`}
                 className="min-w-0 flex-1 rounded-sm border border-border bg-background px-1 text-center text-ui-sm text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring [-webkit-app-region:no-drag]"
               />
@@ -428,7 +430,7 @@ export const TabItem = memo(function TabItem(props: TabItemProps) {
                   </Tooltip>
                 </span>
                 <TabTrailingSlot
-                  label={`Close ${displayName}`}
+                  label={t("Close {{displayName}}", { displayName })}
                   testId={`tab-close-${tab.kind}-${tab.id}`}
                   onClose={() => onClose(displayTab)}
                   leaderBadge={leaderBadge}
@@ -572,6 +574,7 @@ function TabLeadingIcon(props: {
   readonly tabId: string;
   readonly epicId: string | null;
 }) {
+  const { t } = useTranslation("shell");
   const indicatorState = useSurfaceNotificationIndicatorState(
     { epicId: props.epicId ?? props.tabId },
     null,
@@ -597,7 +600,7 @@ function TabLeadingIcon(props: {
       testIdPrefix="header-tab"
       className="text-muted-foreground"
       style={undefined}
-      runningTitle="Task activity in progress"
+      runningTitle={t("Task activity in progress")}
       defaultIcon={defaultIcon}
       statusPresentation="message"
       agentSurface="gui"

@@ -6,10 +6,12 @@ import {
   DEFAULT_WORKTREE_BRANCH_PREFIX,
   useSettingsStore,
 } from "@/stores/settings/settings-store";
+import { DEFAULT_LOCALE } from "@/lib/i18n/init-i18n";
 
 function resetSettingsStore(): void {
   window.localStorage.clear();
   useSettingsStore.setState({
+    locale: DEFAULT_LOCALE,
     artifactIconColorMode: "byType",
     artifactIconColors: DEFAULT_EPIC_NODE_ICON_COLORS,
     defaultPermission: DEFAULT_PERMISSION,
@@ -37,6 +39,57 @@ describe("useSettingsStore", () => {
 
   it("defaults the chat turn minimap to the right side", () => {
     expect(useSettingsStore.getState().chatTurnMinimapSide).toBe("right");
+  });
+
+  it("defaults the UI locale to English", () => {
+    expect(useSettingsStore.getState().locale).toBe("en");
+  });
+
+  it("updates the UI locale via the setter", () => {
+    useSettingsStore.getState().setLocale("ja");
+
+    expect(useSettingsStore.getState().locale).toBe("ja");
+  });
+
+  it("persists and rehydrates the UI locale", async () => {
+    useSettingsStore.getState().setLocale("ja");
+    const persisted = window.localStorage.getItem("traycer-gui-app:settings");
+    expect(persisted ?? "").toContain('"locale":"ja"');
+
+    useSettingsStore.setState({ locale: "en" });
+    if (persisted === null) throw new Error("expected persisted settings");
+    window.localStorage.setItem("traycer-gui-app:settings", persisted);
+    await useSettingsStore.persist.rehydrate();
+
+    expect(useSettingsStore.getState().locale).toBe("ja");
+  });
+
+  it("repairs an invalid persisted UI locale to the default", async () => {
+    window.localStorage.setItem(
+      "traycer-gui-app:settings",
+      JSON.stringify({
+        state: { locale: "fr" },
+        version: 1,
+      }),
+    );
+
+    await useSettingsStore.persist.rehydrate();
+
+    expect(useSettingsStore.getState().locale).toBe("en");
+  });
+
+  it("rehydrates old settings without a UI locale to the default", async () => {
+    window.localStorage.setItem(
+      "traycer-gui-app:settings",
+      JSON.stringify({
+        state: { artifactIconColorMode: "none" },
+        version: 1,
+      }),
+    );
+
+    await useSettingsStore.persist.rehydrate();
+
+    expect(useSettingsStore.getState().locale).toBe("en");
   });
 
   it("persists and rehydrates the chat turn minimap side", async () => {

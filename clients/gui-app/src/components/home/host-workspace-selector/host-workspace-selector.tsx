@@ -8,6 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { useIsMutating } from "@tanstack/react-query";
 import { workspaceMutationKeys } from "@/lib/query-keys";
 import { DropdownMenuLabel } from "@/components/ui/dropdown-menu";
@@ -248,12 +250,13 @@ interface HostWorkspaceSelectorProps {
 }
 
 export function HostWorkspaceSelector(props: HostWorkspaceSelectorProps) {
+  const { t } = useTranslation("common");
   const directoryList = useHostDirectoryList();
   const activeHostId = useAddressableHostId();
   const directoryEntries = directoryList.data ?? [];
   const activeEntry =
     directoryEntries.find((entry) => entry.hostId === activeHostId) ?? null;
-  const hostLabel = activeEntry?.label ?? "Local";
+  const hostLabel = activeEntry?.label ?? t("Local");
   const ownerHostId =
     props.surface.kind === "home" ? null : props.surface.hostId;
   const ownerHostEntry =
@@ -271,7 +274,7 @@ export function HostWorkspaceSelector(props: HostWorkspaceSelectorProps) {
   // "Local" default, not a specific active-host name).
   const inEpicHostLabel =
     ownerHostEntry?.label ??
-    (directoryList.data === undefined ? hostLabel : "Unavailable");
+    (directoryList.data === undefined ? hostLabel : t("Unavailable"));
 
   if (props.surface.kind === "home") {
     return (
@@ -365,6 +368,7 @@ type ActiveHostWorkspaceControlsProps = {
 export function ActiveHostWorkspaceControls(
   props: ActiveHostWorkspaceControlsProps,
 ) {
+  const { t } = useTranslation("common");
   const directoryList = useHostDirectoryList();
   const disabled = props.disabled;
   const directoryEntries = directoryList.data ?? [];
@@ -384,7 +388,9 @@ export function ActiveHostWorkspaceControls(
   // carry is a real unavailable state (D6), not a slow first paint.
   const hostLabel =
     activeEntry?.label ??
-    (scopeHostId === null && !composerPin.isPinned ? "Local" : "Unavailable");
+    (scopeHostId === null && !composerPin.isPinned
+      ? t("Local")
+      : t("Unavailable"));
   // `pin.selection`, NOT `pin.resolvedHostId`: a FOLLOWING surface must keep
   // using the app-wide bound client (which the authority bridge holds on the
   // effective host) rather than a transient requester, so nothing about the
@@ -506,12 +512,12 @@ export function ActiveHostWorkspaceControls(
           intent="pin"
         />
         <section
-          aria-label="Workspaces"
+          aria-label={t("Workspaces")}
           data-testid="host-workspace-selector-folders-section"
           className="w-full max-w-full min-w-0"
         >
           <DropdownMenuLabel className="px-1 text-ui-xs font-medium uppercase tracking-wide text-muted-foreground/70">
-            Workspaces
+            {t("Workspaces")}
           </DropdownMenuLabel>
           <HomeWorkspaceRows
             workspaceSource={workspaceSource}
@@ -620,6 +626,7 @@ function HomeWorkspaceRows(props: {
     seedIntent,
     seedIntentOverride,
   } = props;
+  const { t } = useTranslation("common");
   // Remembered defaults are host-local, so every read and write here is bound
   // to the surface's target host. Both maps are stable references (the bucket
   // is the stored object, or the shared empty one), so subscribing to them
@@ -1018,6 +1025,7 @@ function HomeWorkspaceRows(props: {
           resolvedPrimaryPath,
           setFolderIntent,
           summariesByPath,
+          t,
           workspaceSource,
         }),
       ),
@@ -1029,11 +1037,12 @@ function HomeWorkspaceRows(props: {
       props.hostLabel,
       resolvedFolders,
       resolvedPrimaryPath,
-      workspaceSource,
       setFolderIntent,
       summariesByPath,
       summariesQuery.isFetching,
       summariesQuery.isError,
+      t,
+      workspaceSource,
     ],
   );
   const {
@@ -1257,6 +1266,7 @@ function workspaceRunItemForResolvedFolder(input: {
     timestamp: number,
   ) => void;
   readonly summariesByPath: ReadonlyMap<string, WorktreeWorkspaceSummaryV15>;
+  readonly t: TFunction<"common">;
   readonly workspaceSource: HomeWorkspaceSource;
 }): WorkspaceRunItem {
   const summary = summaryForResolvedFolder(input.entry, input.summariesByPath);
@@ -1272,6 +1282,7 @@ function workspaceRunItemForResolvedFolder(input: {
     resolvedPrimaryPath: input.resolvedPrimaryPath,
     onLocate: input.onLocate,
     announcePrimaryChange: input.announcePrimaryChange,
+    t: input.t,
     workspaceSource: input.workspaceSource,
   });
   if (absentItem !== null) return absentItem;
@@ -1286,6 +1297,7 @@ function workspaceRunItemForResolvedFolder(input: {
       onLocate: input.onLocate,
       resolvedPrimaryPath: input.resolvedPrimaryPath,
       summary,
+      t: input.t,
       workspaceSource: input.workspaceSource,
     });
     if (unresolvedItem !== null) return unresolvedItem;
@@ -1348,7 +1360,7 @@ function workspaceRunItemForResolvedFolder(input: {
     modeDisabled: !metadataResolved,
     modeDisabledReason: metadataResolved
       ? null
-      : "Waiting for the host to verify this folder.",
+      : input.t("Waiting for the host to verify this folder."),
     removeDisabled: false,
     removeDisabledReason: null,
     removePending: false,
@@ -1393,6 +1405,7 @@ function workspaceRunItemForAbsentSummary(input: {
   readonly resolvedPrimaryPath: string | null;
   readonly onLocate: () => void;
   readonly announcePrimaryChange: (folderName: string) => void;
+  readonly t: TFunction<"common">;
   readonly workspaceSource: HomeWorkspaceSource;
 }): WorkspaceRunItem | null {
   if (input.summary === null) return null;
@@ -1405,6 +1418,7 @@ function workspaceRunItemForAbsentSummary(input: {
     repoIdentifier: repoIdentifierForResolvedFolder(input.entry),
     hostLabel: input.hostLabel,
     isPrimary,
+    t: input.t,
     onLocate: input.onLocate,
     onMakePrimary: () => {
       input.workspaceSource.setPrimaryFolder(input.entry.path);
@@ -1430,6 +1444,7 @@ function workspaceRunItemForUnresolvedFolder(input: {
   readonly onLocate: () => void;
   readonly resolvedPrimaryPath: string | null;
   readonly summary: WorktreeWorkspaceSummaryV15 | null;
+  readonly t: TFunction<"common">;
   readonly workspaceSource: HomeWorkspaceSource;
 }): WorkspaceRunItem | null {
   // A summary that landed (present non-git, or present git) falls through to
@@ -1451,6 +1466,7 @@ function workspaceRunItemForUnresolvedFolder(input: {
       hostClient: input.activeHostClient,
       isPrimary,
       onRemove,
+      t: input.t,
     });
   }
   return unresolvedWorkspaceRunItem({
@@ -1466,6 +1482,7 @@ function workspaceRunItemForUnresolvedFolder(input: {
     // binding the user can see - but replacing waits for the host to say
     // `presence: "absent"` out loud.
     onLocate: input.summariesFailed ? null : input.onLocate,
+    t: input.t,
     onMakePrimary: () => {
       input.workspaceSource.setPrimaryFolder(input.entry.path);
       input.announcePrimaryChange(input.entry.name);
@@ -1473,7 +1490,6 @@ function workspaceRunItemForUnresolvedFolder(input: {
     onRemove,
   });
 }
-
 function currentCapturedEntry(
   capturedIntent: WorktreeIntent | null,
   workspacePath: string,
@@ -1569,9 +1585,10 @@ function modeDisabledReasonFor(
   isOwnerActive: boolean,
   activeRunNotice: string,
   metadataPending: boolean,
+  t: TFunction<"common">,
 ): string | null {
   if (isOwnerActive) return activeRunNotice;
-  if (metadataPending) return "Waiting for the host to verify this folder.";
+  if (metadataPending) return t("Waiting for the host to verify this folder.");
   return null;
 }
 
@@ -1588,6 +1605,7 @@ function unresolvedWorkspaceRunItem(input: {
   readonly repoIdentifier: WorktreeWorkspaceSummaryV15["repoIdentifier"];
   readonly hostLabel: string;
   readonly isPrimary: boolean;
+  readonly t: TFunction<"common">;
   /**
    * `null` withholds the replace affordance.
    *
@@ -1603,7 +1621,9 @@ function unresolvedWorkspaceRunItem(input: {
   // Copy is true for both "path gone" and "path is a regular file" — the
   // host conflates those into `presence: "absent"`. Locate re-points at a
   // usable directory on this host either way.
-  const notAvailableLabel = `Not available on ${input.hostLabel}`;
+  const notAvailableLabel = input.t("Not available on {{host}}", {
+    host: input.hostLabel,
+  });
   return {
     key: input.path,
     displayName: input.name,
@@ -1624,7 +1644,9 @@ function unresolvedWorkspaceRunItem(input: {
     isPrimary: input.isPrimary,
     canChangePrimary: true,
     makePrimaryDisabled: true,
-    makePrimaryDisabledReason: "Resolve this folder to make it primary",
+    makePrimaryDisabledReason: input.t(
+      "Resolve this folder to make it primary",
+    ),
     hostClient: null,
     modeDisabled: true,
     modeDisabledReason: notAvailableLabel,
@@ -1646,6 +1668,7 @@ function pendingWorkspaceRunItem(input: {
   readonly hostClient: HostClient<HostRpcRegistry> | null;
   readonly isPrimary: boolean;
   readonly onRemove: () => void;
+  readonly t: TFunction<"common">;
 }): WorkspaceRunItem {
   return {
     key: input.path,
@@ -1656,7 +1679,7 @@ function pendingWorkspaceRunItem(input: {
     missing: false,
     isGitRepo: false,
     mode: "local",
-    branchLabel: "Loading",
+    branchLabel: input.t("Loading"),
     summary: null,
     currentIntent: null,
     defaultNewBranchName: "",
@@ -1665,10 +1688,10 @@ function pendingWorkspaceRunItem(input: {
     isPrimary: input.isPrimary,
     canChangePrimary: true,
     makePrimaryDisabled: true,
-    makePrimaryDisabledReason: "Loading folder metadata",
+    makePrimaryDisabledReason: input.t("Loading folder metadata"),
     hostClient: input.hostClient,
     modeDisabled: true,
-    modeDisabledReason: "Loading folder metadata",
+    modeDisabledReason: input.t("Loading folder metadata"),
     removeDisabled: false,
     removeDisabledReason: null,
     removePending: false,
@@ -1748,6 +1771,7 @@ interface InEpicSurfaceProps {
 // mutations, and terminal resume state in one owner-scoped surface.
 // eslint-disable-next-line complexity
 function InEpicSurface(props: InEpicSurfaceProps) {
+  const { t } = useTranslation("common");
   const { surface } = props;
   const hostOptions = useHostOptions();
   const pickerHosts =
@@ -2040,7 +2064,7 @@ function InEpicSurface(props: InEpicSurfaceProps) {
               commitPaths: handleBindingCommitted,
               showPartialFailure: (message) =>
                 reportableErrorToast(message, undefined, {
-                  title: "Workspace update incomplete",
+                  title: t("Workspace update incomplete"),
                   message: null,
                   code: null,
                   source: "Worktree update",
@@ -2064,6 +2088,7 @@ function InEpicSurface(props: InEpicSurfaceProps) {
     clearStagedWorktreeIntent,
     unstageWorktreeEntry,
     handleBindingCommitted,
+    t,
   ]);
   // Terminal-agent add/remove commit to the binding but deliberately do NOT
   // resume — only the explicit "Update" does. Mark the binding dirty so
@@ -2404,6 +2429,7 @@ function InEpicSurface(props: InEpicSurfaceProps) {
             repoIdentifier: ws.repoIdentifier,
             hostLabel: props.hostLabel,
             isPrimary,
+            t,
             onLocate: () => undefined,
             onMakePrimary: () => undefined,
             onRemove: () => undefined,
@@ -2542,6 +2568,7 @@ function InEpicSurface(props: InEpicSurfaceProps) {
             activeRunLocksBinding,
             activeRunNotice,
             rowMetadataPending,
+            t,
           ),
           removeDisabled: activeRunLocksBinding || removePending,
           removeDisabledReason: removeDisabledReasonFor(
@@ -2614,6 +2641,7 @@ function InEpicSurface(props: InEpicSurfaceProps) {
       handleBindingCommitted,
       markBindingDirtyWithoutResume,
       stagedKey,
+      t,
       unstageWorktreeEntry,
       props.hostClient,
       props.hostLabel,
@@ -2769,7 +2797,7 @@ function InEpicSurface(props: InEpicSurfaceProps) {
           <TooltipWrapper
             label={
               surface.kind === "terminal-agent"
-                ? "Terminal host is fixed"
+                ? t("Terminal host is fixed")
                 : undefined
             }
             side="top"

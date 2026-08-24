@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   Collapsible,
   CollapsibleContent,
@@ -12,6 +13,7 @@ export function DeviceCodeFallback(props: {
   readonly progress: DeviceFlowProgress;
   readonly isHero: boolean;
 }) {
+  const { t } = useTranslation("shell");
   return (
     <Collapsible
       defaultOpen
@@ -32,7 +34,7 @@ export function DeviceCodeFallback(props: {
         )}
         data-testid="signin-device-fallback-trigger"
       >
-        <span>Use code instead</span>
+        <span>{t("Use code instead")}</span>
         <ChevronRight
           className="size-3.5 shrink-0 transition-transform group-data-[state=open]:rotate-90"
           aria-hidden="true"
@@ -48,17 +50,17 @@ export function DeviceCodeFallback(props: {
           )}
         >
           <CopyableApprovalField
-            label="Device code"
+            label={t("Device code")}
             value={props.progress.userCode}
-            copyLabel="Copy device code"
+            copyLabel={t("Copy device code")}
             testId="signin-device-code"
             isHero={props.isHero}
             valueKind="code"
           />
           <CopyableApprovalField
-            label="Approval address"
+            label={t("Approval address")}
             value={props.progress.verificationUri}
-            copyLabel="Copy approval address"
+            copyLabel={t("Copy approval address")}
             testId="signin-device-url"
             isHero={props.isHero}
             valueKind="url"

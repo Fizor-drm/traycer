@@ -9,6 +9,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Search } from "lucide-react";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import type {
@@ -80,6 +82,7 @@ export interface NewWorktreeFormProps {
  * from the selected source, never a direct checkout of the source branch.
  */
 export function NewWorktreeForm(props: NewWorktreeFormProps) {
+  const { t } = useTranslation("common");
   const branchesQuery = useHostQuery<HostRpcRegistry, "worktree.listBranches">({
     cacheKeyIdentity: undefined,
     client: props.hostClient,
@@ -170,13 +173,13 @@ export function NewWorktreeForm(props: NewWorktreeFormProps) {
   const selectedSourceId = selectedSource?.id ?? null;
   const uncommittedFileCount = branchesQuery.data?.uncommittedFileCount ?? 0;
   const sourceRows = useMemo(
-    () => buildSourceRows(model, selectedSourceId, uncommittedFileCount),
-    [model, selectedSourceId, uncommittedFileCount],
+    () => buildSourceRows(model, selectedSourceId, uncommittedFileCount, t),
+    [model, selectedSourceId, uncommittedFileCount, t],
   );
   const branchName = form.branchName;
   const handleChangeName = form.setBranchName;
   const handleSelectSource = form.selectSource;
-  const namePlaceholder = "New branch name (required)";
+  const namePlaceholder = t("New branch name (required)");
 
   return (
     <div
@@ -198,25 +201,25 @@ export function NewWorktreeForm(props: NewWorktreeFormProps) {
     >
       <div className="flex flex-col gap-1">
         <span className="pl-1 text-ui-xs font-medium text-muted-foreground">
-          Source
+          {t("Source")}
         </span>
         <SourceBranchList
           rows={sourceRows}
           promoteRowId={model.newBranchSourceId}
           isLoading={branchesQuery.isLoading}
-          emptyLabel="No branches available"
+          emptyLabel={t("No branches available")}
           onSelect={handleSelectSource}
         />
       </div>
       <div className="flex flex-col gap-1">
         <span className="pl-1 text-ui-xs font-medium text-muted-foreground">
-          New branch name
+          {t("New branch name")}
         </span>
         <Input
           value={branchName}
           disabled={selectedSource === null}
           spellCheck={false}
-          aria-label="New branch name"
+          aria-label={t("New branch name")}
           placeholder={namePlaceholder}
           className="h-8 text-ui-sm"
           data-testid="new-worktree-branch-name"
@@ -236,7 +239,7 @@ export function NewWorktreeForm(props: NewWorktreeFormProps) {
           className="text-ui-xs text-muted-foreground"
           data-testid="new-worktree-save-status"
         >
-          {autosaveStatusLabel(draftIntent, isSaved, trimmed.length > 0)}
+          {autosaveStatusLabel(draftIntent, isSaved, trimmed.length > 0, t)}
         </span>
       </div>
     </div>
@@ -256,6 +259,7 @@ export interface ImportedWorktreeBranchFormProps {
 export function ImportedWorktreeBranchForm(
   props: ImportedWorktreeBranchFormProps,
 ) {
+  const { t } = useTranslation("common");
   return (
     <dl
       className="flex flex-col gap-3 px-1 py-0.5"
@@ -263,7 +267,7 @@ export function ImportedWorktreeBranchForm(
     >
       <div className="min-w-0">
         <dt className="text-ui-xs font-medium text-muted-foreground">
-          Source branch
+          {t("Source branch")}
         </dt>
         <TooltipWrapper
           label={props.sourceBranch}
@@ -281,7 +285,7 @@ export function ImportedWorktreeBranchForm(
       </div>
       <div className="min-w-0">
         <dt className="text-ui-xs font-medium text-muted-foreground">
-          Current branch
+          {t("Current branch")}
         </dt>
         <TooltipWrapper
           label={props.currentBranchName}
@@ -378,11 +382,12 @@ function autosaveStatusLabel(
   draftIntent: WorktreeFolderIntent | null,
   isSaved: boolean,
   hasBranchName: boolean,
+  t: TFunction<"common">,
 ): string {
   if (draftIntent === null) {
-    return hasBranchName ? "Waiting for source…" : "Branch name required";
+    return hasBranchName ? t("Waiting for source…") : t("Branch name required");
   }
-  return isSaved ? "Saved" : "Saving…";
+  return isSaved ? t("Saved") : t("Saving…");
 }
 
 /** The active row's index in the filtered list: the arrow-highlighted row while
@@ -418,6 +423,7 @@ const SourceBranchList = memo(function SourceBranchList(props: {
   readonly emptyLabel: string;
   readonly onSelect: (value: string) => void;
 }) {
+  const { t } = useTranslation("common");
   const idPrefix = useId();
   const listboxId = `${idPrefix}-listbox`;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -514,7 +520,7 @@ const SourceBranchList = memo(function SourceBranchList(props: {
       <div
         id={listboxId}
         role="listbox"
-        aria-label="Worktree source branch"
+        aria-label={t("Worktree source branch")}
         className="overflow-y-auto overscroll-contain"
         style={{ maxHeight: SOURCE_LIST_HEIGHT_CAP }}
         data-testid="new-worktree-source-list"
@@ -525,7 +531,7 @@ const SourceBranchList = memo(function SourceBranchList(props: {
             testId={undefined}
             variant="dots"
           />
-          <span>Loading branches…</span>
+          <span>{t("Loading branches…")}</span>
         </div>
       </div>
     );
@@ -534,7 +540,7 @@ const SourceBranchList = memo(function SourceBranchList(props: {
       <div
         id={listboxId}
         role="listbox"
-        aria-label="Worktree source branch"
+        aria-label={t("Worktree source branch")}
         className="overflow-y-auto overscroll-contain"
         style={{ maxHeight: SOURCE_LIST_HEIGHT_CAP }}
         data-testid="new-worktree-source-list"
@@ -555,7 +561,7 @@ const SourceBranchList = memo(function SourceBranchList(props: {
           id={listboxId}
           role="listbox"
           tabIndex={-1}
-          aria-label="Worktree source branch"
+          aria-label={t("Worktree source branch")}
           className="h-full overscroll-contain"
           data={filtered}
           computeItemKey={sourceBranchRowKey}
@@ -584,8 +590,8 @@ const SourceBranchList = memo(function SourceBranchList(props: {
           aria-controls={listboxId}
           aria-activedescendant={comboboxAriaActiveDescendant}
           value={query}
-          placeholder="Search branches"
-          aria-label="Search branches"
+          placeholder={t("Search branches")}
+          aria-label={t("Search branches")}
           className="text-ui-sm"
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
@@ -867,6 +873,7 @@ function buildSourceRows(
   model: UnifiedPickerModel,
   selectedSourceId: string | null,
   workingTreeUncommitted: number,
+  t: TFunction<"common">,
 ): ReadonlyArray<WorktreeBranchPickerRow> {
   return model.sourceOptions.map((option) => ({
     id: option.id,
@@ -876,7 +883,7 @@ function buildSourceRows(
     primaryLabel: option.carryUncommittedChanges ? option.label : option.name,
     secondaryLabel: null,
     secondaryTitle: null,
-    badges: sourceRowBadges(option, workingTreeUncommitted),
+    badges: sourceRowBadges(option, workingTreeUncommitted, t),
     selected: selectedSourceId === option.id,
     disabled: false,
     disabledReason: null,
@@ -895,13 +902,14 @@ function buildSourceRows(
 function sourceRowBadges(
   option: UnifiedPickerSourceOption,
   workingTreeUncommitted: number,
+  t: TFunction<"common">,
 ): ReadonlyArray<string> {
   if (option.carryUncommittedChanges) {
     return workingTreeUncommitted > 0
-      ? [`${workingTreeUncommitted} uncommitted`]
+      ? [t("{{count}} uncommitted", { count: workingTreeUncommitted })]
       : [];
   }
-  return option.isRemote ? ["remote"] : [];
+  return option.isRemote ? [t("remote")] : [];
 }
 
 /**

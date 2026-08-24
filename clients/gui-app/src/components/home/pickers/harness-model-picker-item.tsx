@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { guiAgentModelCapabilitiesSchema } from "@traycer/protocol/host/agent/gui/unary-schemas";
 
 interface HarnessModelPickerItemProps {
@@ -27,7 +28,7 @@ export function HarnessModelPickerItem(props: HarnessModelPickerItemProps) {
     onActive,
     onSelect,
   } = props;
-
+  const { t } = useTranslation("common");
   // Search is scoped to the active harness, so rows render identically whether
   // browsing or searching: the `browseLabel` (which drops the OpenCode upstream
   // prefix now carried by the group header) and no redundant harness context.
@@ -87,7 +88,7 @@ export function HarnessModelPickerItem(props: HarnessModelPickerItemProps) {
         </span>
         {hasDeprecationNotice ? (
           <Badge variant="destructive" className="shrink-0">
-            Deprecated
+            {t("Deprecated")}
           </Badge>
         ) : null}
         {capacityLabel === null ? null : (

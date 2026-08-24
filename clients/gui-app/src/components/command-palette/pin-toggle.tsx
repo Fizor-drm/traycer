@@ -13,6 +13,7 @@
  * `command-palette-store` and calls `togglePin`.
  */
 import { Pin, PinOff } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 export interface PinToggleProps {
@@ -23,11 +24,12 @@ export interface PinToggleProps {
 
 export function PinToggle(props: PinToggleProps) {
   const { itemId, pinned, onToggle } = props;
+  const { t } = useTranslation("common");
   return (
     <button
       type="button"
       aria-pressed={pinned}
-      aria-label={pinned ? "Unpin command" : "Pin command"}
+      aria-label={pinned ? t("Unpin command") : t("Pin command")}
       data-testid={`command-palette-pin-${itemId}`}
       onPointerDown={(event) => {
         // cmdk intercepts clicks on rows to fire `onSelect`; run

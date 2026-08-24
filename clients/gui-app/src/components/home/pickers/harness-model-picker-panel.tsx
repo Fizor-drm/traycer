@@ -29,6 +29,7 @@ import {
   type KeyboardEvent,
   type RefObject,
 } from "react";
+import { useTranslation } from "react-i18next";
 import {
   HarnessModelPickerModelSettingsFooter,
   type ReasoningFooterConfig,
@@ -163,6 +164,7 @@ export function HarnessModelPickerPanel(props: HarnessModelPickerPanelProps) {
     createProfileDisabledReason,
     profileAdmission,
   } = props;
+  const { t } = useTranslation("common");
   const openAddProfile = useProviderProfileAddFlowStore(
     (state) => state.openForHarness,
   );
@@ -182,7 +184,7 @@ export function HarnessModelPickerPanel(props: HarnessModelPickerPanelProps) {
       sideOffset={8}
       collisionPadding={12}
       role="dialog"
-      aria-label="Select model"
+      aria-label={t("Select model")}
       // Opts this popover out of the keybinding provider's dialog block so the
       // picker's leader-digit shortcuts fire while it's open (see
       // `isAnyDialogOpen` in keybinding-provider.tsx).

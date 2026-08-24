@@ -12,6 +12,7 @@
  * hydration boundary. After `WindowsBridgeContext.hasHydrated` flips
  * true, the real `TabStrip` body swaps in.
  */
+import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -20,11 +21,12 @@ interface TabStripSkeletonProps {
 }
 
 export function TabStripSkeleton({ count }: TabStripSkeletonProps) {
+  const { t } = useTranslation("shell");
   return (
     <div
       data-testid="tab-strip-skeleton"
       aria-busy
-      aria-label="Restoring open tabs"
+      aria-label={t("Restoring open tabs")}
       className={cn(
         "flex h-10 w-full min-w-0 items-center gap-1 px-2",
         "[-webkit-app-region:drag]",

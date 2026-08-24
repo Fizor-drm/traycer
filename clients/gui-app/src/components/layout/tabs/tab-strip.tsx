@@ -50,6 +50,8 @@ import {
   usePendingSetPinnedEpicIds,
 } from "@/hooks/epic/use-epic-set-pinned-mutation";
 import { useEpicTaskPinnedStates } from "@/hooks/epic/use-epic-task-pinned-states-query";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 export function TabStrip() {
   const hasHydrated = useWindowsBridgeHydrated();
@@ -94,15 +96,16 @@ function TabStripBody() {
   const taskPinnedStates = useEpicTaskPinnedStates(indicatorEpicIds);
   const pendingSetPinnedEpicIds = usePendingSetPinnedEpicIds();
   const { mutate: setEpicPinned } = useEpicSetPinned();
+  const { t } = useTranslation("shell");
   const handleSetTaskPinned = useCallback(
     (epicId: string, pinned: boolean, displayName: string) => {
       setEpicPinned(
         { epicId, pinned },
         {
           onSuccess: () => {
-            toast.success(pinConfirmationMessage(displayName, pinned), {
+            toast.success(pinConfirmationMessage(t, displayName, pinned), {
               action: {
-                label: "Undo",
+                label: t("Undo"),
                 onClick: () => {
                   setEpicPinned({ epicId, pinned: !pinned });
                 },
@@ -112,7 +115,7 @@ function TabStripBody() {
         },
       );
     },
-    [setEpicPinned],
+    [setEpicPinned, t],
   );
 
   // Trailing slot: the strip's empty space after the last tab accepts drops
@@ -256,7 +259,7 @@ function TabStripBody() {
     <NotificationIndicatorsProvider indicators={notificationIndicators}>
       <div
         role="tablist"
-        aria-label="Open tabs"
+        aria-label={t("Open tabs")}
         data-testid="tab-strip"
         className="relative flex min-w-0 flex-1 items-end"
       >
@@ -488,8 +491,12 @@ function getHeaderTab(ref: TabRef): HeaderTab | null {
   );
 }
 
-function pinConfirmationMessage(displayName: string, pinned: boolean): string {
+function pinConfirmationMessage(
+  t: TFunction<"shell">,
+  displayName: string,
+  pinned: boolean,
+): string {
   return pinned
-    ? `Pinned “${displayName}” to the top of History`
-    : `Unpinned “${displayName}” from History`;
+    ? t("Pinned “{{displayName}}” to the top of History", { displayName })
+    : t("Unpinned “{{displayName}}” from History", { displayName });
 }

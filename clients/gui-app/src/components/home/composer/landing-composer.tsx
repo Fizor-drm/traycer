@@ -12,6 +12,7 @@ import type { JsonContent } from "@traycer/protocol/common/registry";
 import type { ChatRunSettings } from "@traycer/protocol/host/agent/gui/subscribe";
 
 import { v4 as uuidv4 } from "uuid";
+import { useTranslation } from "react-i18next";
 import { AttachmentStrip } from "@/components/chat/composer/attachments/attachment-strip";
 import { useLandingImageFetcher } from "@/hooks/composer/use-landing-image-fetcher";
 import {
@@ -141,6 +142,7 @@ function promptStashIsDisabled(
 }
 
 export function LandingComposer(props: LandingComposerProps) {
+  const { t } = useTranslation("common");
   const editorRef = useRef<ComposerPromptEditorHandle | null>(null);
   const createdUnboundDraftIdRef = useRef<string | null>(null);
   const [pickerStore] = useState(() => createComposerPickerStore());
@@ -397,10 +399,10 @@ export function LandingComposer(props: LandingComposerProps) {
           // Hashing / IndexedDB write failed: drop the pending node and reclaim.
           editorRef.current?.removeImageAttachmentById(id);
           reportableErrorToast(
-            "Couldn't attach the image.",
-            { description: "Please try adding it again." },
+            t("Couldn't attach the image."),
+            { description: t("Please try adding it again.") },
             {
-              title: "Could not attach image",
+              title: t("Could not attach image"),
               message: null,
               code: null,
               source: "Chat composer",
@@ -413,7 +415,7 @@ export function LandingComposer(props: LandingComposerProps) {
         }
       });
     },
-    [draftId, runPendingImageJob],
+    [draftId, runPendingImageJob, t],
   );
   // Synchronously validate a landing paste's inline-base64 images (decode,
   // MIME/5MB, budget), mint a fresh id + start the background job for each
@@ -472,11 +474,11 @@ export function LandingComposer(props: LandingComposerProps) {
       if (corruptedCount > 0) {
         reportableErrorToast(
           corruptedCount === 1
-            ? "Couldn't attach a pasted image."
-            : "Couldn't attach some pasted images.",
-          { description: "The image was corrupted or too large." },
+            ? t("Couldn't attach a pasted image.")
+            : t("Couldn't attach some pasted images."),
+          { description: t("The image was corrupted or too large.") },
           {
-            title: "Could not attach image",
+            title: t("Could not attach image"),
             message: null,
             code: null,
             source: "Chat composer",
@@ -485,7 +487,7 @@ export function LandingComposer(props: LandingComposerProps) {
       }
       return outcomes;
     },
-    [draftId, startPendingImageIngest],
+    [draftId, startPendingImageIngest, t],
   );
   // Mount-time re-entry completes the pending-node model: the b64 image node IS
   // the work token, so whichever mount owns the editor restarts its ingest. This
@@ -529,18 +531,18 @@ export function LandingComposer(props: LandingComposerProps) {
     if (corruptedCount > 0) {
       reportableErrorToast(
         corruptedCount === 1
-          ? "Couldn't attach a pasted image."
-          : "Couldn't attach some pasted images.",
-        { description: "The image was corrupted or too large." },
+          ? t("Couldn't attach a pasted image.")
+          : t("Couldn't attach some pasted images."),
+        { description: t("The image was corrupted or too large.") },
         {
-          title: "Could not attach image",
+          title: t("Could not attach image"),
           message: null,
           code: null,
           source: "Chat composer",
         },
       );
     }
-  }, [startPendingImageIngest]);
+  }, [startPendingImageIngest, t]);
   const attachmentPending = isAttachmentIngestPending(paste);
   const readPromptStashImage = useCallback(async (hash: string) => {
     const bytes = await getImageBytes(hash);

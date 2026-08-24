@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Check, RotateCcw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,6 @@ import {
 import { worktreeBranchPrefixError } from "@/lib/worktree/worktree-branch-prefix-validation";
 import { pickFriendlyBranchSuffix } from "@/lib/worktree/random-friendly-name";
 
-const RESET_TOOLTIP = `Reset to "${DEFAULT_WORKTREE_BRANCH_PREFIX}"`;
 // Mirrors the agent-selection-guide editor's debounce-autosave convention
 // (`agent-selection-guide-section.tsx`), scaled down for a plain-text field.
 const SAVE_DEBOUNCE_MS = 500;
@@ -24,6 +24,10 @@ export function WorktreeBranchPrefixSection(): ReactNode {
   const setWorktreeBranchPrefix = useSettingsStore(
     (s) => s.setWorktreeBranchPrefix,
   );
+  const { t } = useTranslation("settings");
+  const resetTooltip = t('Reset to "{{prefix}}"', {
+    prefix: DEFAULT_WORKTREE_BRANCH_PREFIX,
+  });
   // The draft is the single source of truth while editing - initialized from
   // the store only on mount, and never re-derived from it mid-edit (autosave
   // writing back to `saved` must never echo into the draft mid-typing: no
@@ -189,20 +193,20 @@ export function WorktreeBranchPrefixSection(): ReactNode {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-ui-sm font-medium text-foreground">
-              Default branch prefix
+              {t("Default branch prefix")}
             </span>
           </div>
           <p className="mt-0.5 truncate text-ui-xs text-muted-foreground">
-            New branches start like{" "}
+            {t("New branches start like")}{" "}
             <span className="font-medium text-foreground">{previewBranch}</span>{" "}
-            unless a repository sets its own prefix in Environment
+            {t("unless a repository sets its own prefix in Environment")}
           </p>
         </div>
         <div className="flex max-w-full shrink-0 flex-wrap items-center gap-1.5">
           <div className="flex size-7 shrink-0 items-center justify-center">
             {showReset ? (
               <TooltipWrapper
-                label={RESET_TOOLTIP}
+                label={resetTooltip}
                 side="top"
                 sideOffset={undefined}
                 align={undefined}
@@ -211,7 +215,7 @@ export function WorktreeBranchPrefixSection(): ReactNode {
                   type="button"
                   size="icon-sm"
                   variant="ghost"
-                  aria-label={RESET_TOOLTIP}
+                  aria-label={resetTooltip}
                   onClick={() => {
                     clearPendingDebounce();
                     draftRef.current = DEFAULT_WORKTREE_BRANCH_PREFIX;
@@ -235,7 +239,7 @@ export function WorktreeBranchPrefixSection(): ReactNode {
           <Input
             ref={prefixInputRef}
             value={draft}
-            aria-label="Branch prefix"
+            aria-label={t("Branch prefix")}
             aria-invalid={error !== null}
             aria-describedby={error !== null ? errorId : undefined}
             placeholder="traycer/"
@@ -297,11 +301,12 @@ function WorktreeBranchPrefixLiveStatus(props: {
   readonly saving: boolean;
   readonly justSaved: boolean;
 }): ReactNode {
+  const { t } = useTranslation("settings");
   let text: string | null = null;
   if (props.saving) {
-    text = "Saving…";
+    text = t("Saving…");
   } else if (props.justSaved) {
-    text = "Saved";
+    text = t("Saved");
   }
   return (
     <span className="sr-only" role="status" aria-live="polite">

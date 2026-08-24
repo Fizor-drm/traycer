@@ -7,6 +7,7 @@ import { AccentDot } from "@/components/providers/accent-dot";
 import type { HarnessModelSelection } from "@/components/home/data/landing-options";
 import type { ProfileAccentDotInput } from "@/components/providers/provider-profile-model";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface HarnessModelTriggerProps extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -41,13 +42,16 @@ export function HarnessModelTrigger(props: HarnessModelTriggerProps) {
     ref,
     ...rest
   } = props;
+  const { t } = useTranslation("common");
   const serviceTierSummary =
     serviceTierLabel === null || !serviceTierActive
       ? null
-      : `${serviceTierLabel} on`;
+      : t("{{serviceTierLabel}} on", { serviceTierLabel });
   const summary = [
     label,
-    reasoningLabel === null ? null : `Thinking ${reasoningLabel}`,
+    reasoningLabel === null
+      ? null
+      : t("Thinking {{reasoningLabel}}", { reasoningLabel }),
     serviceTierSummary,
     profileLabel,
   ]

@@ -2,6 +2,7 @@ import { type ReactNode, useCallback, useSyncExternalStore } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { FilePlus2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { EpicsListPanel } from "@/components/epics/epics-list-panel";
 import type { HistoryItem } from "@/components/home/data/home-page.data";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ export function SplitSlotChooserContent(
   props: SplitSlotChooserProps & { readonly historyAvailable: boolean },
 ): ReactNode {
   const navigate = useNavigate();
+  const { t } = useTranslation("shell");
   const headerItems = useHeaderStripItems();
   // Store focus can land on this empty side without any DOM focus following
   // it (keyboard "add split", focus-side commands). Mirroring the focused
@@ -107,12 +109,12 @@ export function SplitSlotChooserContent(
       if (resolution.kind === "invalid") {
         toast.error(
           destination.kind === "phase-migration"
-            ? "This Phase is locked open in another view."
-            : "This view can't be opened in the split right now.",
+            ? t("This Phase is locked open in another view.")
+            : t("This view can't be opened in the split right now."),
         );
       }
     },
-    [activateFocusedRef, props.side, props.splitId],
+    [activateFocusedRef, props.side, props.splitId, t],
   );
   const openHistoryItem = useCallback(
     (item: HistoryItem): void => {
@@ -131,7 +133,11 @@ export function SplitSlotChooserContent(
 
   return (
     <section
-      aria-label={`${props.slot.kind === "unavailable" ? "Unavailable" : "Empty"} split view`}
+      aria-label={
+        props.slot.kind === "unavailable"
+          ? t("Unavailable split view")
+          : t("Empty split view")
+      }
       className={cn(
         "flex h-full min-h-0 min-w-0 flex-col overflow-hidden border border-dashed border-border/80 bg-muted/20 transition-colors duration-150 ease-out",
         props.dropActive && "border-solid border-primary bg-primary/10",
@@ -145,7 +151,7 @@ export function SplitSlotChooserContent(
             className="text-center text-ui-sm font-medium text-primary"
             aria-live="polite"
           >
-            Release to open here
+            {t("Release to open here")}
           </p>
         ) : null}
         {props.slot.kind === "unavailable" ? (
@@ -154,14 +160,14 @@ export function SplitSlotChooserContent(
               {props.slot.label}
             </p>
             <p className="mt-1 text-ui-xs text-muted-foreground">
-              Choose another view for this split.
+              {t("Choose another view for this split.")}
             </p>
           </div>
         ) : null}
 
         <SplitDestinationGroup
           id={`open-tabs-${props.splitId}-${props.side}`}
-          title="Open Tabs"
+          title={t("Open Tabs")}
           testId="split-open-tabs"
           sectionClassName={undefined}
           bodyClassName="max-h-[35vh] space-y-1 overflow-y-auto"
@@ -180,14 +186,14 @@ export function SplitSlotChooserContent(
             ))
           ) : (
             <p className="px-3 py-2 text-ui-sm text-muted-foreground">
-              No other open tabs
+              {t("No other open tabs")}
             </p>
           )}
         </SplitDestinationGroup>
 
         <SplitDestinationGroup
           id={`create-${props.splitId}-${props.side}`}
-          title="Create"
+          title={t("Create")}
           testId="split-create-actions"
           sectionClassName="border-t border-border/60 pt-5"
           bodyClassName={undefined}
@@ -199,13 +205,13 @@ export function SplitSlotChooserContent(
             onClick={() => openDestination({ kind: "new-draft" })}
           >
             <FilePlus2 />
-            New Task
+            {t("New Task")}
           </Button>
         </SplitDestinationGroup>
 
         <SplitDestinationGroup
           id={`history-${props.splitId}-${props.side}`}
-          title="History"
+          title={t("History")}
           testId="split-history"
           sectionClassName="flex min-h-0 flex-1 flex-col border-t border-border/60 pt-5"
           bodyClassName="min-h-0 flex-1 overflow-x-hidden overflow-y-auto pt-1"
@@ -222,7 +228,7 @@ export function SplitSlotChooserContent(
             />
           ) : (
             <p className="px-1 py-2 text-ui-sm text-muted-foreground">
-              History is unavailable while the host is disconnected.
+              {t("History is unavailable while the host is disconnected.")}
             </p>
           )}
         </SplitDestinationGroup>

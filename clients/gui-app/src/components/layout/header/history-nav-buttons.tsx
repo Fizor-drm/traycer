@@ -1,5 +1,6 @@
 import { type CSSProperties } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useRouter } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
@@ -27,6 +28,7 @@ const NO_DRAG_STYLE = { WebkitAppRegion: "no-drag" } as CSSProperties;
  * renders above the router and never mounts these arrows.
  */
 export function HistoryNavButtons() {
+  const { t } = useTranslation("shell");
   const available = useHistoryNavAvailable();
   const router = useRouter();
   const { canGoBack, canGoForward } = useHistoryNavState();
@@ -34,12 +36,14 @@ export function HistoryNavButtons() {
   const forwardChord = useBindingForAction("nav.forward");
   const backTooltip =
     backChord === null
-      ? "Go back"
-      : `Go back (${formatChordForDisplay(backChord)})`;
+      ? t("Go back")
+      : t("Go back ({{chord}})", { chord: formatChordForDisplay(backChord) });
   const forwardTooltip =
     forwardChord === null
-      ? "Go forward"
-      : `Go forward (${formatChordForDisplay(forwardChord)})`;
+      ? t("Go forward")
+      : t("Go forward ({{chord}})", {
+          chord: formatChordForDisplay(forwardChord),
+        });
   if (!available) {
     return null;
   }
@@ -60,7 +64,7 @@ export function HistoryNavButtons() {
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label="Go back"
+            aria-label={t("Go back")}
             data-testid="history-nav-back"
             disabled={!canGoBack}
             onClick={() => goBack(router)}
@@ -81,7 +85,7 @@ export function HistoryNavButtons() {
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label="Go forward"
+            aria-label={t("Go forward")}
             data-testid="history-nav-forward"
             disabled={!canGoForward}
             onClick={() => goForward(router)}

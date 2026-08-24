@@ -1,4 +1,5 @@
 import { History } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
@@ -18,13 +19,16 @@ import { useBindingForAction } from "@/stores/settings/keybinding-store";
  * descriptor's `matchesPath`.
  */
 export function HistoryButton() {
+  const { t } = useTranslation("shell");
   const { openHistory } = useSystemTabModalActions();
   const historyOverlayActive = useSystemOverlayActive("history");
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = isHistoryPath(pathname) || historyOverlayActive;
   const chord = useBindingForAction("app.history.open");
   const tooltip =
-    chord === null ? "History" : `History (${formatChordForDisplay(chord)})`;
+    chord === null
+      ? t("History")
+      : t("History ({{chord}})", { chord: formatChordForDisplay(chord) });
   const onClick = () => {
     openHistory();
   };
@@ -34,7 +38,7 @@ export function HistoryButton() {
         type="button"
         variant="ghost"
         size="icon-sm"
-        aria-label="History"
+        aria-label={t("History")}
         aria-haspopup="dialog"
         data-testid="history-button"
         onClick={onClick}

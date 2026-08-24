@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { useWindowsMenuBarActive } from "@/components/layout/header/use-windows-menu-bar-active";
 import type { DesktopTopLevelMenuId } from "@/lib/windows/types";
 import { useRunnerOpenTopLevelMenuMutation } from "@/hooks/runner/use-open-top-level-menu-mutation";
@@ -35,6 +36,7 @@ const WINDOWS_MENU_ITEMS: ReadonlyArray<{
  * key, reproducing the native Windows menu bar this frameless window replaces.
  */
 export function WindowsMenuBar(): ReactNode {
+  const { t } = useTranslation("shell");
   const active = useWindowsMenuBarActive();
   const buttonsRef = useRef<Map<DesktopTopLevelMenuId, HTMLButtonElement>>(
     new Map(),
@@ -96,7 +98,7 @@ export function WindowsMenuBar(): ReactNode {
 
   return (
     <nav
-      aria-label="Application menu"
+      aria-label={t("Application menu")}
       className="relative z-10 flex h-full shrink-0 items-center"
       style={NO_DRAG_STYLE}
     >
@@ -121,7 +123,7 @@ export function WindowsMenuBar(): ReactNode {
           }}
           type="button"
         >
-          {renderMenuLabel(item.label, item.mnemonic, mnemonicsVisible)}
+          {renderMenuLabel(t(item.label), item.mnemonic, mnemonicsVisible)}
         </button>
       ))}
     </nav>

@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { FolderPlus, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
@@ -46,6 +47,7 @@ export function WorkspaceFolderRows(props: {
   // dropdown to near-zero height (it renders but reads as "missing").
   readonly nestedInPopover: boolean;
 }) {
+  const { t } = useTranslation("common");
   const { items } = props;
   // Captured so the branch-form's nested source dropdown uses this container as
   // its collision boundary (in-epic, where the rows live inside a popover).
@@ -141,7 +143,7 @@ export function WorkspaceFolderRows(props: {
                   testId={undefined}
                   variant="dots"
                 />
-                Linking folder…
+                {t("Linking folder…")}
               </span>
               {props.recentWorkspaces}
             </>
@@ -188,6 +190,7 @@ export function AddFolderButton(props: {
   readonly disabled: boolean;
   readonly disabledReason: string | null;
 }) {
+  const { t } = useTranslation("common");
   const button = (
     <Button
       type="button"
@@ -209,7 +212,7 @@ export function AddFolderButton(props: {
       ) : (
         <FolderPlus data-icon="inline-start" />
       )}
-      <span className="truncate">Add folder</span>
+      <span className="truncate">{t("Add folder")}</span>
     </Button>
   );
   if (props.disabled && props.disabledReason !== null) {
@@ -239,6 +242,7 @@ function UpdateFoldersButton(props: {
   readonly enabled: boolean;
   readonly pending: boolean;
 }) {
+  const { t } = useTranslation("common");
   const button = (
     <button
       type="button"
@@ -264,15 +268,15 @@ function UpdateFoldersButton(props: {
       ) : (
         <RotateCw className="size-4" />
       )}
-      <span className="truncate">Update</span>
+      <span className="truncate">{t("Update")}</span>
     </button>
   );
   return (
     <TooltipWrapper
       label={
         props.enabled
-          ? "Apply folder changes and restart the terminal"
-          : "No folder changes to apply"
+          ? t("Apply folder changes and restart the terminal")
+          : t("No folder changes to apply")
       }
       side="top"
       sideOffset={undefined}

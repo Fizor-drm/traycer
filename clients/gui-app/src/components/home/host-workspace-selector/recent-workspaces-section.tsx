@@ -1,4 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { ChevronRight, Folder, Search, Trash2 } from "lucide-react";
 import type { WorkspaceRecentEntry } from "@traycer/protocol/host/workspace/unary-schemas";
 import {
@@ -21,6 +23,7 @@ export function RecentWorkspacesSection(props: {
   readonly onLocate: RecentWorkspacesController["locate"];
   readonly onForget: RecentWorkspacesController["forget"];
 }) {
+  const { t } = useTranslation("common");
   const empty = props.entries.length === 0;
   const [open, setOpen] = useState(props.activeCount === 0);
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -59,7 +62,7 @@ export function RecentWorkspacesSection(props: {
     >
       <CollapsibleTrigger asChild>
         <TooltipWrapper
-          label={empty ? "No recent folders" : null}
+          label={empty ? t("No recent folders") : null}
           side="top"
           sideOffset={4}
           align="center"
@@ -68,14 +71,16 @@ export function RecentWorkspacesSection(props: {
             ref={triggerRef}
             type="button"
             aria-disabled={empty}
-            aria-label={`Recent folders, ${props.entries.length}`}
+            aria-label={t("Recent folders, {{count}}", {
+              count: props.entries.length,
+            })}
             className="ms-auto inline-flex w-fit min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-ui-sm text-muted-foreground outline-none transition-[background-color,color] hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/60 aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground [&[data-state=open]>svg]:rotate-90"
           >
             <ChevronRight
               className="size-3.5 shrink-0 transition-transform duration-150 motion-reduce:transition-none"
               aria-hidden
             />
-            <span className="truncate">Recent</span>
+            <span className="truncate">{t("Recent")}</span>
             <span
               key={props.entries.length}
               className="rounded-md bg-foreground/6 px-1.5 tabular-nums text-ui-xs text-muted-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95"
@@ -125,10 +130,11 @@ function RecentWorkspaceRow(props: {
   readonly onLocate: () => Promise<void>;
   readonly onForget: () => Promise<void>;
 }) {
+  const { t } = useTranslation("common");
   const pending = props.pendingPath === props.entry.path;
   const anotherPending =
     props.pendingPath !== null && props.pendingPath !== props.entry.path;
-  const primaryAction = recentPrimaryAction(pending, props.failed);
+  const primaryAction = recentPrimaryAction(pending, props.failed, t);
   return (
     <div
       className="flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1.5 hover:bg-foreground/3"
@@ -155,7 +161,7 @@ function RecentWorkspaceRow(props: {
         </TooltipWrapper>
         {props.failed ? (
           <span className="text-ui-xs text-destructive" role="status">
-            Unavailable
+            {t("Unavailable")}
           </span>
         ) : null}
       </div>
@@ -168,8 +174,12 @@ function RecentWorkspaceRow(props: {
           disabled={pending || anotherPending}
           aria-label={
             props.failed
-              ? `Retry ${workspaceFolderName(props.entry.path)}`
-              : `Add ${workspaceFolderName(props.entry.path)} to context`
+              ? t("Retry {{name}}", {
+                  name: workspaceFolderName(props.entry.path),
+                })
+              : t("Add {{name}} to context", {
+                  name: workspaceFolderName(props.entry.path),
+                })
           }
           onClick={() => void props.onAdd()}
         >
@@ -177,7 +187,7 @@ function RecentWorkspaceRow(props: {
         </Button>
         {props.failed ? (
           <TooltipWrapper
-            label="Locate folder"
+            label={t("Locate folder")}
             side="top"
             sideOffset={undefined}
             align={undefined}
@@ -186,7 +196,9 @@ function RecentWorkspaceRow(props: {
               type="button"
               size="icon-sm"
               variant="ghost"
-              aria-label={`Locate ${workspaceFolderName(props.entry.path)}`}
+              aria-label={t("Locate {{name}}", {
+                name: workspaceFolderName(props.entry.path),
+              })}
               onClick={() => void props.onLocate()}
             >
               <Search className="size-3.5" />
@@ -199,7 +211,11 @@ function RecentWorkspaceRow(props: {
   );
 }
 
-function recentPrimaryAction(pending: boolean, failed: boolean): ReactNode {
+function recentPrimaryAction(
+  pending: boolean,
+  failed: boolean,
+  t: TFunction<"common">,
+): ReactNode {
   if (pending) {
     return (
       <AgentSpinningDots
@@ -209,18 +225,19 @@ function recentPrimaryAction(pending: boolean, failed: boolean): ReactNode {
       />
     );
   }
-  if (failed) return "Retry";
-  return "Add";
+  if (failed) return t("Retry");
+  return t("Add");
 }
 
 function ForgetButton(props: {
   readonly entry: WorkspaceRecentEntry;
   readonly onForget: () => Promise<void>;
 }) {
+  const { t } = useTranslation("common");
   const name = workspaceFolderName(props.entry.path);
   return (
     <TooltipWrapper
-      label="Forget folder"
+      label={t("Forget folder")}
       side="top"
       sideOffset={undefined}
       align={undefined}
@@ -229,7 +246,7 @@ function ForgetButton(props: {
         type="button"
         size="icon-sm"
         variant="ghost"
-        aria-label={`Forget ${name}`}
+        aria-label={t("Forget {{name}}", { name })}
         className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
         onClick={() => void props.onForget()}
       >

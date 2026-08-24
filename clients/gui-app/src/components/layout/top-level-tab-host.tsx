@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { useDroppable } from "@dnd-kit/core";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { cn } from "@/lib/utils";
 import {
@@ -360,6 +361,7 @@ function FillableSplitSlot(props: {
   readonly placement: SurfacePlacement;
   readonly focused: boolean;
 }): ReactNode {
+  const { t } = useTranslation("shell");
   const dropData: TopLevelFillableTarget = {
     kind: TOP_LEVEL_FILLABLE_TARGET,
     splitId: props.splitId,
@@ -373,7 +375,7 @@ function FillableSplitSlot(props: {
   return (
     <div
       ref={setNodeRef}
-      aria-label="Fillable split slot"
+      aria-label={t("Fillable split slot")}
       className={cn(
         surfaceClassName(props.placement),
         dropActive && "ring-2 ring-inset ring-primary",
