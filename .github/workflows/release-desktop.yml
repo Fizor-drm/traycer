@@ -1,0 +1,125 @@
+name: Release Desktop (Windows exe)
+
+# Fork release pipeline. Builds an UNSIGNED Windows desktop bundle and
+# publishes it as a GitHub Release on the fork. Triggered by pushing a
+# `desktop-v*` tag (the tagged commit must contain this workflow).
+#
+# The bundle ships only the GUI + CLI, per the repo invariant ("Bundle CLI
+# only, not the host"): the CLI binary is downloaded from the LATEST STABLE
+# upstream `cli-v*` release and staged into resources/cli/win32-x64/, and the
+# host itself is provisioned at runtime by that CLI from upstream releases,
+# signature-verified against the committed public key. Nothing here needs
+# signing secrets; the produced binaries are unsigned (SmartScreen will warn).
+
+on:
+  push:
+    tags:
+      - "desktop-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-desktop-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_REPO: traycerai/traycer
+  BUN_VERSION: 1.3.12
+
+jobs:
+  build-windows-exe:
+    name: Build Windows exe (unsigned)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Resolve latest stable upstream CLI release
+        id: cli
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="$(gh release list --repo "$UPSTREAM_REPO" --limit 50 \
+            --json tagName,isPrerelease,isDraft \
+            --jq '[.[] | select(.isPrerelease == false and .isDraft == false and (.tagName | startswith("cli-v")))][0].tagName')"
+          if [ -z "$tag" ] || [ "$tag" = "null" ]; then
+            echo "No stable cli-v* release found upstream" >&2
+            exit 1
+          fi
+          echo "Upstream CLI release: $tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#cli-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Stage bundled CLI (win32-x64)
+        env:
+          CLI_TAG: ${{ steps.cli.outputs.tag }}
+          CLI_VERSION: ${{ steps.cli.outputs.version }}
+        run: |
+          set -euo pipefail
+          dir="clients/desktop/resources/cli/win32-x64"
+          mkdir -p "$dir"
+          base="https://github.com/$UPSTREAM_REPO/releases/download/$CLI_TAG"
+          echo "Downloading CLI binary from $CLI_TAG ..."
+          curl -fsSL --retry 3 -o "$dir/traycer.exe" \
+            "$base/traycer-cli-windows-x64.exe"
+          # Contract consumed by readBundledCliVersion() (cli-discovery.ts).
+          printf '{ "version": "%s" }\n' "$CLI_VERSION" > "$dir/version.json"
+          ls -la "$dir"
+
+      - name: Stamp desktop app version from tag
+        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#desktop-v}"
+          cd clients/desktop
+          npm pkg set "version=$version"
+          echo "App version stamped: $version"
+
+      - name: Package (electron-builder, unsigned)
+        working-directory: clients/desktop
+        run: bun run package
+
+      - name: Collect artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p dist-artifacts
+          find clients/desktop/release -maxdepth 1 -type f \
+            \( -name '*.exe' -o -name '*.msi' \) -print -exec cp {} dist-artifacts/ \;
+          test -n "$(ls -A dist-artifacts)" || {
+            echo "No .exe/.msi artifacts found in clients/desktop/release" >&2
+            exit 1
+          }
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: traycer-desktop-windows
+          path: dist-artifacts/*
+          if-no-files-found: error
+
+      - name: Create GitHub release and attach artifacts
+        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          title="Traycer Desktop ${tag#desktop-v} (fork, Japanese UI)"
+          if ! gh release create "$tag" dist-artifacts/* \
+              --title "$title" --generate-notes; then
+            echo "Release already exists - uploading assets with clobber"
+            gh release upload "$tag" dist-artifacts/* --clobber
+          fi
