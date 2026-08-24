@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { basenameOfPath } from "@/lib/path";
 import { useAuthStore } from "@/stores/auth/auth-store";
 import {
@@ -60,19 +61,26 @@ export function HomeHero({ workspaceFolders }: HomeHeroProps) {
 
   const projectName = folders.length > 0 ? basenameOfPath(folders[0]) : null;
   const firstName = profile === null ? null : readFirstName(profile.userName);
+  const { t } = useTranslation("common");
+  const heading =
+    firstName === null
+      ? t(greeting)
+      : t("{{greeting}}, {{name}}", {
+          greeting: t(greeting),
+          name: firstName,
+        });
 
   return (
     <div className="flex flex-col items-center gap-3 text-center">
       <h1 className="text-display font-medium text-foreground sm:text-display">
-        {greeting}
-        {firstName === null ? null : `, ${firstName}`}
+        {heading}
       </h1>
       <p className="text-ui text-muted-foreground sm:text-title-sm">
-        {prompt}
+        {t(prompt)}
         {projectName !== null ? (
           <span className="text-muted-foreground/70">
             {" "}
-            in <span className="text-foreground">{projectName}</span>
+            {t("in")} <span className="text-foreground">{projectName}</span>
           </span>
         ) : null}
       </p>

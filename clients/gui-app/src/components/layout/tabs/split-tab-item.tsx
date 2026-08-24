@@ -1,5 +1,6 @@
 import { memo, useCallback, useMemo, type ReactNode } from "react";
 import { useDroppable } from "@dnd-kit/core";
+import { useTranslation } from "react-i18next";
 import * as m from "motion/react-m";
 import { Button } from "@/components/ui/button";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
@@ -75,6 +76,7 @@ export interface SplitTabItemProps {
 export const SplitTabItem = memo(function SplitTabItem(
   props: SplitTabItemProps,
 ): ReactNode {
+  const { t } = useTranslation("shell");
   const dropData = useMemo<HeaderTabSlotDropData>(
     () => ({
       kind: HEADER_TAB_SLOT_DND_TYPE,
@@ -103,7 +105,7 @@ export const SplitTabItem = memo(function SplitTabItem(
       animate={{ opacity: isDragging ? 0.36 : 1, scale: isDragging ? 0.96 : 1 }}
       transition={HEADER_TAB_LAYOUT_TRANSITION}
       role="group"
-      aria-label="Split tab group"
+      aria-label={t("Split tab group")}
       data-testid={`split-tab-group-${props.item.id}`}
       data-active={props.isActive ? "true" : "false"}
       // Two ordinary tab footprints plus the leading quick-actions control.
@@ -247,6 +249,7 @@ function SplitQuickActions(props: {
   readonly engaged: boolean;
   readonly onSplitCommand: (id: TabSplitCommandId, tab: HeaderTab) => void;
 }): ReactNode {
+  const { t } = useTranslation("shell");
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -254,7 +257,11 @@ function SplitQuickActions(props: {
           type="button"
           size="icon-sm"
           variant="ghost"
-          aria-label={`Split view actions, ${props.focusedSide} view focused`}
+          aria-label={
+            props.focusedSide === "left"
+              ? t("Split view actions, left view focused")
+              : t("Split view actions, right view focused")
+          }
           data-testid={`split-quick-actions-${props.splitId}`}
           className={cn(
             "relative z-20 mr-1 h-7 w-10 shrink-0 rounded-md hover:bg-accent/60 [-webkit-app-region:no-drag]",
@@ -415,17 +422,20 @@ function SplitFillableMember(props: {
   readonly onSplitCommand: (id: TabSplitCommandId, tab: HeaderTab) => void;
 }): ReactNode {
   const { stripItemId, side } = props;
+  const { t } = useTranslation("shell");
   const focusSide = useCallback(() => {
     tabCommandCoordinator.focusSplitSide({ splitId: stripItemId, side });
   }, [side, stripItemId]);
   const unavailable = props.slot.kind === "unavailable";
-  const label = unavailable ? props.slot.label : "Choose view";
+  const label = unavailable ? props.slot.label : t("Choose view");
   const control = (
     <div
       role="tab"
       tabIndex={0}
       aria-selected={props.focused}
-      aria-label={unavailable ? label : "Choose a view for this split side"}
+      aria-label={
+        unavailable ? label : t("Choose a view for this split side")
+      }
       data-testid={`split-tab-placeholder-${props.side}`}
       onClick={focusSide}
       onFocus={focusSide}

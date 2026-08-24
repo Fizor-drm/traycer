@@ -1,4 +1,5 @@
 import { ChevronDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,9 +42,10 @@ interface PermissionsPickerProps {
 }
 
 export function PermissionsPicker(props: PermissionsPickerProps) {
+  const { t } = useTranslation("common");
   const { value, disabled, onChange, supportedPermissionModes, harnessLabel } =
     props;
-  const unsupportedSuffix = harnessLabel ?? "this provider";
+  const unsupportedSuffix = harnessLabel ?? t("this provider");
   // Display value is the *normalized* one: when the sticky value isn't in the
   // active harness's supported set (rehydration of a saved chat, the one-frame
   // window between a harness swap and the parent's clamp commit, or any race
@@ -136,7 +138,9 @@ export function PermissionsPicker(props: PermissionsPickerProps) {
                   <span className="block leading-5 text-muted-foreground">
                     {isSupported
                       ? option.description
-                      : `Not supported by ${unsupportedSuffix}.`}
+                      : t("Not supported by {{suffix}}.", {
+                          suffix: unsupportedSuffix,
+                        })}
                   </span>
                 </span>
               </DropdownMenuRadioItem>

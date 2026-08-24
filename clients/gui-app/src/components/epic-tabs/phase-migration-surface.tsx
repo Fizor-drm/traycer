@@ -4,6 +4,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { ReportIssueAction } from "@/components/report-issue/report-issue-action";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export interface PhaseMigrationSurfaceProps {
 export function PhaseMigrationSurface(
   props: PhaseMigrationSurfaceProps,
 ): ReactNode {
+  const { t } = useTranslation("shell");
   const snapshot = useSyncExternalStore(
     phaseMigrationController.subscribe.bind(phaseMigrationController),
     () => phaseMigrationController.snapshot(props.tabId),
@@ -55,17 +57,18 @@ export function PhaseMigrationSurface(
           </div>
           <div className="min-w-0 space-y-2">
             <h2 className="text-ui-sm font-semibold text-foreground">
-              Migrating Phase to Epic
+              {t("Migrating Phase to Epic")}
             </h2>
             <p className="text-ui-sm leading-6 text-muted-foreground">
-              Converting this legacy Phase into an Epic. Phase tasks are being
-              turned into tickets, and saved plans or verification notes are
-              being attached as spec and review artifacts.
+              {t(
+                "Converting this legacy Phase into an Epic. Phase tasks are being turned into tickets, and saved plans or verification notes are being attached as spec and review artifacts.",
+              )}
             </p>
             {isPending && isTakingLonger ? (
               <p className="text-ui-sm leading-6 text-muted-foreground">
-                Still migrating. Larger Phases can take a little longer while
-                the desktop host copies the room and uploads the Epic.
+                {t(
+                  "Still migrating. Larger Phases can take a little longer while the desktop host copies the room and uploads the Epic.",
+                )}
               </p>
             ) : null}
             {errorMessage !== null ? (
@@ -84,12 +87,14 @@ export function PhaseMigrationSurface(
                   type="button"
                   variant="outline"
                 >
-                  Re-attempt migration
+                  {t("Re-attempt migration")}
                 </Button>
                 <ReportIssueAction
                   context={createReportIssueContext({
-                    title: "Phase migration did not finish",
-                    message: "The legacy Phase migration did not complete.",
+                    title: t("Phase migration did not finish"),
+                    message: t(
+                      "The legacy Phase migration did not complete.",
+                    ),
                     code: null,
                     source: "Phase migration",
                   })}

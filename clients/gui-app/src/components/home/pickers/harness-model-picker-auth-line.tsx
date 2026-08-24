@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { ProviderCliState } from "@traycer/protocol/host/provider-schemas";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 import { isProviderAmbientSignedOut } from "@/lib/providers/provider-ambient-auth";
 
 /**
@@ -24,10 +25,11 @@ import { isProviderAmbientSignedOut } from "@/lib/providers/provider-ambient-aut
 export function PickerProviderAuthLine(props: {
   readonly state: ProviderCliState | null;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const { state } = props;
   if (state === null || !state.enabled) return null;
   if (isProviderAmbientSignedOut(state)) {
-    return <AuthLineRow badgeText={null} label="Not authenticated" />;
+    return <AuthLineRow badgeText={null} label={t("Not authenticated")} />;
   }
   const auth = state.auth;
   if (auth.status !== "authenticated" && auth.status !== "configured") {

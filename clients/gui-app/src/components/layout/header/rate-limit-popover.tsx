@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Gauge, Settings } from "lucide-react";
 import {
   DEFAULT_ACCOUNT_CONTEXT,
@@ -418,6 +419,7 @@ export function RateLimitPopover({
   readonly scope: HostScope;
   readonly hasExplicitPick: boolean;
 }): ReactNode {
+  const { t } = useTranslation("shell");
   return (
     <PopoverContent
       side="bottom"
@@ -425,7 +427,7 @@ export function RateLimitPopover({
       sideOffset={8}
       collisionPadding={RATE_LIMIT_POPOVER_COLLISION_PADDING_PX}
       role="dialog"
-      aria-label="Usage limits"
+      aria-label={t("Usage limits")}
       className="w-fit max-w-[var(--radix-popover-content-available-width)] max-h-[var(--radix-popover-content-available-height)] gap-0 overflow-hidden rounded-xl p-0"
       // Radix auto-focuses the first focusable child on open. Here that's the
       // Overview rail tab, whose `TooltipWrapper` opens the tooltip on focus
@@ -959,6 +961,7 @@ function RateLimitHostUnavailableNotice({
 }: {
   readonly scope: HostScope;
 }): ReactNode {
+  const { t } = useTranslation("shell");
   if (scope.status === "connecting") {
     return (
       <span
@@ -966,7 +969,7 @@ function RateLimitHostUnavailableNotice({
         data-testid="rate-limit-host-connecting"
       >
         <MutedAgentSpinner />
-        Finding {scope.hostLabel}…
+        {t("Finding {{hostLabel}}…", { hostLabel: scope.hostLabel })}
       </span>
     );
   }
@@ -978,13 +981,19 @@ function RateLimitHostUnavailableNotice({
     >
       <p className="text-ui-sm font-medium text-foreground">
         {scope.status === "vanished"
-          ? `${scope.hostLabel} is no longer connected`
-          : `Can't reach ${scope.hostLabel}`}
+          ? t("{{hostLabel}} is no longer connected", {
+              hostLabel: scope.hostLabel,
+            })
+          : t("Can't reach {{hostLabel}}", { hostLabel: scope.hostLabel })}
       </p>
       <p className="text-ui-sm text-muted-foreground">
         {scope.status === "vanished"
-          ? "It was removed or signed out, so its usage limits can't be read."
-          : "Provider usage limits are read from the host itself, so they're unavailable while it's offline."}
+          ? t(
+              "It was removed or signed out, so its usage limits can't be read.",
+            )
+          : t(
+              "Provider usage limits are read from the host itself, so they're unavailable while it's offline.",
+            )}
       </p>
       <button
         type="button"
@@ -992,7 +1001,7 @@ function RateLimitHostUnavailableNotice({
         className="rounded-md px-1 py-0.5 text-ui-sm text-primary transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         data-testid="rate-limit-host-return-to-active"
       >
-        Show the active host
+        {t("Show the active host")}
       </button>
     </div>
   );
@@ -1055,6 +1064,7 @@ function RateLimitRail({
   readonly onSelect: (tab: RateLimitPopoverTab) => void;
   readonly onClose: () => void;
 }): ReactNode {
+  const { t } = useTranslation("shell");
   const { openSettings } = useSystemTabModalActions();
   const openProviderSettings = (): void => {
     onClose();
@@ -1065,12 +1075,12 @@ function RateLimitRail({
     <div className="flex min-h-0 flex-col items-center border-r bg-foreground/3 p-1.5">
       <div
         role="tablist"
-        aria-label="Usage limit providers"
+        aria-label={t("Usage limit providers")}
         aria-orientation="vertical"
         className="flex min-h-0 flex-1 flex-col items-center gap-1.5 overflow-y-auto"
       >
         <RailTab
-          label="Overview"
+          label={t("Overview")}
           selected={activeTab === "overview"}
           onSelect={() => onSelect("overview")}
           icon={<Gauge className="size-4" />}
@@ -1107,14 +1117,14 @@ function RateLimitRail({
         traycerRefreshTarget={traycerRefreshTarget}
       />
       <TooltipWrapper
-        label="Provider settings"
+        label={t("Provider settings")}
         side="top"
         sideOffset={undefined}
         align={undefined}
       >
         <button
           type="button"
-          aria-label="Provider settings"
+          aria-label={t("Provider settings")}
           onClick={openProviderSettings}
           className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/60"
         >
@@ -1253,10 +1263,11 @@ function RateLimitOverview({
  * collapsing to the height of the (hidden, zero-height) sibling blocks.
  */
 function RateLimitOverviewLoading(): ReactNode {
+  const { t } = useTranslation("shell");
   return (
     <div className="flex flex-1 items-center justify-center gap-2 py-10 text-ui-sm text-muted-foreground">
       <MutedAgentSpinner />
-      Fetching usage limits
+      {t("Fetching usage limits")}
     </div>
   );
 }

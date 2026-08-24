@@ -32,6 +32,7 @@ import { ComposerHarnessMemoryPersistLifecycleBridge } from "@/providers/compose
 import { WorktreeIntentMemoryPersistLifecycleBridge } from "@/providers/worktree-intent-memory-persist-lifecycle-bridge";
 import { WorktreeIntentStagingPersistLifecycleBridge } from "@/providers/worktree-intent-staging-persist-lifecycle-bridge";
 import { EpicCanvasPersistLifecycleBridge } from "@/providers/epic-canvas-persist-lifecycle-bridge";
+import { I18nProvider } from "@/providers/i18n-provider";
 import { AppLocalNotificationsPersistLifecycleBridge } from "@/providers/app-local-notifications-persist-lifecycle-bridge";
 import { ReadingPositionPersistLifecycleBridge } from "@/providers/reading-position-persist-lifecycle-bridge";
 import { LandingTerminalPersistLifecycleBridge } from "@/providers/landing-terminal-persist-lifecycle-bridge";
@@ -105,7 +106,7 @@ export interface TraycerAppProps {
  * Public shell-agnostic entry point for the Traycer GUI.
  *
  * Mounts the documented provider stack - outer to inner -
- *   RunnerHostProvider → QueryClientProvider → ThemeProvider →
+ *   I18nProvider → RunnerHostProvider → QueryClientProvider → ThemeProvider →
  *   TooltipProvider → HostRuntimeProvider → HostCompatibilityProvider →
  *   auth-scoped lifecycle providers → RunnerHostBridges →
  *   HostReadinessControllerProvider → RouterProvider → Toaster.
@@ -163,48 +164,50 @@ export function TraycerApp(props: TraycerAppProps): ReactNode {
   );
 
   return (
-    <RunnerHostProvider runnerHost={props.runnerHost}>
-      <LazyMotion features={domMax}>
-        <WindowsBridgeProvider>
-          <ResourceTelemetryBridge />
-          <QueryClientProvider client={queryClient}>
-            <ThemeProvider>
-              <TooltipProvider>
-                <KeybindingProvider router={router}>
-                  <DesktopZoomController />
-                  <ReportIssueDialogHost />
-                  <Toaster />
-                  <HostRuntimeProvider
-                    registry={props.registry}
-                    messengerFactory={props.messengerFactory ?? null}
-                    invalidator={null}
-                    requestId={null}
-                    remoteFetcher={props.remoteFetcher}
-                    fallback={hostRuntimeFallback}
-                  >
-                    <HostCompatibilityProvider>
-                      <HostReadinessControllerProvider
-                        onConfigureShell={configureShell}
-                        onOpenSettings={openSettings}
-                      >
-                        <RootErrorBoundary router={router}>
-                          <TraycerAuthenticatedRuntime router={router} />
-                        </RootErrorBoundary>
-                      </HostReadinessControllerProvider>
-                    </HostCompatibilityProvider>
-                  </HostRuntimeProvider>
-                </KeybindingProvider>
-              </TooltipProvider>
-            </ThemeProvider>
-            {ReactQueryDevtools === null ? null : (
-              <Suspense fallback={null}>
-                <ReactQueryDevtools initialIsOpen={false} />
-              </Suspense>
-            )}
-          </QueryClientProvider>
-        </WindowsBridgeProvider>
-      </LazyMotion>
-    </RunnerHostProvider>
+    <I18nProvider>
+      <RunnerHostProvider runnerHost={props.runnerHost}>
+        <LazyMotion features={domMax}>
+          <WindowsBridgeProvider>
+            <ResourceTelemetryBridge />
+            <QueryClientProvider client={queryClient}>
+              <ThemeProvider>
+                <TooltipProvider>
+                  <KeybindingProvider router={router}>
+                    <DesktopZoomController />
+                    <ReportIssueDialogHost />
+                    <Toaster />
+                    <HostRuntimeProvider
+                      registry={props.registry}
+                      messengerFactory={props.messengerFactory ?? null}
+                      invalidator={null}
+                      requestId={null}
+                      remoteFetcher={props.remoteFetcher}
+                      fallback={hostRuntimeFallback}
+                    >
+                      <HostCompatibilityProvider>
+                        <HostReadinessControllerProvider
+                          onConfigureShell={configureShell}
+                          onOpenSettings={openSettings}
+                        >
+                          <RootErrorBoundary router={router}>
+                            <TraycerAuthenticatedRuntime router={router} />
+                          </RootErrorBoundary>
+                        </HostReadinessControllerProvider>
+                      </HostCompatibilityProvider>
+                    </HostRuntimeProvider>
+                  </KeybindingProvider>
+                </TooltipProvider>
+              </ThemeProvider>
+              {ReactQueryDevtools === null ? null : (
+                <Suspense fallback={null}>
+                  <ReactQueryDevtools initialIsOpen={false} />
+                </Suspense>
+              )}
+            </QueryClientProvider>
+          </WindowsBridgeProvider>
+        </LazyMotion>
+      </RunnerHostProvider>
+    </I18nProvider>
   );
 }
 

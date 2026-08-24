@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 /**
@@ -11,6 +12,7 @@ export function WorkspaceBranchLabel(props: {
   readonly source: string | null;
   readonly className: string | undefined;
 }) {
+  const { t } = useTranslation("common");
   if (props.source === null) {
     return (
       <span
@@ -40,7 +42,7 @@ export function WorkspaceBranchLabel(props: {
         className="min-w-0 flex-1 truncate text-ui-xs text-muted-foreground"
         data-testid="folder-branch-source"
       >
-        from {props.source}
+        {t("from")} {props.source}
       </span>
     </span>
   );

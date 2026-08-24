@@ -8,6 +8,7 @@ import {
   useRef,
 } from "react";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +34,7 @@ const LIVE_SEARCH_DEBOUNCE_MS = 140;
  * any focus-reclamation gymnastics.
  */
 export function FindInPageBar() {
+  const { t } = useTranslation("shell");
   const isOpen = useFindInPageStore((s) => s.isOpen);
   const matches = useFindInPageStore((s) => s.matches);
   const matchCase = useFindInPageStore((s) => s.matchCase);
@@ -211,8 +213,11 @@ export function FindInPageBar() {
 
   const matchLabel = ((): string | null => {
     if (matches === null) return null;
-    if (matches.total === 0) return "No matches";
-    return `${matches.current} of ${matches.total}`;
+    if (matches.total === 0) return t("No matches");
+    return t("{{current}} of {{total}}", {
+      current: matches.current,
+      total: matches.total,
+    });
   })();
 
   return (
@@ -221,7 +226,7 @@ export function FindInPageBar() {
       className={cn(
         "pointer-events-auto absolute right-3 top-3 z-30 flex items-center gap-1 rounded-md border border-border bg-popover px-2 py-1 shadow-md",
       )}
-      aria-label="Find in page"
+      aria-label={t("Find in page")}
     >
       <Input
         ref={inputRef}
@@ -229,8 +234,8 @@ export function FindInPageBar() {
         value={query}
         onChange={handleQueryChange}
         onKeyDown={handleKeyDown}
-        placeholder="Find"
-        aria-label="Find in page"
+        placeholder={t("Find")}
+        aria-label={t("Find in page")}
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
@@ -249,7 +254,7 @@ export function FindInPageBar() {
       <Button
         variant="ghost"
         size="icon"
-        aria-label="Previous match"
+        aria-label={t("Previous match")}
         onMouseDown={(event) => {
           event.preventDefault();
           advance(false);
@@ -262,7 +267,7 @@ export function FindInPageBar() {
       <Button
         variant="ghost"
         size="icon"
-        aria-label="Next match"
+        aria-label={t("Next match")}
         onMouseDown={(event) => {
           event.preventDefault();
           advance(true);
@@ -276,7 +281,7 @@ export function FindInPageBar() {
         variant="ghost"
         size="icon"
         aria-pressed={matchCase}
-        aria-label="Match case"
+        aria-label={t("Match case")}
         onMouseDown={(event) => {
           event.preventDefault();
           setMatchCase(!matchCase);
@@ -291,7 +296,7 @@ export function FindInPageBar() {
       <Button
         variant="ghost"
         size="icon"
-        aria-label="Close find"
+        aria-label={t("Close find")}
         onMouseDown={(event) => {
           event.preventDefault();
           handleClose();

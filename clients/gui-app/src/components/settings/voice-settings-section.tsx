@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { useTranslation } from "react-i18next";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { Switch } from "@/components/ui/switch";
 import { useSettingsStore } from "@/stores/settings/settings-store";
@@ -12,11 +13,14 @@ export function VoiceSettingsSection(): ReactNode {
       setVoiceInputEnabled: s.setVoiceInputEnabled,
     })),
   );
+  const { t } = useTranslation("settings");
 
   return (
     <SettingsRow
-      label="Voice input"
-      description="Dictate prompts with the mic button in the composer. Speech is transcribed on-device - audio never leaves your machine."
+      label={t("Voice input")}
+      description={t(
+        "Dictate prompts with the mic button in the composer. Speech is transcribed on-device - audio never leaves your machine.",
+      )}
       control={
         <Switch
           checked={voiceInputEnabled}
@@ -29,7 +33,7 @@ export function VoiceSettingsSection(): ReactNode {
             );
             setVoiceInputEnabled(enabled);
           }}
-          aria-label="Voice input"
+          aria-label={t("Voice input")}
         />
       }
     />

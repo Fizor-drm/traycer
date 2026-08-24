@@ -6,6 +6,7 @@
  * live in `palette-cmdk-controller.ts`.
  */
 import { Fragment } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { CommandEmpty, CommandGroup } from "@/components/ui/command";
 import { PaletteItemRow } from "@/components/command-palette/palette-item-row";
@@ -58,10 +59,11 @@ interface SubpageViewProps {
 export function SubpageView(props: SubpageViewProps) {
   const { subpage, ctx, onSelect } = props;
   const items = subpage.useItems(ctx);
+  const { t } = useTranslation("common");
   return (
     <>
       {items.length === 0 ? (
-        <CommandEmpty>Nothing available.</CommandEmpty>
+        <CommandEmpty>{t("Nothing available.")}</CommandEmpty>
       ) : null}
       <CommandGroup heading={subpage.title}>
         {items.map((item) => (
@@ -220,12 +222,13 @@ export function OpenerDeepView(props: OpenerDeepViewProps) {
  */
 export function OpenerRootView(props: OpenerRootViewProps) {
   const { items, onSelect } = props;
+  const { t } = useTranslation("common");
   return (
     <>
       {items.length === 0 ? (
-        <CommandEmpty>Nothing to open.</CommandEmpty>
+        <CommandEmpty>{t("Nothing to open.")}</CommandEmpty>
       ) : null}
-      <CommandGroup heading="Open into pane">
+      <CommandGroup heading={t("Open into pane")}>
         {items.map((item) => (
           <PaletteItemRow
             key={item.id}

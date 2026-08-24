@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Mic, Square } from "lucide-react";
 import { ToolbarIconButton } from "@/components/home/toolbar/toolbar-buttons";
 import { MutedAgentSpinner } from "@/components/ui/agent-spinning-dots";
@@ -26,16 +28,19 @@ export interface ComposerDictationControl {
   readonly getStream: () => MediaStream | null;
 }
 
-function labelFor(state: VoiceDictationState): string {
+function labelFor(
+  state: VoiceDictationState,
+  t: TFunction<"common">,
+): string {
   switch (state) {
     case "recording":
-      return "Stop voice input";
+      return t("Stop voice input");
     case "requesting":
-      return "Starting voice input";
+      return t("Starting voice input");
     case "transcribing":
-      return "Transcribing";
+      return t("Transcribing");
     default:
-      return "Start voice input";
+      return t("Start voice input");
   }
 }
 
@@ -44,10 +49,11 @@ export function ComposerMicButton({
 }: {
   readonly control: ComposerDictationControl;
 }) {
+  const { t } = useTranslation("common");
   const { state, onToggle } = control;
   const isBusy = state === "requesting" || state === "transcribing";
   const isRecording = state === "recording";
-  const label = labelFor(state);
+  const label = labelFor(state, t);
   // Surface the (live, rebindable) shortcut in the tooltip when idle so it's
   // discoverable; omit it if the user has unbound the action.
   const boundChord = useBindingForAction(DICTATION_ACTION_ID);
@@ -88,14 +94,19 @@ function MicButtonIcon(props: {
   return <Mic className="size-4" />;
 }
 
-function preparingLabel(status: DictationPreparingStatus): string {
+function preparingLabel(
+  status: DictationPreparingStatus,
+  t: TFunction<"common">,
+): string {
   if (status.downloadState === "error") {
-    return "Voice dictation setup failed - retrying";
+    return t("Voice dictation setup failed - retrying");
   }
   if (status.downloadState === "downloading" && status.progress !== null) {
-    return `Setting up voice dictation… ${Math.round(status.progress * 100)}%`;
+    return t("Setting up voice dictation… {{progress}}%", {
+      progress: Math.round(status.progress * 100),
+    });
   }
-  return "Preparing voice input…";
+  return t("Preparing voice input…");
 }
 
 // Mic icon wrapped in a circular progress ring. Determinate while downloading
@@ -153,7 +164,8 @@ export function ComposerMicPreparing({
 }: {
   readonly status: DictationPreparingStatus;
 }) {
-  const label = preparingLabel(status);
+  const { t } = useTranslation("common");
+  const label = preparingLabel(status, t);
   const progress =
     status.downloadState === "downloading" ? status.progress : null;
   // A native `title` on a `disabled` button doesn't show on hover (the button

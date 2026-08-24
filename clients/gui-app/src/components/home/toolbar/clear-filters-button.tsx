@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -6,6 +7,7 @@ interface ClearFiltersButtonProps {
 }
 
 export function ClearFiltersButton(props: ClearFiltersButtonProps) {
+  const { t } = useTranslation("common");
   const { onClick } = props;
   return (
     <Button
@@ -16,7 +18,7 @@ export function ClearFiltersButton(props: ClearFiltersButtonProps) {
       className="gap-1.5 text-ui-sm text-muted-foreground hover:text-foreground"
     >
       <X className="size-4" />
-      Clear
+      {t("Clear")}
     </Button>
   );
 }

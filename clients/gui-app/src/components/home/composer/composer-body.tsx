@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
 import type { ReactNode, RefObject } from "react";
 import type { JsonContent } from "@traycer/protocol/common/registry";
@@ -118,6 +119,7 @@ export function ComposerBody({
   onDocumentChange,
   onSelectionChange,
 }: ComposerBodyProps) {
+  const { t } = useTranslation("common");
   const harnessId = useStore(toolbarStore, (s) => s.selection.harnessId);
   const chatPasteActive = composerMode === "chat";
   const hiddenInTerminal = cn(composerMode !== "chat" && "hidden");
@@ -149,7 +151,7 @@ export function ComposerBody({
                 ingestPastedComposerImages={ingestPastedComposerImages}
                 isActive={chatEditorIsActive}
                 disabled={isSubmitting}
-                placeholder={COMPOSER_PLACEHOLDER}
+                placeholder={t(COMPOSER_PLACEHOLDER)}
                 editorClassName={editorClassName}
                 stabilizeImageAttachmentCaret
                 onDocumentChange={onDocumentChange}

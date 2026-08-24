@@ -1,4 +1,6 @@
 import { GitBranch } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { HOVER_PREVIEW_SCROLL_CLASS } from "@/components/ui/hover-preview-surface";
 import { cn } from "@/lib/utils";
 import { CopyPathButton } from "./copy-path-button";
@@ -23,6 +25,7 @@ import { WorkspaceModeIcon } from "./workspace-mode-icon";
 export function WorkspaceFolderHoverList(props: {
   readonly items: ReadonlyArray<WorkspaceRunItem>;
 }) {
+  const { t } = useTranslation("common");
   return (
     <div
       className={cn(
@@ -62,7 +65,7 @@ export function WorkspaceFolderHoverList(props: {
             </div>
             {runPath === null ? (
               <span className="break-words pl-5 text-ui-xs leading-5 text-muted-foreground/70">
-                {newWorktreeDetail(item)}
+                {newWorktreeDetail(item, t)}
               </span>
             ) : (
               <span className="flex min-w-0 items-start gap-1 pl-5">
@@ -85,9 +88,12 @@ export function WorkspaceFolderHoverList(props: {
   );
 }
 
-function newWorktreeDetail(item: WorkspaceRunItem): string {
+function newWorktreeDetail(
+  item: WorkspaceRunItem,
+  t: TFunction<"common">,
+): string {
   const source = workspaceRunBranchSourceLabel(item.currentIntent);
   return source === null
-    ? "New worktree · created on send"
-    : `From ${source} · created on send`;
+    ? t("New worktree · created on send")
+    : t("From {{source}} · created on send", { source });
 }

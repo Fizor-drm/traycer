@@ -4,6 +4,7 @@ import { ReportIssueAction } from "@/components/report-issue/report-issue-action
 import { createReportIssueContext } from "@/lib/report-issue-context";
 import type { GuiHarnessCatalogEntry } from "@/hooks/harnesses/use-gui-harness-catalog";
 import { useProvidersFocusStore } from "@/stores/settings/providers-focus-store";
+import { useTranslation } from "react-i18next";
 import { KeyRound } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -54,12 +55,13 @@ export function ModelRowsState(props: ModelRowsStateProps): ReactNode | null {
     rowsCount,
     onOpenProviderSettings,
   } = props;
+  const { t } = useTranslation("common");
 
   if (catalogLoading && rowsCount === 0) {
     return (
       <PickerStateRow
         icon={<MutedAgentSpinner />}
-        label="Loading models"
+        label={t("Loading models")}
         action={undefined}
       />
     );
@@ -68,7 +70,7 @@ export function ModelRowsState(props: ModelRowsStateProps): ReactNode | null {
   if (catalogError) {
     return (
       <PickerStateRow
-        label="Couldn't load providers"
+        label={t("Couldn't load providers")}
         icon={undefined}
         action={
           <ReportIssueAction
@@ -110,7 +112,7 @@ export function ModelRowsState(props: ModelRowsStateProps): ReactNode | null {
     const reason = activeProvider.modelsError.message.trim();
     return (
       <PickerStateRow
-        label={reason.length > 0 ? reason : "Couldn't load models"}
+        label={reason.length > 0 ? reason : t("Couldn't load models")}
         icon={undefined}
         action={
           <ReportIssueAction
@@ -186,17 +188,20 @@ function ProviderApiKeyCta(props: {
   readonly label: string;
   readonly onOpenProviderSettings: () => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-6 text-center">
       <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
         <KeyRound className="size-4" />
       </span>
       <span className="text-ui-sm font-medium text-foreground">
-        Connect {props.label}
+        {t("Connect {{label}}", { label: props.label })}
       </span>
       <p className="max-w-[min(90vw,16rem)] text-balance text-ui-xs text-muted-foreground">
-        {props.label} needs an API key to list models and start chats. Add yours
-        in Provider settings to get started.
+        {t(
+          "{{label}} needs an API key to list models and start chats. Add yours in Provider settings to get started.",
+          { label: props.label },
+        )}
       </p>
       <Button
         size="sm"
@@ -209,7 +214,7 @@ function ProviderApiKeyCta(props: {
           props.onOpenProviderSettings();
         }}
       >
-        Add API key
+        {t("Add API key")}
       </Button>
     </div>
   );

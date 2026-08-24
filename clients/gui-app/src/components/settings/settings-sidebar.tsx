@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { AnimatePresence } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import {
   SETTINGS_SECTIONS,
@@ -13,7 +14,6 @@ import {
   useSettingsLeaderModifierForIndex,
 } from "@/providers/keybinding-context";
 import { LeaderDigitBadge } from "@/components/ui/leader-digit-badge";
-import { leaderHint } from "@/components/ui/leader-digit-shortcuts";
 import { Analytics, AnalyticsEvent } from "@/lib/analytics";
 import { HostSwitcher } from "@/components/settings/host-scope/host-switcher";
 import {
@@ -109,6 +109,7 @@ function SettingsSidebarHostPicker(props: {
   readonly scope: HostScope;
 }): ReactNode {
   const { scope } = props;
+  const { t } = useTranslation("settings");
   const openAddHost = useAddHostDialogStore((s) => s.openDialog);
   // `gap-0.5` matches the section rows below, so the picker reads as the first
   // row of the tier it heads rather than a control docked above it.
@@ -148,8 +149,9 @@ function SettingsSidebarHostPicker(props: {
           className="px-1 text-[0.6875rem] leading-snug text-muted-foreground/80"
           data-testid="settings-host-viewing-note"
         >
-          Viewing — the active host is{" "}
-          {scope.activeHost?.name ?? "another host"}.
+          {t("Viewing — the active host is {{host}}.", {
+            host: scope.activeHost?.name ?? t("another host"),
+          })}
         </p>
       )}
       {/* Mounted once: the picker footer is the only opener, but the dialog
@@ -186,9 +188,10 @@ function SettingsSidebarGroupRule(): ReactNode {
 function SettingsSidebarGroupHeader(props: {
   readonly label: string;
 }): ReactNode {
+  const { t } = useTranslation("settings");
   return (
     <h2 className="mb-1 px-3 font-semibold text-ui-xs tracking-wide text-muted-foreground/70 uppercase">
-      {props.label}
+      {t(props.label)}
     </h2>
   );
 }
@@ -201,6 +204,7 @@ interface SettingsSidebarItemProps {
 
 function SettingsSidebarItem(props: SettingsSidebarItemProps) {
   const { section, index, mode } = props;
+  const { t } = useTranslation("settings");
   const badgeModifier = useSettingsLeaderModifierForIndex(index);
   const Icon = section.icon;
   const digit = singleDigitLeaderDigitFor(index);
@@ -214,7 +218,10 @@ function SettingsSidebarItem(props: SettingsSidebarItemProps) {
             key={`${badgeModifier}:${section.id}`}
             digit={digit}
             modifier={badgeModifier}
-            ariaLabel={leaderHint(digit, "to open", section.label)}
+            ariaLabel={t("Press {{digit}} to open {{section}}", {
+              digit,
+              section: t(section.label),
+            })}
             testId={`settings-section-digit-${digit}`}
             className="text-muted-foreground"
           />
@@ -223,7 +230,7 @@ function SettingsSidebarItem(props: SettingsSidebarItemProps) {
     </span>
   );
   const label = (
-    <span className="min-w-0 flex-1 truncate">{section.label}</span>
+    <span className="min-w-0 flex-1 truncate">{t(section.label)}</span>
   );
   if (mode.kind === "modal") {
     const active = mode.activeSection === section.id;

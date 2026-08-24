@@ -1,5 +1,7 @@
 import { ArrowUp, Square } from "lucide-react";
 import { memo, useCallback, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Button } from "@/components/ui/button";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 import type { ChatActiveTurn } from "@traycer/protocol/host/agent/gui/subscribe";
@@ -31,18 +33,19 @@ function ComposerSendButtonImpl(props: ComposerSendButtonProps) {
     onStopTurn,
     disabledHint,
   } = props;
+  const { t } = useTranslation("common");
   const stopMode = activeTurnStatus !== null;
   const disabled = stopMode
     ? stopDisabled || onStopTurn === null
     : !canSubmit || disabledHint !== null;
-  const label = composerSendButtonLabel(activeTurnStatus);
+  const label = composerSendButtonLabel(activeTurnStatus, t);
   // Hint mode (e.g. no workspace) marks the button `aria-disabled` rather than
   // using the `disabled` attribute, so it stays focusable and the styled
   // TooltipWrapper's hint is reachable by hover and keyboard focus (a native
   // `title` is suppressed on a disabled <button>). Other disabled states keep
   // the real `disabled` attribute and the native Send/Stop title.
   const hintActive = !stopMode && disabledHint !== null;
-  const buttonTitle = stopMode ? "Stop assistant turn" : "Send";
+  const buttonTitle = stopMode ? t("Stop assistant turn") : t("Send");
   const submitOrStopTurn = useCallback(() => {
     if (hintActive) return;
     if (!stopMode) {
@@ -119,8 +122,9 @@ function composerSendButtonIcon(
 
 function composerSendButtonLabel(
   activeTurnStatus: ChatActiveTurn["status"] | null,
+  t: TFunction<"common">,
 ): string {
-  if (activeTurnStatus === null) return "Send";
-  if (activeTurnStatus === "stopping") return "Stopping";
-  return "Stop";
+  if (activeTurnStatus === null) return t("Send");
+  if (activeTurnStatus === "stopping") return t("Stopping");
+  return t("Stop");
 }

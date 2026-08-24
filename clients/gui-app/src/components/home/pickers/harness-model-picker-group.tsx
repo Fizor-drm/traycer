@@ -32,6 +32,7 @@ import {
   type ProviderPackPreparing,
 } from "@/components/providers/provider-pack-readiness";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import type { ProviderProfile } from "@traycer/protocol/host/provider-schemas";
 
 const LOCKED_PROVIDER_TOOLTIP =
@@ -75,6 +76,7 @@ export function ProviderRail(props: ProviderRailProps) {
     onOpenProviderSettings,
     onRefresh,
   } = props;
+  const { t } = useTranslation("common");
   const entries = visibleRailEntries({
     harnesses,
     fallbackHarnesses,
@@ -91,7 +93,7 @@ export function ProviderRail(props: ProviderRailProps) {
     <div className="flex min-h-0 flex-col items-center border-r bg-muted/20 p-1">
       <div
         role="tablist"
-        aria-label="Model providers"
+        aria-label={t("Model providers")}
         className="no-scrollbar flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto overscroll-contain px-1 pt-1"
       >
         {pending && entries.length === 0 ? (
@@ -117,18 +119,18 @@ export function ProviderRail(props: ProviderRailProps) {
       </div>
       <RefreshIconButton
         onRefresh={onRefresh}
-        label="Refresh providers & models"
+        label={t("Refresh providers & models")}
         className="mt-1"
       />
       <TooltipWrapper
-        label="Provider CLI settings"
+        label={t("Provider CLI settings")}
         side="top"
         sideOffset={undefined}
         align={undefined}
       >
         <button
           type="button"
-          aria-label="Provider CLI settings"
+          aria-label={t("Provider CLI settings")}
           onClick={onOpenProviderSettings}
           className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/60"
         >
@@ -265,6 +267,7 @@ function railButtonClassName(state: {
 // held; switching is pure state (no focus move), so the search box keeps focus.
 function ProviderRailButton(props: ProviderRailButtonProps) {
   const { entry, index, active, disabled, onEntryChange, onRetryPack } = props;
+  const { t } = useTranslation("common");
   const leaderModifier = usePickerProviderLeaderForIndex(index);
   const degradedDescriptionId = useId();
   const preparingDescriptionId = useId();
@@ -368,7 +371,7 @@ function ProviderRailButton(props: ProviderRailButtonProps) {
             ) : null}
             {entry.degraded ? (
               <span id={degradedDescriptionId} className="sr-only">
-                Setup required
+                {t("Setup required")}
               </span>
             ) : null}
             <PickerLeaderBadge

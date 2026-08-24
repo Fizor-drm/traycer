@@ -18,8 +18,10 @@ import {
   type Mock,
 } from "vitest";
 import { GeneralSettingsPanel } from "@/components/settings/panels/general-settings-panel";
+import { applyLocale, DEFAULT_LOCALE } from "@/lib/i18n/init-i18n";
 import { modLabel } from "@/lib/keybindings/platform";
 import { clearAllPersistedStores } from "@/lib/persist";
+import { I18nProvider } from "@/providers/i18n-provider";
 import {
   useMigrationRunStore,
   type MigrationRunState,
@@ -319,6 +321,7 @@ describe("GeneralSettingsPanel", () => {
     useLocalSnapshotClearStore.setState({ clearedAtByScope: {} });
     useOnboardingStore.setState({ completedAt: null, step: 0 });
     useSettingsStore.setState({
+      locale: DEFAULT_LOCALE,
       showGlobalResourceMonitor: true,
       showNavigatorResourceStats: false,
       pinContextUsageBreakdown: false,
@@ -326,9 +329,11 @@ describe("GeneralSettingsPanel", () => {
     });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     cleanup();
     vi.restoreAllMocks();
+    await applyLocale(DEFAULT_LOCALE);
+    document.documentElement.lang = "";
     useAuthStore.getState().setSignedOut();
     useLocalSnapshotClearStore.setState({ clearedAtByScope: {} });
     useOnboardingStore.setState({ completedAt: null, step: 0 });
@@ -649,6 +654,44 @@ describe("GeneralSettingsPanel", () => {
     expect(documentPosition(chat, running)).toBe("before");
     expect(documentPosition(running, setup)).toBe("before");
     expect(documentPosition(setup, danger)).toBe("before");
+  });
+
+  it("renders the language group first and swaps its labels to Japanese on 日本語", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <I18nProvider>
+          <GeneralSettingsPanel />
+        </I18nProvider>
+      </QueryClientProvider>,
+    );
+
+    const chat = screen.getByRole("heading", { level: 2, name: "Chat & composer" });
+    const language = screen.getByRole("heading", { level: 2, name: "Language" });
+    expect(documentPosition(language, chat)).toBe("before");
+    expect(
+      screen.getByRole("combobox", { name: "Interface language" }),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("combobox", { name: "Interface language" }),
+    );
+    fireEvent.click(screen.getByRole("option", { name: "日本語" }));
+
+    // No restart: the same mounted panel re-renders through i18next once the
+    // lazy ja bundle lands.
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { level: 2, name: "言語" }),
+      ).toBeTruthy();
+    });
+    expect(
+      screen.getByRole("combobox", { name: "インターフェースの言語" }),
+    ).toBeTruthy();
+    expect(useSettingsStore.getState().locale).toBe("ja");
+    expect(document.documentElement.lang).toBe("ja");
   });
 
   it("renders named sections as h2 headings outside separate bordered cards", () => {

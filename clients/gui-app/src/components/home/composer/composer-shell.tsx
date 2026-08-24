@@ -1,4 +1,5 @@
 import { memo, type DragEventHandler, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { FileText, Files, ImageIcon } from "lucide-react";
 
 import { ComposerMenu } from "@/components/chat/composer/menu/composer-menu";
@@ -132,6 +133,7 @@ function ComposerShellImpl(props: ComposerShellProps) {
     toolbar,
   } = props;
 
+  const { t } = useTranslation("common");
   const { ref: narrowRef, isNarrow } = useComposerNarrowObserver();
   const overlayContent =
     dragOverlayVariant === null
@@ -151,7 +153,11 @@ function ComposerShellImpl(props: ComposerShellProps) {
           pickerStore={pickerStore}
           overlay={
             overlayContent === null ? null : (
-              <ComposerDropOverlay {...overlayContent} />
+              <ComposerDropOverlay
+                {...overlayContent}
+                title={t(overlayContent.title)}
+                subtitle={t(overlayContent.subtitle)}
+              />
             )
           }
           utilityRail={utilityRail}

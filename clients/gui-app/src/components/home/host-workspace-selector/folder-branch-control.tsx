@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, GitBranch } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   Popover,
   PopoverContent,
@@ -33,6 +34,7 @@ export function FolderBranchControl(props: {
   readonly boundaryEl: HTMLElement | null;
   readonly readOnly: boolean;
 }) {
+  const { t } = useTranslation("common");
   const { item } = props;
   const sourceLabel = workspaceRunBranchSourceLabel(item.currentIntent);
   const tooltipLabel = branchTooltipLabel(item);
@@ -114,7 +116,7 @@ export function FolderBranchControl(props: {
     if (props.readOnly) {
       return (
         <ReadonlyBranchTrigger
-          ariaLabel="View existing worktree branch"
+          ariaLabel={t("View existing worktree branch")}
           item={item}
           testId="folder-branch-import-trigger"
         />
@@ -131,7 +133,7 @@ export function FolderBranchControl(props: {
           <PopoverTrigger asChild>
             <button
               type="button"
-              aria-label="View existing worktree branch"
+              aria-label={t("View existing worktree branch")}
               data-testid="folder-branch-import-trigger"
               className={cn(FOLDER_CONTROL_TRIGGER_CLASS, "text-foreground/75")}
             >
@@ -178,7 +180,7 @@ export function FolderBranchControl(props: {
       type="button"
       disabled={item.modeDisabled}
       aria-disabled={props.readOnly ? true : undefined}
-      aria-label="Choose worktree branch"
+      aria-label={t("Choose worktree branch")}
       data-testid="folder-branch-trigger"
       className={cn(FOLDER_CONTROL_TRIGGER_CLASS, "text-foreground/75")}
     >

@@ -16,6 +16,7 @@ import {
   TerminalSquare,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { registerDynamicActionHandler } from "@/lib/keybindings/dispatch";
 import { useLandingTerminalSurfaceActive } from "./landing-terminal-surface-binding";
@@ -243,6 +244,7 @@ function settleDirectoryRequest(args: {
  * that same captured draft. No consumer reads live host or draft focus.
  */
 export function LandingTerminalPanel(): ReactNode {
+  const { t } = useTranslation("common");
   const {
     focusedLandingPageId,
     target,
@@ -488,7 +490,7 @@ export function LandingTerminalPanel(): ReactNode {
       ) {
         replaceDirectoryRequest({
           ...request,
-          error: "The selected host is no longer available.",
+          error: t("The selected host is no longer available."),
         });
         return;
       }
@@ -496,7 +498,7 @@ export function LandingTerminalPanel(): ReactNode {
       if (selectedTarget === null) {
         replaceDirectoryRequest({
           ...request,
-          error: "That directory is no longer attached.",
+          error: t("That directory is no longer attached."),
         });
         return;
       }
@@ -510,7 +512,7 @@ export function LandingTerminalPanel(): ReactNode {
         requestId: request.key,
       });
     },
-    [replaceDirectoryRequest, selectWorkspacePath],
+    [replaceDirectoryRequest, selectWorkspacePath, t],
   );
 
   const handleReconciliationError = useCallback(() => {
@@ -524,7 +526,7 @@ export function LandingTerminalPanel(): ReactNode {
     writeDirectoryRequest({
       ...request,
       selectedTarget: null,
-      error: "The terminal directory could not be opened.",
+      error: t("The terminal directory could not be opened."),
     });
     if (ownsFocus) {
       requestPrimaryFocus({
@@ -532,7 +534,7 @@ export function LandingTerminalPanel(): ReactNode {
         requestId: request.key,
       });
     }
-  }, [writeDirectoryRequest]);
+  }, [t, writeDirectoryRequest]);
 
   const activateTerminalTab = useCallback(
     (instanceId: string) => {
@@ -1410,12 +1412,13 @@ function useLandingTerminalShortcuts(args: {
 function LandingTerminalPanelToggle(props: {
   readonly onOpenPanel: () => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   return (
     <Button
       type="button"
       variant="ghost"
       size="icon-sm"
-      aria-label="Open terminal panel"
+      aria-label={t("Open terminal panel")}
       data-testid="landing-terminal-toggle"
       // Occupies exactly the box the header's collapse button renders in
       // while the panel is open (1px panel border + an icon-sm button
@@ -1434,11 +1437,12 @@ function LandingTerminalPanelHeader(props: {
   readonly onToggleMaximized: () => void;
   readonly onTogglePanel: () => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   return (
     <div className="flex h-9 shrink-0 items-center justify-between border-b border-canvas-border/70 px-2">
       <div className="flex min-w-0 items-center gap-2 text-ui-sm font-medium">
         <TerminalSquare className="size-4 shrink-0" />
-        <span className="truncate">Terminal</span>
+        <span className="truncate">{t("Terminal")}</span>
       </div>
       <div className="flex shrink-0 items-center">
         <Button
@@ -1447,8 +1451,8 @@ function LandingTerminalPanelHeader(props: {
           size="icon-sm"
           aria-label={
             props.maximized
-              ? "Restore terminal panel"
-              : "Maximize terminal panel"
+              ? t("Restore terminal panel")
+              : t("Maximize terminal panel")
           }
           onClick={props.onToggleMaximized}
         >
@@ -1462,7 +1466,7 @@ function LandingTerminalPanelHeader(props: {
           type="button"
           variant="ghost"
           size="icon-sm"
-          aria-label="Collapse terminal panel"
+          aria-label={t("Collapse terminal panel")}
           data-testid="landing-terminal-collapse"
           onClick={props.onTogglePanel}
         >
@@ -1488,13 +1492,14 @@ function LandingTerminalPanelBody(props: {
   readonly onCancelDirectoryPicker: () => void;
   readonly authorityEntries: LandingTerminalAuthorityEntries;
 }): ReactNode {
+  const { t } = useTranslation("common");
   if (props.availability === "unknown" && props.directoryPicker === null) {
     return (
       <div
         role="status"
         className="flex min-h-0 flex-1 items-center justify-center p-6 text-center text-ui-sm text-muted-foreground"
       >
-        Connecting to the selected host…
+        {t("Connecting to the selected host…")}
       </div>
     );
   }
@@ -1561,6 +1566,7 @@ function LandingTerminalEmptyState(props: {
   readonly activeHostId: string | null;
   readonly reconciledContext: LandingTerminalHostContext | null;
 }): ReactNode {
+  const { t } = useTranslation("common");
   // Bridged v2.0 host with no primary folder: capability/update guidance, not
   // the removed folder-picker blocker and not a guessed cwd.
   if (
@@ -1582,7 +1588,7 @@ function LandingTerminalEmptyState(props: {
   }
   return (
     <div className="flex h-full min-h-0 items-center justify-center p-6 text-center text-ui-sm text-muted-foreground">
-      Starting terminal…
+      {t("Starting terminal…")}
     </div>
   );
 }

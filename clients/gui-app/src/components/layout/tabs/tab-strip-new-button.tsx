@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 import { formatChordForDisplay } from "@/lib/keybindings/chord";
 import { useBindingForAction } from "@/stores/settings/keybinding-store";
@@ -13,9 +14,14 @@ export function TabStripNewButton(
   props: TabStripNewButtonProps,
 ): React.ReactNode {
   const { onNewTab } = props;
+  const { t } = useTranslation("shell");
   const chord = useBindingForAction("epic.new");
   const tooltip =
-    chord === null ? "New task" : `New task (${formatChordForDisplay(chord)})`;
+    chord === null
+      ? t("New task")
+      : t("New task ({{chord}})", {
+          chord: formatChordForDisplay(chord),
+        });
 
   return (
     <TooltipWrapper
@@ -27,7 +33,7 @@ export function TabStripNewButton(
       <button
         type="button"
         data-testid="tab-new"
-        aria-label={NEW_TAB_PLACEHOLDER}
+        aria-label={t(NEW_TAB_PLACEHOLDER)}
         onClick={onNewTab}
         className="ml-1 flex size-7 shrink-0 items-center justify-center self-center rounded-md text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground [-webkit-app-region:no-drag]"
       >

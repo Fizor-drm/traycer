@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import {
   HostSwitcher,
@@ -109,13 +110,14 @@ export function WorkspaceHostSwitcher(
  * pairs with "Workspaces" below it.
  */
 export function HostSection(props: HostSectionProps): ReactNode {
+  const { t } = useTranslation("common");
   return (
     <section
       data-testid="host-workspace-selector-host-section"
       className="w-full max-w-full min-w-0"
     >
       <DropdownMenuLabel className="px-1 text-ui-xs font-medium uppercase tracking-wide text-muted-foreground/70">
-        Host
+        {t("Host")}
       </DropdownMenuLabel>
       <WorkspaceHostSwitcher {...props} surface="field" />
     </section>

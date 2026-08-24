@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { useStore } from "zustand";
+import { useTranslation } from "react-i18next";
 import { v4 as uuidv4 } from "uuid";
 import { TabHostProvider } from "@/components/epic-canvas/tab-host-provider";
 import {
@@ -120,6 +121,7 @@ function LandingTerminalTileBody(props: LandingTerminalTileProps): ReactNode {
 export function LandingTerminalLegacyBootstrap(
   props: LandingTerminalTileProps,
 ): ReactNode {
+  const { t } = useTranslation("common");
   const removeExitedTab = useLandingTerminalStore(
     (state) => state.removeExitedTab,
   );
@@ -220,7 +222,7 @@ export function LandingTerminalLegacyBootstrap(
         message={
           bootstrap.createRetryError?.message ??
           bootstrap.createError?.message ??
-          "Could not start terminal."
+          t("Could not start terminal.")
         }
         isPending={bootstrap.createRetryIsPending}
         onRetry={bootstrap.retry}
@@ -586,6 +588,7 @@ export function LandingTerminalErrorState(props: {
   readonly isPending: boolean;
   readonly onRetry: () => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   return (
     <div className="flex h-full min-h-0 w-full flex-col items-center justify-center gap-3 bg-canvas p-4 text-center text-ui-sm text-destructive">
       <span>{props.message}</span>
@@ -603,7 +606,7 @@ export function LandingTerminalErrorState(props: {
             variant={undefined}
           />
         ) : null}
-        Retry
+        {t("Retry")}
       </Button>
     </div>
   );
@@ -634,11 +637,18 @@ function TerminalDeadState(props: {
   readonly hostLabel: string;
   readonly unavailability: HostUnavailability | null;
 }): ReactNode {
+  const { t } = useTranslation("common");
   return (
     <div className="flex h-full min-h-0 w-full items-center justify-center bg-canvas p-4 text-center text-ui-sm text-muted-foreground">
       {props.unavailability === "plan-restricted"
-        ? `${props.hostLabel} is local only on your current plan, so it can't be reached from here. Upgrade to use it remotely; this terminal stays bound to it.`
-        : `${props.hostLabel} is offline. This terminal stays bound to that host.`}
+        ? t(
+            "{{hostLabel}} is local only on your current plan, so it can't be reached from here. Upgrade to use it remotely; this terminal stays bound to it.",
+            { hostLabel: props.hostLabel },
+          )
+        : t(
+            "{{hostLabel}} is offline. This terminal stays bound to that host.",
+            { hostLabel: props.hostLabel },
+          )}
     </div>
   );
 }

@@ -21,6 +21,11 @@ import {
 } from "@/lib/artifacts/node-display";
 import { DEFAULT_THEME_PRESET, type ThemePreset } from "@/lib/theme-presets";
 import {
+  DEFAULT_LOCALE,
+  isAppLocale,
+  type AppLocale,
+} from "@/lib/i18n/init-i18n";
+import {
   DEFAULT_DIFF_VIEWER_PREFERENCES,
   type DiffViewerPreferences,
   type DiffViewerPreferencesPatch,
@@ -66,6 +71,8 @@ export const DEFAULT_WORKTREE_BRANCH_PREFIX = "traycer/";
 export interface SettingsState {
   theme: ThemeMode;
   themePreset: ThemePreset;
+  /** UI display language. Persisted so the choice survives restarts. */
+  locale: AppLocale;
   defaultSelection: HarnessModelSelection;
   defaultReasoning: ReasoningLevel;
   defaultServiceTier: ServiceTier;
@@ -144,6 +151,7 @@ export interface SettingsState {
    */
   diffViewerPreferences: DiffViewerPreferences;
   setTheme: (theme: ThemeMode) => void;
+  setLocale: (locale: AppLocale) => void;
   setThemePreset: (preset: ThemePreset) => void;
   setComposerMode: (mode: ComposerMode) => void;
   setPreventSleepWhileRunning: (value: boolean) => void;
@@ -176,6 +184,7 @@ export interface SettingsState {
 type PersistedSettingsState = Pick<
   SettingsState,
   | "theme"
+  | "locale"
   | "themePreset"
   | "defaultSelection"
   | "defaultReasoning"
@@ -244,6 +253,7 @@ function clampCodeFontSize(value: number): number {
 function partializeSettingsState(state: SettingsState): PersistedSettingsState {
   return {
     theme: state.theme,
+    locale: state.locale,
     themePreset: state.themePreset,
     defaultSelection: state.defaultSelection,
     defaultReasoning: state.defaultReasoning,
@@ -280,6 +290,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       theme: "system",
+      locale: DEFAULT_LOCALE,
       themePreset: DEFAULT_THEME_PRESET,
       defaultSelection: DEFAULT_SELECTION,
       defaultReasoning: DEFAULT_REASONING,
@@ -310,6 +321,7 @@ export const useSettingsStore = create<SettingsState>()(
       steerOnModEnterEnabled: true,
       diffViewerPreferences: DEFAULT_DIFF_VIEWER_PREFERENCES,
       setTheme: makeSetter(set, "theme"),
+      setLocale: makeSetter(set, "locale"),
       setThemePreset: makeSetter(set, "themePreset"),
       setComposerMode: makeSetter(set, "composerMode"),
       setPreventSleepWhileRunning: makeSetter(set, "preventSleepWhileRunning"),
@@ -393,8 +405,9 @@ export const useSettingsStore = create<SettingsState>()(
       // otherwise corrupted localStorage value would otherwise rehydrate
       // verbatim (the default shallow merge takes persisted fields as-is),
       // flow straight into branch composition, and still mount the editor
-      // showing it as healthy. Every other field keeps the default shallow
-      // merge behavior.
+      // showing it as healthy. `chatTurnMinimapSide` and `locale` get the
+      // same repair for the same reason. Every other field keeps the default
+      // shallow merge behavior.
       merge: (persistedState, currentState) => {
         const persisted: Record<string, unknown> = isRecord(persistedState)
           ? persistedState
@@ -403,6 +416,7 @@ export const useSettingsStore = create<SettingsState>()(
         const merged: SettingsState = { ...currentState, ...persisted };
         return {
           ...merged,
+          locale: isAppLocale(merged.locale) ? merged.locale : DEFAULT_LOCALE,
           worktreeBranchPrefix:
             typeof merged.worktreeBranchPrefix === "string" &&
             worktreeBranchPrefixError(merged.worktreeBranchPrefix) === null

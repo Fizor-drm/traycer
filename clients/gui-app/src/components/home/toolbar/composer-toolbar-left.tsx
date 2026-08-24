@@ -1,5 +1,6 @@
 import { memo, useCallback, useRef, type ChangeEvent } from "react";
 import { ImagePlus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolbarIconButton } from "@/components/home/toolbar/toolbar-buttons";
 import { PermissionsPicker } from "@/components/home/pickers/permissions-picker";
 import type { PermissionMode } from "@/components/home/data/landing-options";
@@ -37,6 +38,7 @@ function ComposerToolbarLeftImpl(props: ComposerToolbarLeftProps) {
     settingsLocked,
   } = props;
   const inputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation("common");
 
   const handleOpenImagePicker = useCallback(() => {
     const input = inputRef.current;
@@ -68,13 +70,13 @@ function ComposerToolbarLeftImpl(props: ComposerToolbarLeftProps) {
         onChange={handleImageChange}
       />
       <TooltipWrapper
-        label="Attach image"
+        label={t("Attach image")}
         side="top"
         sideOffset={undefined}
         align={undefined}
       >
         <ToolbarIconButton
-          aria-label="Attach image"
+          aria-label={t("Attach image")}
           onClick={handleOpenImagePicker}
         >
           <ImagePlus className="size-4" />
@@ -93,7 +95,7 @@ function ComposerToolbarLeftImpl(props: ComposerToolbarLeftProps) {
           aria-atomic="true"
           className="max-w-[min(28vw,14rem)] truncate text-ui-xs text-muted-foreground"
         >
-          New mode applies to the next turn
+          {t("New mode applies to the next turn")}
         </output>
       ) : null}
     </div>

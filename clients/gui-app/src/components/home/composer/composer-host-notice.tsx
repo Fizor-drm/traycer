@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, X } from "lucide-react";
 
 /**
@@ -25,6 +26,7 @@ interface ComposerHostNoticeProps {
 }
 
 export function ComposerHostNotice(props: ComposerHostNoticeProps): ReactNode {
+  const { t } = useTranslation("common");
   const notice = props.notice;
   if (notice === null) return null;
   return (
@@ -38,7 +40,7 @@ export function ComposerHostNotice(props: ComposerHostNoticeProps): ReactNode {
       <p className="min-w-0 flex-1 text-foreground">{notice.message}</p>
       <button
         type="button"
-        aria-label="Dismiss"
+        aria-label={t("Dismiss")}
         data-testid="composer-host-notice-dismiss"
         onClick={props.onDismiss}
         className="grid size-5 shrink-0 place-items-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

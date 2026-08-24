@@ -1,4 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { TriangleAlert } from "lucide-react";
 import type {
   RepoBranchPrefixState,
@@ -135,6 +137,7 @@ function WorktreeScriptsDialogBody(props: {
   readonly context: WorktreeScriptsContext;
   readonly onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useTranslation("common");
   const { context, summary, workspacePath } = props;
   const stageScripts = useWorktreeIntentStagingStore((s) => s.stageScripts);
   const stageBranchName = useWorktreeIntentStagingStore(
@@ -264,7 +267,7 @@ function WorktreeScriptsDialogBody(props: {
     branchScripts,
     branchReadFailed,
   });
-  const descriptor = describeTarget({ resolved, workspacePath });
+  const descriptor = describeTarget({ resolved, workspacePath, t });
 
   const handleSave = (scripts: WorktreeEntryScripts): Promise<unknown> => {
     if (
@@ -303,15 +306,17 @@ function WorktreeScriptsDialogBody(props: {
     <ScriptsReviewDialog
       key={seedKey}
       testId="worktree-scripts-dialog"
-      title="Worktree environment"
-      description={environmentDialogDescription(summary, workspacePath)}
+      title={t("Worktree environment")}
+      description={environmentDialogDescription(summary, workspacePath, t)}
       pathLabel={descriptor.pathLabel}
       pathValue={descriptor.pathValue}
       scriptSeed={scriptSeed}
       seedPending={seedPending}
       errorNote={
         branchReadFailed
-          ? "Couldn't read this branch's committed scripts — starting blank. Saving will set new scripts for the worktree."
+          ? t(
+              "Couldn't read this branch's committed scripts — starting blank. Saving will set new scripts for the worktree.",
+            )
           : null
       }
       scriptsNote={descriptor.scriptsNote}
@@ -338,7 +343,7 @@ function WorktreeScriptsDialogBody(props: {
         ) : null
       }
       inUseNote={null}
-      saveLabel="Save scripts"
+      saveLabel={t("Save scripts")}
       onSave={handleSave}
       onEscapeKeyDown={(event) => {
         if (cancelBranchEditingRef.current === null) return;
@@ -359,14 +364,17 @@ function WorktreeScriptsDialogBody(props: {
 function environmentDialogDescription(
   summary: WorktreeWorkspaceSummaryV14,
   workspacePath: string,
+  t: TFunction<"common">,
 ): string {
   const label =
     summary.repoIdentifier !== null
       ? `${summary.repoIdentifier.owner}/${summary.repoIdentifier.repo}`
       : lastPathSegment(workspacePath);
   return summary.isGitRepo
-    ? `Configure lifecycle scripts and branch prefix for ${label}.`
-    : `Configure lifecycle scripts for ${label}.`;
+    ? t("Configure lifecycle scripts and branch prefix for {{label}}.", {
+        label,
+      })
+    : t("Configure lifecycle scripts for {{label}}.", { label });
 }
 
 function lastPathSegment(path: string): string {
@@ -512,6 +520,7 @@ function RegenerateBranchNameOffer(props: {
   readonly onConfirm: () => void;
   readonly onDismiss: () => void;
 }) {
+  const { t } = useTranslation("common");
   return (
     <div
       role="status"
@@ -525,14 +534,14 @@ function RegenerateBranchNameOffer(props: {
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-col gap-1">
           <span className="text-ui-sm font-medium">
-            Update the staged branch name?
+            {t("Update the staged branch name?")}
           </span>
           <p className="text-ui-xs text-amber-950/80 dark:text-amber-100/80">
-            This picker already proposed{" "}
+            {t("This picker already proposed")}{" "}
             <code className="rounded bg-amber-500/15 px-1 py-0.5 font-mono text-amber-950 dark:text-amber-50">
               {props.previousProposal}
             </code>
-            . Apply the new prefix to that staged name, or keep it as-is.
+            {t(". Apply the new prefix to that staged name, or keep it as-is.")}
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-1.5">
@@ -543,7 +552,7 @@ function RegenerateBranchNameOffer(props: {
             className="text-amber-950 hover:bg-amber-500/15 hover:text-amber-950 dark:text-amber-100 dark:hover:bg-amber-500/20 dark:hover:text-amber-50"
             onClick={props.onDismiss}
           >
-            Keep current
+            {t("Keep current")}
           </Button>
           <Button
             type="button"
@@ -552,7 +561,7 @@ function RegenerateBranchNameOffer(props: {
             className="border-amber-600/40 bg-background/60 text-amber-950 hover:bg-amber-500/15 hover:text-amber-950 dark:border-amber-400/40 dark:text-amber-50 dark:hover:bg-amber-500/20 dark:hover:text-amber-50"
             onClick={props.onConfirm}
           >
-            Use new prefix
+            {t("Use new prefix")}
           </Button>
         </div>
       </div>
@@ -709,17 +718,20 @@ function resolveScriptSeed(input: {
 function describeTarget(input: {
   readonly resolved: ResolvedScriptsTarget;
   readonly workspacePath: string;
+  readonly t: TFunction<"common">;
 }): {
   readonly pathLabel: string | null;
   readonly pathValue: string | null;
   readonly scriptsNote: string;
 } {
+  const { t } = input;
   if (input.resolved.kind === "existing-worktree") {
     return {
-      pathLabel: "Worktree path",
+      pathLabel: t("Worktree path"),
       pathValue: input.resolved.worktreePath,
-      scriptsNote:
+      scriptsNote: t(
         "Edit the setup and teardown scripts for this worktree. Saved to its own environment file, never the source checkout.",
+      ),
     };
   }
   if (input.resolved.kind === "new-branch-worktree") {
@@ -730,22 +742,25 @@ function describeTarget(input: {
     return {
       pathLabel: null,
       pathValue: null,
-      scriptsNote:
+      scriptsNote: t(
         "These scripts ride the worktree request - the host writes them into the new worktree when the agent starts.",
+      ),
     };
   }
   if (input.resolved.kind === "checkout-branch-worktree") {
     return {
-      pathLabel: "Existing branch",
+      pathLabel: t("Existing branch"),
       pathValue: input.resolved.branchName,
-      scriptsNote:
+      scriptsNote: t(
         "This branch is checked out into a new worktree. The scripts ride the request - written into the new worktree at create.",
+      ),
     };
   }
   return {
-    pathLabel: "Folder",
+    pathLabel: t("Folder"),
     pathValue: input.workspacePath,
-    scriptsNote:
+    scriptsNote: t(
       "This folder runs in your checkout. Saved to the repo's own environment file - commit it to share.",
+    ),
   };
 }

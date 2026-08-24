@@ -1,6 +1,15 @@
 import { configure } from "@testing-library/react";
 import { vi } from "vitest";
 
+// Initialize the app's i18next instance for every test file. Components
+// using `useTranslation` that are mounted WITHOUT `I18nProvider` otherwise
+// resolve against react-i18next's uninitialized default instance, which
+// returns raw keys - interpolated templates like `"Thinking {{label}}"`
+// would render un-substituted. With the real instance initialized (English
+// fallback, lazy ja bundles) missing keys fall back to the English source
+// text exactly as production does.
+import "@/lib/i18n/init-i18n";
+
 // CI stability net. A stray late async error - an `unhandledRejection` or
 // `uncaughtException` from a timer, socket, or microtask that fires AFTER a
 // test's teardown - otherwise takes down the whole vitest worker (exit 1 with

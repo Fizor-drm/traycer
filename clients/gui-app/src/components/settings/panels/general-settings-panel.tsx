@@ -1,12 +1,21 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { SettingsPanelShell } from "@/components/settings/settings-panel-shell";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsGroup } from "@/components/settings/settings-group";
 import { VoiceSettingsSection } from "@/components/settings/voice-settings-section";
 import { WorktreeBranchPrefixSection } from "@/components/settings/worktree-branch-prefix-section";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { isAppLocale, i18n } from "@/lib/i18n/init-i18n";
 import { useSettingsDensity } from "@/providers/settings-density-context";
 import { cn } from "@/lib/utils";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
@@ -36,16 +45,18 @@ import { getFeatureSettingsBridge } from "@/lib/desktop-feature-settings";
 import { useRunnerFeatureSettingsQuery } from "@/hooks/runner/use-runner-feature-settings-query";
 import { useRunnerAgentRolesSet } from "@/hooks/runner/use-runner-agent-roles-set-mutation";
 
-const MIGRATION_PROGRESS_LABEL = "Migrating tasks";
 const MOD_ENTER_LABEL = `${modLabel()}+Enter`;
 
 function formatMigrationProgress(state: MigrationRunState): string | null {
   if (state.status !== "running") return null;
-  if (state.totals === null) return MIGRATION_PROGRESS_LABEL;
+  if (state.totals === null) return i18n.t("Migrating tasks");
   const { totalTaskChains, totalLocalEpics } = state.totals;
   const tasks = `${taskChainsSeen(state.counts)}/${totalTaskChains}`;
   const epics = `${epicsSeen(state.counts)}/${totalLocalEpics}`;
-  return `${MIGRATION_PROGRESS_LABEL} - tasks ${tasks}, epics ${epics}`;
+  return i18n.t("Migrating tasks - tasks {{tasks}}, epics {{epics}}", {
+    tasks,
+    epics,
+  });
 }
 
 function trackGeneralSetting(setting: AnalyticsSetting): void {
@@ -103,24 +114,65 @@ export function GeneralSettingsPanel() {
   const featureSettings = useRunnerFeatureSettingsQuery();
   const setAgentRoles = useRunnerAgentRolesSet();
   const featureSettingsAvailable = getFeatureSettingsBridge() !== null;
+  const { t } = useTranslation("settings");
+  const locale = useSettingsStore((s) => s.locale);
+  const setLocale = useSettingsStore((s) => s.setLocale);
 
   return (
     <SettingsPanelShell
-      title="General"
-      description="App behavior, agent activity, and local data controls."
+      title={t("General")}
+      description={t("App behavior, agent activity, and local data controls.")}
       bodyClassName="overflow-visible rounded-none border-none bg-transparent"
     >
       <div className={cn("flex flex-col", compact ? "gap-3.5" : "gap-5")}>
         <SettingsGroup
-          title="Chat & composer"
+          title={t("Language")}
+          tone="default"
+          dataTestId={undefined}
+          fill={false}
+        >
+          <SettingsRow
+            label={t("Interface language")}
+            description={t(
+              "Choose the language used across the app interface. Applies immediately.",
+            )}
+            control={
+              <Select
+                value={locale}
+                onValueChange={(value) => {
+                  if (!isAppLocale(value)) return;
+                  trackGeneralSetting("locale");
+                  setLocale(value);
+                }}
+              >
+                <SelectTrigger
+                  size="sm"
+                  aria-label={t("Interface language")}
+                  className="w-[min(40vw,8rem)]"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="ja">日本語</SelectItem>
+                </SelectContent>
+              </Select>
+            }
+          />
+        </SettingsGroup>
+
+        <SettingsGroup
+          title={t("Chat & composer")}
           tone="default"
           dataTestId={undefined}
           fill={false}
         >
           <VoiceSettingsSection />
           <SettingsRow
-            label="Quote reply on text selection"
-            description="Selecting assistant text shows a quote button that inserts the selection into the composer."
+            label={t("Quote reply on text selection")}
+            description={t(
+              "Selecting assistant text shows a quote button that inserts the selection into the composer.",
+            )}
             control={
               <Switch
                 checked={quoteReplyEnabled}
@@ -128,13 +180,16 @@ export function GeneralSettingsPanel() {
                   trackGeneralSetting("quoteReplyEnabled");
                   setQuoteReplyEnabled(value);
                 }}
-                aria-label="Quote reply on text selection"
+                aria-label={t("Quote reply on text selection")}
               />
             }
           />
           <SettingsRow
-            label={`Steer with ${MOD_ENTER_LABEL}`}
-            description={`While a turn is running on a supported harness, ${MOD_ENTER_LABEL} sends the composer text as a same-turn steering message that jumps the queue. Plain Enter keeps queueing.`}
+            label={t("Steer with {{modEnter}}", { modEnter: MOD_ENTER_LABEL })}
+            description={t(
+              "While a turn is running on a supported harness, {{modEnter}} sends the composer text as a same-turn steering message that jumps the queue. Plain Enter keeps queueing.",
+              { modEnter: MOD_ENTER_LABEL },
+            )}
             control={
               <Switch
                 checked={steerOnModEnterEnabled}
@@ -142,13 +197,17 @@ export function GeneralSettingsPanel() {
                   trackGeneralSetting("steerOnModEnterEnabled");
                   setSteerOnModEnterEnabled(value);
                 }}
-                aria-label={`Steer with ${MOD_ENTER_LABEL}`}
+                aria-label={t("Steer with {{modEnter}}", {
+                  modEnter: MOD_ENTER_LABEL,
+                })}
               />
             }
           />
           <SettingsRow
-            label="Pin context usage breakdown"
-            description="Keep the context window breakdown visible near the chat composer when usage data is available."
+            label={t("Pin context usage breakdown")}
+            description={t(
+              "Keep the context window breakdown visible near the chat composer when usage data is available.",
+            )}
             control={
               <Switch
                 checked={pinContextUsageBreakdown}
@@ -156,21 +215,23 @@ export function GeneralSettingsPanel() {
                   trackGeneralSetting("pinContextUsageBreakdown");
                   setPinContextUsageBreakdown(value);
                 }}
-                aria-label="Pin context usage breakdown"
+                aria-label={t("Pin context usage breakdown")}
               />
             }
           />
         </SettingsGroup>
 
         <SettingsGroup
-          title="Running agents"
+          title={t("Running agents")}
           tone="default"
           dataTestId={undefined}
           fill={false}
         >
           <SettingsRow
-            label="Prevent sleep while running"
-            description="Keep the computer awake while an agent is running, so work continues when you step away."
+            label={t("Prevent sleep while running")}
+            description={t(
+              "Keep the computer awake while an agent is running, so work continues when you step away.",
+            )}
             control={
               <Switch
                 checked={preventSleepWhileRunning}
@@ -178,13 +239,13 @@ export function GeneralSettingsPanel() {
                   trackGeneralSetting("preventSleepWhileRunning");
                   setPreventSleepWhileRunning(value);
                 }}
-                aria-label="Prevent sleep while running"
+                aria-label={t("Prevent sleep while running")}
               />
             }
           />
           <SettingsRow
-            label="Show global resources button"
-            description="Show the app-wide resource monitor in the header."
+            label={t("Show global resources button")}
+            description={t("Show the app-wide resource monitor in the header.")}
             control={
               <Switch
                 checked={showGlobalResourceMonitor}
@@ -192,13 +253,15 @@ export function GeneralSettingsPanel() {
                   trackGeneralSetting("showGlobalResourceMonitor");
                   setShowGlobalResourceMonitor(value);
                 }}
-                aria-label="Show global resources button"
+                aria-label={t("Show global resources button")}
               />
             }
           />
           <SettingsRow
-            label="Show navigator resource stats"
-            description="Show compact live CPU and memory chips in task navigator rows."
+            label={t("Show navigator resource stats")}
+            description={t(
+              "Show compact live CPU and memory chips in task navigator rows.",
+            )}
             control={
               <Switch
                 checked={showNavigatorResourceStats}
@@ -206,14 +269,14 @@ export function GeneralSettingsPanel() {
                   trackGeneralSetting("showNavigatorResourceStats");
                   setShowNavigatorResourceStats(value);
                 }}
-                aria-label="Show navigator resource stats"
+                aria-label={t("Show navigator resource stats")}
               />
             }
           />
         </SettingsGroup>
 
         <SettingsGroup
-          title="Worktrees"
+          title={t("Worktrees")}
           tone="default"
           dataTestId={undefined}
           fill={false}
@@ -223,17 +286,21 @@ export function GeneralSettingsPanel() {
 
         {featureSettingsAvailable ? (
           <SettingsGroup
-            title="Experimental"
+            title={t("Experimental")}
             tone="default"
             dataTestId={undefined}
             fill={false}
           >
             <SettingsRow
-              label="Agent roles"
+              label={t("Agent roles")}
               description={
                 featureSettings.isError
-                  ? "Couldn't read feature settings. Repair ~/.traycer/cli/config.json, or back it up before resetting it, then reopen Settings."
-                  : "Let agents claim durable responsibilities and coordinate through role-aware tools and prompts."
+                  ? t(
+                      "Couldn't read feature settings. Repair ~/.traycer/cli/config.json, or back it up before resetting it, then reopen Settings.",
+                    )
+                  : t(
+                      "Let agents claim durable responsibilities and coordinate through role-aware tools and prompts.",
+                    )
               }
               control={
                 <Switch
@@ -245,7 +312,7 @@ export function GeneralSettingsPanel() {
                   onCheckedChange={(enabled) => {
                     setAgentRoles.mutate(enabled);
                   }}
-                  aria-label="Agent roles"
+                  aria-label={t("Agent roles")}
                 />
               }
             />
@@ -253,14 +320,14 @@ export function GeneralSettingsPanel() {
         ) : null}
 
         <SettingsGroup
-          title="Setup & migration"
+          title={t("Setup & migration")}
           tone="default"
           dataTestId={undefined}
           fill={false}
         >
           <SettingsRow
-            label="Product tour"
-            description="Replay the first-launch onboarding tour."
+            label={t("Product tour")}
+            description={t("Replay the first-launch onboarding tour.")}
             control={
               <Button
                 type="button"
@@ -275,15 +342,15 @@ export function GeneralSettingsPanel() {
                   });
                 }}
               >
-                Replay tour
+                {t("Replay tour")}
               </Button>
             }
           />
           <SettingsRow
-            label="Data migration"
+            label={t("Data migration")}
             description={
               migrationProgressLabel ??
-              "Retry moving local SQLite tasks and epics to cloud."
+              t("Retry moving local SQLite tasks and epics to cloud.")
             }
             control={
               <Button
@@ -303,7 +370,7 @@ export function GeneralSettingsPanel() {
                     variant={undefined}
                   />
                 ) : null}
-                Re-attempt migration
+                {t("Re-attempt migration")}
               </Button>
             }
           />
@@ -326,9 +393,10 @@ export function GeneralSettingsPanel() {
  * the machine's own page, where the page title already names the target.
  */
 function DangerZoneSection() {
+  const { t } = useTranslation("settings");
   return (
     <SettingsGroup
-      title="Danger Zone"
+      title={t("Danger Zone")}
       tone="danger"
       dataTestId="settings-danger-zone"
       fill={false}
@@ -375,6 +443,7 @@ function resolvePerWindowHostClear(
 function SettingsLocalAppStateSection() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const bridge = useWindowsBridge();
+  const { t } = useTranslation("settings");
 
   // Routed through `useMutation` (mirrors the sibling `clearSnapshotsMutation`):
   // `isPending` drives the UI and `onError` resets the dialog + toasts, so a
@@ -389,15 +458,17 @@ function SettingsLocalAppStateSection() {
     // so the user isn't stuck on a spinning confirm.
     onError: (error) => {
       setConfirmOpen(false);
-      toastFromRunnerError(error, "Couldn't clear local app state.");
+      toastFromRunnerError(error, t("Couldn't clear local app state."));
     },
   });
 
   return (
     <>
       <SettingsRow
-        label="Local app state"
-        description="Reset this device's app state - open tabs, layout, drafts, settings, and view preferences - then reload. You stay signed in. File edit snapshots are cleared from the host's own Overview page."
+        label={t("Local app state")}
+        description={t(
+          "Reset this device's app state - open tabs, layout, drafts, settings, and view preferences - then reload. You stay signed in. File edit snapshots are cleared from the host's own Overview page.",
+        )}
         control={
           <Button
             type="button"
@@ -416,17 +487,19 @@ function SettingsLocalAppStateSection() {
                 variant={undefined}
               />
             ) : null}
-            Clear local app state
+            {t("Clear local app state")}
           </Button>
         }
       />
       <ConfirmDestructiveDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="Clear local app state?"
-        description="This resets app state on this device - open tabs, layout, drafts, settings, and view preferences - then reloads. It can't be undone. You'll stay signed in."
+        title={t("Clear local app state?")}
+        description={t(
+          "This resets app state on this device - open tabs, layout, drafts, settings, and view preferences - then reloads. It can't be undone. You'll stay signed in.",
+        )}
         cascadeSummary={null}
-        actionLabel="Clear local app state"
+        actionLabel={t("Clear local app state")}
         isPending={clearLocalAppStateMutation.isPending}
         onConfirm={() => {
           clearLocalAppStateMutation.mutate();

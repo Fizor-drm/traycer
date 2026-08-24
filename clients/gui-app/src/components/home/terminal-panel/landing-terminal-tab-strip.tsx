@@ -21,6 +21,7 @@ import {
   type InlineRenameInputProps,
 } from "@/hooks/ui/use-inline-rename";
 import { registerPrimaryFocusEndpoint } from "@/lib/focus/primary-focus-coordinator";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { LandingTerminalTabRef } from "@/stores/home/landing-terminal-store";
 import type { PlainTerminalViewModel } from "@/lib/terminals/plain-terminal-authority";
@@ -130,6 +131,7 @@ function NewTerminalButton(props: {
   readonly onAdd: () => void;
 }): ReactNode {
   const { disabledReason, onAdd } = props;
+  const { t } = useTranslation("common");
   const disabled = disabledReason !== null;
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   useLayoutEffect(
@@ -151,7 +153,7 @@ function NewTerminalButton(props: {
       type="button"
       variant="ghost"
       size="icon-sm"
-      aria-label="New terminal"
+      aria-label={t("New terminal")}
       data-testid="landing-terminal-new-tab"
       aria-disabled={disabled || undefined}
       className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-transparent aria-disabled:hover:text-current dark:aria-disabled:hover:bg-transparent"
@@ -189,6 +191,7 @@ function LandingTerminalTab(props: {
   readonly viewModel: PlainTerminalViewModel | null;
 }): ReactNode {
   const { tab, active, onActivate, onRename } = props;
+  const { t } = useTranslation("common");
   const displayName = props.viewModel?.displayTitle ?? tab.name;
   const displayCwd =
     props.viewModel?.liveCwd ?? props.viewModel?.launchCwd ?? null;
@@ -268,7 +271,7 @@ function LandingTerminalTab(props: {
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label={`Close ${displayName}`}
+            aria-label={t("Close {{displayName}}", { displayName })}
             disabled={!props.canClose}
             className="opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
             onClick={(event) => {
@@ -286,20 +289,20 @@ function LandingTerminalTab(props: {
           onSelect={rename.startEditing}
         >
           <Pencil className="size-4" />
-          Rename
+          {t("Rename")}
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem
           disabled={!props.canClose}
           onSelect={() => props.onClose(tab)}
         >
-          Close
+          {t("Close")}
         </ContextMenuItem>
         <ContextMenuItem
           disabled={!props.canCloseAll}
           onSelect={props.onCloseAll}
         >
-          Close All
+          {t("Close All")}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
@@ -313,11 +316,12 @@ function LandingTerminalTabLabel(props: {
   readonly inputProps: InlineRenameInputProps;
   readonly viewModel: PlainTerminalViewModel | null;
 }): ReactNode {
+  const { t } = useTranslation("common");
   if (props.isEditing) {
     return (
       <input
         {...props.inputProps}
-        aria-label="Rename terminal"
+        aria-label={t("Rename terminal")}
         data-testid={`landing-terminal-tab-input-${props.instanceId}`}
         className="h-6 min-w-[7ch] max-w-40 rounded-sm border border-border bg-background px-1 text-ui-sm text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring"
       />
@@ -348,7 +352,7 @@ function LandingTerminalTabLabel(props: {
           className="text-ui-xs text-muted-foreground"
           data-testid={`landing-terminal-dormant-${props.instanceId}`}
         >
-          · dormant
+          {t("· dormant")}
         </span>
       ) : null}
       {props.viewModel?.isRuntimeUnknown === true ? (
@@ -356,7 +360,7 @@ function LandingTerminalTabLabel(props: {
           className="text-ui-xs text-muted-foreground"
           data-testid={`landing-terminal-unavailable-${props.instanceId}`}
         >
-          · status unavailable
+          {t("· status unavailable")}
         </span>
       ) : null}
     </>

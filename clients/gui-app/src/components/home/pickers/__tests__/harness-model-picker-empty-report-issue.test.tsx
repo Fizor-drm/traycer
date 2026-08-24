@@ -35,9 +35,14 @@ function harnessEntry(
 function renderRowsState(
   props: Omit<Parameters<typeof ModelRowsState>[0], "onOpenProviderSettings">,
 ): void {
+  // `ModelRowsState` uses `useTranslation`, so it must mount through JSX -
+  // calling it as a function would run its hooks outside React.
   render(
     <TooltipProvider>
-      {ModelRowsState({ ...props, onOpenProviderSettings: () => undefined })}
+      <ModelRowsState
+        {...props}
+        onOpenProviderSettings={() => undefined}
+      />
     </TooltipProvider>,
   );
 }

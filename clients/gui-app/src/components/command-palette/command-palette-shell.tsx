@@ -63,6 +63,7 @@ import type {
   CommandScope,
 } from "@/lib/commands/types";
 import { formatChordForDisplay } from "@/lib/keybindings/chord";
+import { useTranslation } from "react-i18next";
 import { useCommandPaletteStore } from "@/stores/command-palette/command-palette-store";
 import { Analytics, AnalyticsEvent } from "@/lib/analytics";
 
@@ -97,6 +98,7 @@ export interface CommandPaletteShellProps {
 
 export function CommandPaletteShell(props: CommandPaletteShellProps) {
   const { ctx, RootList } = props;
+  const { t } = useTranslation("common");
 
   const open = useCommandPaletteStore((state) => state.open);
   const query = useCommandPaletteStore((state) => state.query);
@@ -156,12 +158,14 @@ export function CommandPaletteShell(props: CommandPaletteShellProps) {
         }}
       >
         <DialogHeader className="sr-only">
-          <DialogTitle>Command Palette</DialogTitle>
-          <DialogDescription>Search for a command to run.</DialogDescription>
+          <DialogTitle>{t("Command Palette")}</DialogTitle>
+          <DialogDescription>
+            {t("Search for a command to run.")}
+          </DialogDescription>
         </DialogHeader>
         <Command
           filter={paletteFilter}
-          label="Search commands"
+          label={t("Search commands")}
           onKeyDown={handleKeyDown}
         >
           <PaletteQueryProvider value={query}>
@@ -169,9 +173,11 @@ export function CommandPaletteShell(props: CommandPaletteShellProps) {
               value={query}
               onValueChange={handleQueryChange}
               placeholder={
-                activeSubpage !== null ? activeSubpage.title : PLACEHOLDER_HINT
+                activeSubpage !== null
+                  ? activeSubpage.title
+                  : t(PLACEHOLDER_HINT)
               }
-              aria-label="Search commands"
+              aria-label={t("Search commands")}
             />
             <CommandList
               ref={listRef}
@@ -224,6 +230,7 @@ export function RootView(props: RootViewProps) {
     onSelect,
     onTogglePin,
   } = props;
+  const { t } = useTranslation("common");
 
   const scopedItems = useMemo(
     () => filterByScope(items, effectiveScope),
@@ -260,7 +267,7 @@ export function RootView(props: RootViewProps) {
   return (
     <>
       {loading && items.length === 0 ? null : (
-        <CommandEmpty>No commands match.</CommandEmpty>
+        <CommandEmpty>{t("No commands match.")}</CommandEmpty>
       )}
       {orderedBuckets.map((bucket, index) => (
         <GroupBlock
@@ -291,10 +298,11 @@ interface GroupBlockProps {
 function GroupBlock(props: GroupBlockProps) {
   const { bucket, onSelect, onTogglePin, pinnedIdSet, withLeadingSeparator } =
     props;
+  const { t } = useTranslation("common");
   return (
     <>
       {withLeadingSeparator ? <CommandSeparator /> : null}
-      <CommandGroup heading={bucket.label}>
+      <CommandGroup heading={t(bucket.label)}>
         {bucket.items.map((item) => (
           <PaletteItemRow
             key={item.id}

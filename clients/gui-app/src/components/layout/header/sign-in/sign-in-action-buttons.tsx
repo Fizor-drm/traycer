@@ -1,5 +1,6 @@
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import { useAuthSignInMutation } from "@/hooks/auth/use-auth-sign-in-mutation";
 import { cn } from "@/lib/utils";
 import { HERO_PRIMARY_BUTTON_CLASS } from "./styles";
@@ -9,6 +10,7 @@ export function PrimarySignInButton(props: {
   readonly isSigningIn: boolean;
 }) {
   const signInMutation = useAuthSignInMutation();
+  const { t } = useTranslation("shell");
   const isPending = props.isSigningIn || signInMutation.isPending;
 
   return (
@@ -26,7 +28,7 @@ export function PrimarySignInButton(props: {
         props.isHero && HERO_PRIMARY_BUTTON_CLASS,
       )}
     >
-      Sign in
+      {t("Sign in")}
       {isPending ? (
         <AgentSpinningDots
           variant="dots"
@@ -43,6 +45,7 @@ export function RetrySignInButton(props: {
   readonly isSigningIn: boolean;
 }) {
   const signInMutation = useAuthSignInMutation();
+  const { t } = useTranslation("shell");
 
   if (!props.isSigningIn) return null;
 
@@ -64,7 +67,7 @@ export function RetrySignInButton(props: {
         props.isHero ? "h-auto justify-center px-0 py-0 text-ui-sm" : null,
       )}
     >
-      Taking too long? Retry
+      {t("Taking too long? Retry")}
     </Button>
   );
 }

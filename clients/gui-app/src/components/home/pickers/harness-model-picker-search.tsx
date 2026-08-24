@@ -4,6 +4,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { RefObject } from "react";
 
 interface HarnessModelPickerSearchProps {
@@ -24,12 +25,13 @@ export function HarnessModelPickerSearch(props: HarnessModelPickerSearchProps) {
     listboxId,
     activeDescendant,
   } = props;
+  const { t } = useTranslation("common");
   // Search is scoped to the active harness, so name it in the placeholder. Falls
   // back to the generic copy before the catalog resolves the active provider.
   const placeholder =
     providerLabel.length > 0
-      ? `Search ${providerLabel} models`
-      : "Search models";
+      ? t("Search {{providerLabel}} models", { providerLabel })
+      : t("Search models");
 
   return (
     <div className="shrink-0 border-b p-2">

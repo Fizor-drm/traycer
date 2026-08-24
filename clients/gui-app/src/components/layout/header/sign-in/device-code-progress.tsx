@@ -1,4 +1,5 @@
 import { CircleAlert, Clock, SquareArrowOutUpRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import { useAuthOpenVerificationPageMutation } from "@/hooks/auth/use-auth-open-verification-page-mutation";
@@ -23,6 +24,7 @@ export function DeviceCodeProgress(props: {
 }) {
   const openVerificationPageMutation = useAuthOpenVerificationPageMutation();
   const signInMutation = useAuthSignInMutation();
+  const { t } = useTranslation("shell");
   const progress = props.progress;
   const remainingSeconds = useRemainingDeviceSeconds(progress.expiresAtMs);
   const isFinalizing = progress.phase === "finalizing";
@@ -30,8 +32,10 @@ export function DeviceCodeProgress(props: {
   // countdown reaching zero while the token is validated.
   const isExpired = !isFinalizing && remainingSeconds === 0;
   const expiryCopy = isExpired
-    ? "Code expired"
-    : `Expires in ${formatClockDuration(remainingSeconds)}`;
+    ? t("Code expired")
+    : t("Expires in {{duration}}", {
+        duration: formatClockDuration(remainingSeconds),
+      });
 
   return (
     <div
@@ -46,10 +50,10 @@ export function DeviceCodeProgress(props: {
       <div className={cn("flex flex-col gap-4", props.isHero ? "p-5" : "p-4")}>
         <div className="space-y-1.5 text-center">
           <h2 className="font-heading font-medium tracking-normal">
-            Approve in your browser
+            {t("Approve in your browser")}
           </h2>
           <p className="mx-auto max-w-[32ch] leading-5 text-ui-sm text-muted-foreground">
-            After you approve, Traycer will continue here.
+            {t("After you approve, Traycer will continue here.")}
           </p>
         </div>
 
@@ -64,7 +68,7 @@ export function DeviceCodeProgress(props: {
           onClick={() => openVerificationPageMutation.mutate()}
           data-testid="signin-open-approval"
         >
-          Open approval page
+          {t("Open approval page")}
           <SquareArrowOutUpRight className="size-4" aria-hidden="true" />
         </Button>
 
@@ -79,7 +83,7 @@ export function DeviceCodeProgress(props: {
           {isExpired ? (
             <div className="flex items-center gap-1">
               <CircleAlert className="size-3.5 shrink-0" aria-hidden="true" />
-              <span className="shrink-0">Approval code expired</span>
+              <span className="shrink-0">{t("Approval code expired")}</span>
             </div>
           ) : (
             <div className="flex items-center gap-1">
@@ -90,8 +94,8 @@ export function DeviceCodeProgress(props: {
               />
               <span className="shrink-0">
                 {isFinalizing
-                  ? "Approved - finishing sign-in"
-                  : "Waiting for approval"}
+                  ? t("Approved - finishing sign-in")
+                  : t("Waiting for approval")}
               </span>
             </div>
           )}
@@ -120,7 +124,7 @@ export function DeviceCodeProgress(props: {
               : "text-ui-xs",
           )}
         >
-          Taking too long? Start over
+          {t("Taking too long? Start over")}
         </Button>
       </div>
     </div>
