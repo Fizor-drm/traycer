@@ -9,7 +9,14 @@ export const DEFAULT_LOCALE: AppLocale = "en";
 // Key = English source text (`t("Language")`). The English dictionary is
 // therefore empty by construction - a key with no ja entry renders the key
 // itself (the English copy), which is what makes phased migration safe.
-export const I18N_NAMESPACES = ["common", "shell", "settings"] as const;
+export const I18N_NAMESPACES = [
+  "common",
+  "shell",
+  "settings",
+  "palette",
+  "panels",
+  "canvas",
+] as const;
 export type I18nNamespace = (typeof I18N_NAMESPACES)[number];
 export const DEFAULT_I18N_NAMESPACE: I18nNamespace = "common";
 
@@ -35,6 +42,9 @@ const JA_NAMESPACE_LOADERS: Record<
   common: () => import("@/lib/i18n/locales/ja/common.json"),
   shell: () => import("@/lib/i18n/locales/ja/shell.json"),
   settings: () => import("@/lib/i18n/locales/ja/settings.json"),
+  palette: () => import("@/lib/i18n/locales/ja/palette.json"),
+  panels: () => import("@/lib/i18n/locales/ja/panels.json"),
+  canvas: () => import("@/lib/i18n/locales/ja/canvas.json"),
 };
 
 const lazyLocaleBackend: BackendModule = {
