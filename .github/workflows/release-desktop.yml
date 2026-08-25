@@ -88,6 +88,18 @@ jobs:
           npm pkg set "version=$version"
           echo "App version stamped: $version"
 
+      - name: Stamp production deploy target
+        run: |
+          set -euo pipefail
+          # config.ts ships committed as a DEV build (environment: "dev",
+          # appName "Traycer Dev"). The internal release pipeline stamps the
+          # production identity before packaging; without this the packaged
+          # app runs with dev identity - dev userData, dev CLI discovery
+          # (expects the dev orchestrator's wrapper env) - and can never
+          # provision a host ("no hosts available").
+          bun clients/desktop/scripts/set-deploy-target.cjs \
+            --target=production --version="${GITHUB_REF_NAME#desktop-v}"
+
       - name: Package (electron-builder, unsigned)
         working-directory: clients/desktop
         env:
@@ -99,6 +111,10 @@ jobs:
           # be the well-known default.
           VITE_DESKTOP_LOCAL_STORAGE_KEY: d407d08e2768eea2c9daff9975c151503da30b4a563dee7a8a5856b7fa8ad64b
         run: bun run package
+
+      - name: Restore deploy target
+        if: always()
+        run: bun clients/desktop/scripts/set-deploy-target.cjs --restore
 
       - name: Collect artifacts
         run: |
