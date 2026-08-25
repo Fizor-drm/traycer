@@ -86,7 +86,13 @@ jobs:
           version="${GITHUB_REF_NAME#desktop-v}"
           cd clients/desktop
           npm pkg set "version=$version"
-          echo "App version stamped: $version"
+          # Repoint electron-updater at THIS fork's releases. The committed
+          # publish config targets upstream traycerai/traycer, whose 1.x
+          # releases are NEWER than any fork tag - the updater would nag the
+          # user into "downloading" the official app over the fork.
+          npm pkg set "build.publish[0].owner=Fizor-drm"
+          npm pkg set "build.publish[0].repo=traycer"
+          echo "App version stamped: $version (updater -> Fizor-drm/traycer)"
 
       - name: Stamp production deploy target
         run: |
@@ -121,7 +127,8 @@ jobs:
           set -euo pipefail
           mkdir -p dist-artifacts
           find clients/desktop/release -maxdepth 1 -type f \
-            \( -name '*.exe' -o -name '*.msi' \) -print -exec cp {} dist-artifacts/ \;
+            \( -name '*.exe' -o -name '*.msi' -o -name 'latest.yml' -o -name '*.blockmap' \) \
+            -print -exec cp {} dist-artifacts/ \;
           test -n "$(ls -A dist-artifacts)" || {
             echo "No .exe/.msi artifacts found in clients/desktop/release" >&2
             exit 1
