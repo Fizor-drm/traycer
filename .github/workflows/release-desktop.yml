@@ -90,6 +90,14 @@ jobs:
 
       - name: Package (electron-builder, unsigned)
         working-directory: clients/desktop
+        env:
+          # The renderer's secure-local-storage refuses to boot a packaged
+          # build without this build-time key (it would otherwise fall back
+          # to a well-known public secret). A fork build bundles the key in
+          # the asar anyway, so a fixed random value is equivalent in
+          # strength to what the internal pipeline ships - it just must not
+          # be the well-known default.
+          VITE_DESKTOP_LOCAL_STORAGE_KEY: d407d08e2768eea2c9daff9975c151503da30b4a563dee7a8a5856b7fa8ad64b
         run: bun run package
 
       - name: Collect artifacts
