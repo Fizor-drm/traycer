@@ -1,4 +1,5 @@
 import { useCallback, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertCircle, Unplug } from "lucide-react";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export function FileTreeWorkspacesUnavailable(props: {
   readonly onRetry: () => Promise<void>;
 }): ReactNode {
   const onRetry = props.onRetry;
+  const { t } = useTranslation("canvas");
   const handleRefresh = useCallback((): Promise<void> => onRetry(), [onRetry]);
   const refresh = useRefreshSpinner({
     onRefresh: handleRefresh,
@@ -42,13 +44,15 @@ export function FileTreeWorkspacesUnavailable(props: {
   const Icon = unreachable ? Unplug : AlertCircle;
   const unreachableTitle =
     props.hostName === null
-      ? "Can't reach this host"
-      : `Can't reach ${props.hostName}`;
-  const title = unreachable ? unreachableTitle : "Couldn't load workspaces";
+      ? t("Can't reach this host")
+      : t("Can't reach {{name}}", { name: props.hostName });
+  const title = unreachable ? unreachableTitle : t("Couldn't load workspaces");
   const reason =
     props.failure.kind === "answered"
       ? props.failure.message
-      : "This panel is pointed at a host that isn't responding. Pick another host above, or try again.";
+      : t(
+          "This panel is pointed at a host that isn't responding. Pick another host above, or try again.",
+        );
 
   return (
     <div
@@ -86,7 +90,7 @@ export function FileTreeWorkspacesUnavailable(props: {
             variant={undefined}
           />
         ) : null}
-        Retry
+        {t("Retry")}
       </Button>
     </div>
   );

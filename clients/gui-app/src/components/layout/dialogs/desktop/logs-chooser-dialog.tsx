@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useState, type ReactNode } from "react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, FolderOpen } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ReportIssueAction } from "@/components/report-issue/report-issue-action";
 import { createReportIssueContext } from "@/lib/report-issue-context";
@@ -21,6 +22,7 @@ import type {
   DesktopSupportLogTarget,
   DesktopSupportSnapshot,
 } from "@/lib/windows/types";
+import { i18n } from "@/lib/i18n/init-i18n";
 import type { DesktopSupportDialogProps } from "./types";
 
 const SUPPORT_LOG_TAIL_LINES = 100;
@@ -68,6 +70,7 @@ function revealReducer(_state: RevealState, action: RevealAction): RevealState {
 function LogsChooserDialogContent(
   props: LogsChooserDialogContentProps,
 ): ReactNode {
+  const { t } = useTranslation("common");
   const snapshot = useSupportSnapshot(props.open, props.support);
   const [revealState, dispatchReveal] = useReducer(revealReducer, {
     pendingTarget: null,
@@ -78,7 +81,7 @@ function LogsChooserDialogContent(
     if (props.support === null) {
       dispatchReveal({
         type: "error",
-        message: "Desktop support bridge unavailable.",
+        message: i18n.t("Desktop support bridge unavailable.", { ns: "common" }),
       });
       return;
     }
@@ -90,7 +93,7 @@ function LogsChooserDialogContent(
       () => {
         dispatchReveal({
           type: "error",
-          message: "Could not reveal the selected log.",
+          message: i18n.t("Could not reveal the selected log.", { ns: "common" }),
         });
       },
     );
@@ -118,7 +121,7 @@ function LogsChooserDialogContent(
         <span>{snapshot.message}</span>
         <ReportIssueAction
           context={createReportIssueContext({
-            title: "Couldn't load desktop details",
+            title: t("Couldn't load desktop details"),
             message: null,
             code: null,
             source: "Logs",
@@ -139,10 +142,10 @@ function LogsChooserDialogContent(
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <FolderOpen className="size-4" />
-          Open Logs
+          {t("Open Logs")}
         </DialogTitle>
         <DialogDescription className="sr-only">
-          Desktop and host diagnostics.
+          {t("Desktop and host diagnostics.")}
         </DialogDescription>
       </DialogHeader>
       {snapshotContent}
@@ -154,7 +157,7 @@ function LogsChooserDialogContent(
           <span>{revealState.error}</span>
           <ReportIssueAction
             context={createReportIssueContext({
-              title: "Couldn't reveal the log file",
+              title: t("Couldn't reveal the log file"),
               message: null,
               code: null,
               source: "Logs",
@@ -207,7 +210,9 @@ function useSupportSnapshot(
             support,
             snapshot: {
               status: "unavailable",
-              message: "Could not load desktop details.",
+              message: i18n.t("Could not load desktop details.", {
+                ns: "common",
+              }),
             },
           });
         }
@@ -219,18 +224,18 @@ function useSupportSnapshot(
   }, [open, support]);
 
   if (!open) {
-    return { status: "loading", message: "Loading details..." };
+    return { status: "loading", message: i18n.t("Loading details...", { ns: "common" }) };
   }
   if (support === null) {
     return {
       status: "unavailable",
-      message: "Desktop support bridge unavailable.",
+      message: i18n.t("Desktop support bridge unavailable.", { ns: "common" }),
     };
   }
   if (resource?.support === support) {
     return resource.snapshot;
   }
-  return { status: "loading", message: "Loading details..." };
+  return { status: "loading", message: i18n.t("Loading details...", { ns: "common" }) };
 }
 
 type LogTailState =
@@ -248,6 +253,7 @@ interface LogEntryPanelProps {
 }
 
 function LogEntryPanel(props: LogEntryPanelProps): ReactNode {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const tail = useLogTail(open, props.support, props.entry.target);
   const Icon = open ? ChevronUp : ChevronDown;
@@ -278,7 +284,7 @@ function LogEntryPanel(props: LogEntryPanelProps): ReactNode {
           className="shrink-0"
         >
           <FolderOpen />
-          {props.revealPending ? "Opening..." : "Reveal"}
+          {props.revealPending ? t("Opening...") : t("Reveal")}
         </Button>
       </div>
       {open ? <LogTailView state={tail} /> : null}
@@ -296,17 +302,33 @@ function useLogTail(
     enabled: open && support !== null,
   });
 
-  if (!open) return { status: "idle", message: "Expand to load log output." };
+  if (!open)
+    return {
+      status: "idle",
+      message: i18n.t("Expand to load log output.", { ns: "common" }),
+    };
   if (support === null) {
-    return { status: "error", message: "Desktop support bridge unavailable." };
+    return {
+      status: "error",
+      message: i18n.t("Desktop support bridge unavailable.", { ns: "common" }),
+    };
   }
   if (data !== undefined) return { status: "ready", result: data };
   if (isError)
-    return { status: "error", message: "Could not load log output." };
+    return {
+      status: "error",
+      message: i18n.t("Could not load log output.", { ns: "common" }),
+    };
   if (isFetching) {
-    return { status: "loading", message: "Loading log output..." };
+    return {
+      status: "loading",
+      message: i18n.t("Loading log output...", { ns: "common" }),
+    };
   }
-  return { status: "idle", message: "Expand to load log output." };
+  return {
+    status: "idle",
+    message: i18n.t("Expand to load log output.", { ns: "common" }),
+  };
 }
 
 function desktopSupportLogTailQueryOptions(
@@ -325,12 +347,13 @@ function desktopSupportLogTailQueryOptions(
 }
 
 function LogTailView(props: { readonly state: LogTailState }): ReactNode {
+  const { t } = useTranslation("common");
   if (props.state.status === "ready") {
     const content = props.state.result.lines.join("\n");
     if (content.length === 0) {
       return (
         <p className="rounded-md border border-border/60 bg-foreground/3 px-3 py-2 text-center text-ui-xs text-muted-foreground">
-          Log file is empty.
+          {t("Log file is empty.")}
         </p>
       );
     }
@@ -339,7 +362,9 @@ function LogTailView(props: { readonly state: LogTailState }): ReactNode {
         <div className="flex items-center justify-between gap-2">
           {props.state.result.truncated ? (
             <p className="text-ui-xs text-muted-foreground">
-              Showing last {SUPPORT_LOG_TAIL_LINES} lines.
+              {t("Showing last {{count}} lines.", {
+                count: SUPPORT_LOG_TAIL_LINES,
+              })}
             </p>
           ) : (
             <span aria-hidden />
@@ -347,7 +372,7 @@ function LogTailView(props: { readonly state: LogTailState }): ReactNode {
           <CopyTextButton
             value={content}
             label={null}
-            ariaLabel="Copy log output"
+            ariaLabel={t("Copy log output")}
             disabled={false}
           />
         </div>
@@ -364,7 +389,7 @@ function LogTailView(props: { readonly state: LogTailState }): ReactNode {
         <span>{props.state.message}</span>
         <ReportIssueAction
           context={createReportIssueContext({
-            title: "Couldn't load log output",
+            title: t("Couldn't load log output"),
             message: null,
             code: null,
             source: "Logs",

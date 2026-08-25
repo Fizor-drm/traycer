@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type {
   ModelProviderAuthResult,
   ModelProviderEntry,
@@ -22,6 +23,7 @@ import {
   modelProviderListErrorMessage,
 } from "@/lib/providers/model-provider-error-copy";
 import { redactLogText } from "@/lib/logger";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { cn } from "@/lib/utils";
 import type { ProviderPackPreparing } from "@/components/providers/provider-pack-readiness";
 import { providerPackPreparingLabel } from "@/components/providers/provider-pack-readiness";
@@ -142,7 +144,9 @@ function disconnectRowError(
       modelProviderId,
       message: redactLogText(
         result.reason ??
-          "Removing this credential isn't available on this host.",
+          i18n.t("Removing this credential isn't available on this host.", {
+            ns: "panels",
+          }),
       ),
     };
   }
@@ -164,7 +168,10 @@ function customSubmitError(result: ModelProviderAuthResult): string | null {
   }
   if (result.kind === "unsupported") {
     return redactLogText(
-      result.reason ?? "Custom providers aren't available on this host.",
+      result.reason ??
+        i18n.t("Custom providers aren't available on this host.", {
+          ns: "panels",
+        }),
     );
   }
   return null;
@@ -184,9 +191,15 @@ function disconnectDescription(
   providerLabel: string,
 ): string {
   if (entry.configDeclaredCustom) {
-    return `Disconnect ${entry.name}? Its declaration stays in ${providerLabel}'s config file, so you can turn it back on later.`;
+    return i18n.t(
+      "Disconnect {{name}}? Its declaration stays in {{provider}}'s config file, so you can turn it back on later.",
+      { name: entry.name, provider: providerLabel, ns: "panels" },
+    );
   }
-  return `Remove the stored ${entry.name} credential from ${providerLabel}? If an environment variable or config file also provides it, ${entry.name} keeps working from that source.`;
+  return i18n.t(
+    "Remove the stored {{name}} credential from {{provider}}? If an environment variable or config file also provides it, {{name}} keeps working from that source.",
+    { name: entry.name, provider: providerLabel, ns: "panels" },
+  );
 }
 
 /**
@@ -491,6 +504,7 @@ export function ProviderModelProvidersTab(props: {
   readonly packPreparing: ProviderPackPreparing | null;
 }): ReactNode {
   const { providerId, providerLabel, capabilities, packPreparing } = props;
+  const { t } = useTranslation("panels");
   // Subscribed for the re-render; the id itself comes off the BOUND client,
   // because Settings can target a non-active host - the same rule
   // `useProviderNativeScope` follows, and for the same reason: an attempt filed
@@ -619,9 +633,10 @@ export function ProviderModelProvidersTab(props: {
       data-testid="provider-model-providers-tab"
     >
       <p className="text-ui-xs text-muted-foreground">
-        Credentials for the upstream model providers {providerLabel} can call.
-        They are stored by {providerLabel} itself, so its CLI and Traycer see
-        the same sign-ins.
+        {t(
+          "Credentials for the upstream model providers {{provider}} can call. They are stored by {{provider}} itself, so its CLI and Traycer see the same sign-ins.",
+          { provider: providerLabel },
+        )}
       </p>
 
       {entries.length > 0 ? (
@@ -744,14 +759,14 @@ export function ProviderModelProvidersTab(props: {
         onOpenChange={(open) => {
           if (!open) setDisconnectTarget(null);
         }}
-        title="Disconnect provider"
+        title={t("Disconnect provider")}
         description={
           disconnectTarget === null
             ? ""
             : disconnectDescription(disconnectTarget, providerLabel)
         }
         cascadeSummary={null}
-        actionLabel="Disconnect"
+        actionLabel={t("Disconnect")}
         isPending={disconnectPending}
         onConfirm={handleDisconnect}
       />
@@ -791,20 +806,21 @@ function ModelProvidersBody(props: {
   readonly onConnect: (entry: ModelProviderEntry) => void;
   readonly onDisconnect: (entry: ModelProviderEntry) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (props.listPending) {
     return (
       <div className="flex items-center gap-2 py-6 text-ui-sm text-muted-foreground">
         <MutedAgentSpinner />
-        Loading model providers
+        {t("Loading model providers")}
       </div>
     );
   }
   if (props.listError !== null) {
     return (
       <EmptyState
-        title="Couldn't load model providers"
+        title={t("Couldn't load model providers")}
         description={props.listError}
-        actionLabel="Retry"
+        actionLabel={t("Retry")}
         onAction={props.onRetry}
       />
     );
@@ -831,8 +847,8 @@ function ModelProvidersBody(props: {
       <EmptyState
         title={
           result.code === "capability_unavailable"
-            ? "Not available here"
-            : "Couldn't load model providers"
+            ? t("Not available here")
+            : t("Couldn't load model providers")
         }
         description={redactLogText(
           modelProviderListErrorMessage(result.code, result.detail),
@@ -840,7 +856,7 @@ function ModelProvidersBody(props: {
         // `capability_unavailable` means the surface is not offered on this
         // host at all - a retry cannot change that, and offering one would be a
         // button that is guaranteed to do nothing.
-        actionLabel={result.code === "server_unavailable" ? "Retry" : null}
+        actionLabel={result.code === "server_unavailable" ? t("Retry") : null}
         onAction={result.code === "server_unavailable" ? props.onRetry : null}
       />
     );
@@ -858,8 +874,11 @@ function ModelProvidersBody(props: {
       >
         <li className="w-full py-2">
           <EmptyState
-            title="No model providers"
-            description={`${props.providerLabel} reported no upstream providers on this host.`}
+            title={t("No model providers")}
+            description={t(
+              "{{provider}} reported no upstream providers on this host.",
+              { provider: props.providerLabel },
+            )}
             actionLabel={null}
             onAction={null}
           />
@@ -899,7 +918,7 @@ function ModelProvidersBody(props: {
       >
         <li className="w-full py-2">
           <EmptyState
-            title="No matching providers"
+            title={t("No matching providers")}
             description={props.filterEmptyDescription}
             actionLabel={null}
             onAction={null}
@@ -979,6 +998,7 @@ function ModelProviderListShell(props: {
   readonly refreshing: boolean;
   readonly children: ReactNode;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <>
       <RefreshingNotice refreshing={props.refreshing} />
@@ -1012,7 +1032,7 @@ function ModelProviderListShell(props: {
               onClick={props.onAddCustom}
             >
               <Plus className="size-3.5" />
-              Add custom provider
+              {t("Add custom provider")}
             </Button>
           </li>
         ) : null}
@@ -1058,6 +1078,7 @@ function customRowActions(
  * nothing. Which is what happened, twice.
  */
 function RefreshingNotice(props: { readonly refreshing: boolean }): ReactNode {
+  const { t } = useTranslation("panels");
   if (!props.refreshing) return null;
   return (
     <div
@@ -1065,7 +1086,7 @@ function RefreshingNotice(props: { readonly refreshing: boolean }): ReactNode {
       role="status"
     >
       <MutedAgentSpinner />
-      Refreshing providers
+      {t("Refreshing providers")}
     </div>
   );
 }
@@ -1085,6 +1106,7 @@ function ModelProviderRow(props: {
   readonly onReenableCustom: (values: CustomProviderValues) => void;
 }): ReactNode {
   const { entry } = props;
+  const { t } = useTranslation("panels");
   const custom = customRowActions(entry, props.canUpdateCustom);
   // Every config-writing entry point closes while ANY of them is in flight, not
   // just the acting row's. They all rewrite one file, and a completion that
@@ -1162,9 +1184,9 @@ function ModelProviderRow(props: {
               onClick={() => {
                 props.onEditCustom(custom.values);
               }}
-              aria-label={`Edit ${entry.name}`}
+              aria-label={t("Edit {{name}}", { name: entry.name })}
             >
-              Edit
+              {t("Edit")}
             </Button>
           ) : null}
           {custom?.reenable === true ? (
@@ -1176,9 +1198,9 @@ function ModelProviderRow(props: {
               onClick={() => {
                 props.onReenableCustom(custom.values);
               }}
-              aria-label={`Re-enable ${entry.name}`}
+              aria-label={t("Re-enable {{name}}", { name: entry.name })}
             >
-              Re-enable
+              {t("Re-enable")}
             </Button>
           ) : null}
           {showConnect ? (
@@ -1191,9 +1213,9 @@ function ModelProviderRow(props: {
               // Row-specific, like its three siblings: "Connect" alone repeats
               // ~180 times in the accessibility tree with nothing saying which
               // provider each one belongs to.
-              aria-label={`Connect ${entry.name}`}
+              aria-label={t("Connect {{name}}", { name: entry.name })}
             >
-              Connect
+              {t("Connect")}
             </Button>
           ) : null}
           {showDisconnect ? (
@@ -1218,9 +1240,9 @@ function ModelProviderRow(props: {
               // nothing and stays live.
               disabled={disconnectWritesConfig(entry) ? configBusy : props.busy}
               onClick={props.onDisconnect}
-              aria-label={`Disconnect ${entry.name}`}
+              aria-label={t("Disconnect {{name}}", { name: entry.name })}
             >
-              Disconnect
+              {t("Disconnect")}
             </Button>
           ) : null}
         </div>

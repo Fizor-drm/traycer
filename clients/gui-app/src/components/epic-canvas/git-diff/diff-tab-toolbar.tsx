@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import {
   AlignJustify,
   ChevronsDownUp,
@@ -71,6 +73,7 @@ interface DiffTabToolbarProps {
 }
 
 export function DiffTabToolbar(props: DiffTabToolbarProps) {
+  const { t } = useTranslation("canvas");
   const view = props.view;
   const isSplit = view.mode === "split";
 
@@ -81,22 +84,22 @@ export function DiffTabToolbar(props: DiffTabToolbarProps) {
     readonly patch: (checked: boolean) => DiffTabToolbarViewPatch;
   }> = [
     {
-      label: "Backgrounds",
+      label: t("Backgrounds"),
       checked: view.backgrounds,
       patch: (backgrounds) => ({ backgrounds }),
     },
     {
-      label: "Line numbers",
+      label: t("Line numbers"),
       checked: view.lineNumbers,
       patch: (lineNumbers) => ({ lineNumbers }),
     },
     {
-      label: "Word wrap",
+      label: t("Word wrap"),
       checked: view.wordWrap,
       patch: (wordWrap) => ({ wordWrap }),
     },
     {
-      label: "Ignore whitespace",
+      label: t("Ignore whitespace"),
       checked: view.ignoreWhitespace,
       patch: (ignoreWhitespace) => ({ ignoreWhitespace }),
     },
@@ -106,7 +109,7 @@ export function DiffTabToolbar(props: DiffTabToolbarProps) {
     <div className="flex items-center gap-0.5">
       {collapseAll !== null ? (
         <TooltipWrapper
-          label={collapseAll.allCollapsed ? "Expand all" : "Collapse all"}
+          label={collapseAll.allCollapsed ? t("Expand all") : t("Collapse all")}
           side="top"
           sideOffset={undefined}
           align={undefined}
@@ -123,7 +126,7 @@ export function DiffTabToolbar(props: DiffTabToolbarProps) {
             variant="ghost"
             size="icon-sm"
             aria-label={
-              collapseAll.allCollapsed ? "Expand all" : "Collapse all"
+              collapseAll.allCollapsed ? t("Expand all") : t("Collapse all")
             }
             className="text-muted-foreground hover:text-foreground"
           >
@@ -137,7 +140,7 @@ export function DiffTabToolbar(props: DiffTabToolbarProps) {
       ) : null}
 
       <TooltipWrapper
-        label={isSplit ? "Split view" : "Unified view"}
+        label={isSplit ? t("Split view") : t("Unified view")}
         side="top"
         sideOffset={undefined}
         align={undefined}
@@ -150,7 +153,7 @@ export function DiffTabToolbar(props: DiffTabToolbarProps) {
           variant="ghost"
           size="icon-sm"
           aria-label={
-            isSplit ? "Switch to unified view" : "Switch to split view"
+            isSplit ? t("Switch to unified view") : t("Switch to split view")
           }
           className="text-muted-foreground hover:text-foreground"
         >
@@ -164,7 +167,7 @@ export function DiffTabToolbar(props: DiffTabToolbarProps) {
 
       {props.onRefresh !== null ? (
         <TooltipWrapper
-          label="Refresh diff"
+          label={t("Refresh diff")}
           side="top"
           sideOffset={undefined}
           align={undefined}
@@ -176,7 +179,7 @@ export function DiffTabToolbar(props: DiffTabToolbarProps) {
               disabled={props.refreshing}
               variant="ghost"
               size="icon-sm"
-              aria-label="Refresh diff"
+              aria-label={t("Refresh diff")}
               className="text-muted-foreground hover:text-foreground"
             >
               <RefreshIcon refreshing={props.refreshing} />
@@ -188,7 +191,7 @@ export function DiffTabToolbar(props: DiffTabToolbarProps) {
       <Popover>
         <PopoverTrigger asChild>
           <TooltipWrapper
-            label="Diff settings"
+            label={t("Diff settings")}
             side="top"
             sideOffset={undefined}
             align={undefined}
@@ -197,7 +200,7 @@ export function DiffTabToolbar(props: DiffTabToolbarProps) {
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label="Diff settings"
+              aria-label={t("Diff settings")}
               className="text-muted-foreground hover:text-foreground"
             >
               <Settings2 className="size-4" />
@@ -216,9 +219,10 @@ export function DiffTabToolbar(props: DiffTabToolbarProps) {
             />
           ))}
           <div className="flex items-center justify-between gap-3 px-2 py-1.5 text-ui-sm">
-            <span>Indicator style</span>
+            <span>{t("Indicator style")}</span>
             <IndicatorStyleControl
               value={view.indicatorStyle}
+              t={t}
               onChange={(indicatorStyle) =>
                 props.onViewPatch({ indicatorStyle })
               }
@@ -244,7 +248,7 @@ export function DiffTabToolbar(props: DiffTabToolbarProps) {
                 ) : (
                   <ExternalLink className="size-4 text-muted-foreground" />
                 )}
-                Open in editor
+                {t("Open in editor")}
               </Button>
             </>
           ) : null}
@@ -273,6 +277,7 @@ function DiffSettingRow(props: {
 // width is the segment width and translateX(index * 100%) lands it exactly.
 function IndicatorStyleControl(props: {
   readonly value: GitDiffIndicatorStyle;
+  readonly t: TFunction<"canvas">;
   readonly onChange: (style: GitDiffIndicatorStyle) => void;
 }): ReactNode {
   const activeIndex = INDICATOR_OPTIONS.findIndex(
@@ -282,7 +287,7 @@ function IndicatorStyleControl(props: {
   return (
     <div
       role="radiogroup"
-      aria-label="Indicator style"
+      aria-label={props.t("Indicator style")}
       // muted-fill-ok: segmented track on bg-canvas (tile-canvas canvas-token-scope); --canvas never equals --muted
       className="relative flex items-center rounded-md bg-muted p-0.5"
     >
@@ -297,7 +302,7 @@ function IndicatorStyleControl(props: {
         return (
           <TooltipWrapper
             key={option.value}
-            label={option.label}
+            label={props.t(option.label)}
             side="top"
             sideOffset={undefined}
             align={undefined}
@@ -306,7 +311,7 @@ function IndicatorStyleControl(props: {
               type="button"
               role="radio"
               aria-checked={active}
-              aria-label={option.label}
+              aria-label={props.t(option.label)}
               onClick={() => props.onChange(option.value)}
               className={cn(
                 "relative z-10 flex size-7 items-center justify-center rounded-sm transition-colors",

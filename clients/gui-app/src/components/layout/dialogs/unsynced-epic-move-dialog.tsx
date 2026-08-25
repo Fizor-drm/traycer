@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,6 +19,7 @@ import type { EpicNewWindowFlow } from "@/components/layout/hooks/use-epic-open-
 export function UnsyncedEpicMoveDialog(props: {
   readonly flow: EpicNewWindowFlow;
 }) {
+  const { t } = useTranslation("common");
   const waitForSyncRef = useRef<HTMLButtonElement | null>(null);
   const request = props.flow.pendingMove;
   const epicId = request?.epicId ?? null;
@@ -65,10 +67,11 @@ export function UnsyncedEpicMoveDialog(props: {
         }}
       >
         <DialogHeader>
-          <DialogTitle>You have unsynced changes for this Epic.</DialogTitle>
+          <DialogTitle>{t("You have unsynced changes for this Epic.")}</DialogTitle>
           <DialogDescription>
-            Wait for sync before moving it, or discard local edits and open it
-            in a new window now.
+            {t(
+              "Wait for sync before moving it, or discard local edits and open it in a new window now.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -79,7 +82,7 @@ export function UnsyncedEpicMoveDialog(props: {
             data-testid="epic-move-unsynced-discard"
           >
             <ExternalLink />
-            Discard and move
+            {t("Discard and move")}
           </Button>
           <Button
             type="button"
@@ -88,7 +91,7 @@ export function UnsyncedEpicMoveDialog(props: {
             data-testid="epic-move-unsynced-wait"
             ref={waitForSyncRef}
           >
-            Wait for sync
+            {t("Wait for sync")}
           </Button>
         </DialogFooter>
       </DialogContent>

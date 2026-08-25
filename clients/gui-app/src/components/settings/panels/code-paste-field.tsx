@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MutedAgentSpinner } from "@/components/ui/agent-spinning-dots";
@@ -74,6 +75,7 @@ export function CodePasteField({
   readonly visibleLabel: boolean;
 }): ReactNode {
   const inputId = useId();
+  const { t } = useTranslation("panels");
   const [rawCode, setRawCode] = useState("");
   const [lastSubmittedCode, setLastSubmittedCode] = useState<string | null>(
     null,
@@ -124,7 +126,7 @@ export function CodePasteField({
           !visibleLabel && "sr-only",
         )}
       >
-        Paste the code
+        {t("Paste the code")}
       </label>
       <div className="flex items-center gap-2">
         <Input
@@ -133,7 +135,7 @@ export function CodePasteField({
           autoComplete="off"
           spellCheck={false}
           className="min-w-0 flex-1 font-mono text-ui-sm"
-          placeholder="Paste code"
+          placeholder={t("Paste code")}
           value={displayValue}
           disabled={disabled}
           readOnly={locked}
@@ -159,7 +161,7 @@ export function CodePasteField({
           type="button"
           size="icon-sm"
           variant="secondary"
-          aria-label="Submit code"
+          aria-label={t("Submit code")}
           disabled={disabled || locked || !isValid}
           onClick={() => submit(trimmed)}
         >
@@ -172,11 +174,15 @@ export function CodePasteField({
       </div>
       {showFormatHint ? (
         <p className="text-ui-xs text-muted-foreground">
-          The code should look like <code>abc123#xyz789</code>.
+          {t("The code should look like {{example}}.", {
+            example: "abc123#xyz789",
+          })}
         </p>
       ) : null}
       {codePaste.submitError !== null ? (
-        <p className="text-ui-xs text-destructive">{SUBMIT_ERROR_MESSAGE}</p>
+        <p className="text-ui-xs text-destructive">
+          {t(SUBMIT_ERROR_MESSAGE)}
+        </p>
       ) : null}
     </div>
   );

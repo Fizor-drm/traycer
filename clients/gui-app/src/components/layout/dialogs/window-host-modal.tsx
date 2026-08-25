@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import { Dialog as DialogPrimitive } from "radix-ui";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import { HostBootCard } from "@/components/centered-card";
@@ -11,6 +12,7 @@ import { getClientAppVersion } from "@/lib/app-version";
 import { cn } from "@/lib/utils";
 import { createReportIssueContext } from "@/lib/report-issue-context";
 import { usePressStartActivation } from "@/lib/host/press-start-activation";
+import { i18n } from "@/lib/i18n/init-i18n";
 import type { HostProgressView } from "@/lib/host/host-progress-copy";
 import {
   hostUpdateSkew,
@@ -219,6 +221,7 @@ export function WindowHostModal(props: WindowHostModalProps): ReactNode {
  * one" signal a row of equal-weight buttons is.
  */
 export function WindowHostStartupCard(props: WindowHostModalProps): ReactNode {
+  const { t } = useTranslation("common");
   const copy = modalCopy(props.variant, props.cause);
   // The released card face: body only, one heading, for a start that is
   // progressing or slow. A SETTLED failure gets the titled face below even on
@@ -247,7 +250,7 @@ export function WindowHostStartupCard(props: WindowHostModalProps): ReactNode {
               className="font-heading text-lg leading-none font-medium"
             >
               {props.cause === "cold-start"
-                ? "Traycer Host didn't start"
+                ? t("Traycer Host didn't start")
                 : copy.title}
             </h2>
             {props.cause === "cold-start" ? null : (
@@ -293,6 +296,7 @@ function NarrationActions(
   },
 ): ReactNode {
   const settingsActivation = usePressStartActivation(props.onOpenSettings);
+  const { t } = useTranslation("common");
   return (
     <div
       className={cn(
@@ -318,7 +322,7 @@ function NarrationActions(
           onClick={props.onUpdateHost}
           data-testid="window-host-modal-update-host"
         >
-          Update host
+          {t("Update host")}
         </Button>
       )}
       {props.onRetry === null ? null : (
@@ -331,7 +335,7 @@ function NarrationActions(
           data-testid="window-host-modal-retry"
         >
           <span className="inline-flex items-center gap-1.5">
-            <span>Retry</span>
+            <span>{t("Retry")}</span>
             {props.retryPending ? (
               <AgentSpinningDots
                 className={undefined}
@@ -362,7 +366,7 @@ function NarrationActions(
         data-testid="window-host-modal-open-settings"
         data-emphasis={props.settingsEmphasis}
       >
-        Open settings
+        {t("Open settings")}
       </Button>
       {props.showReportIssue ? (
         <ReportIssueAction
@@ -466,12 +470,24 @@ function IncompatibleDetail(props: {
       data-testid="window-host-modal-incompatible-detail"
     >
       {detail.hostVersion === null ? null : (
-        <span>Host version: {detail.hostVersion}</span>
+        <span>
+          {i18n.t("Host version: {{version}}", {
+            ns: "common",
+            version: detail.hostVersion,
+          })}
+        </span>
       )}
       {detail.minSupportedVersion === null ? null : (
-        <span>Minimum supported: {detail.minSupportedVersion}</span>
+        <span>
+          {i18n.t("Minimum supported: {{version}}", {
+            ns: "common",
+            version: detail.minSupportedVersion,
+          })}
+        </span>
       )}
-      <span className="break-words">Reason: {detail.code}</span>
+      <span className="break-words">
+        {i18n.t("Reason: {{code}}", { ns: "common", code: detail.code })}
+      </span>
     </div>
   );
 }
@@ -505,12 +521,22 @@ function ClientCompatibilityDetail(props: {
       data-testid="window-host-modal-client-compatibility-detail"
     >
       <span>
-        This app: {requirement.observedClientAppVersion ?? "unknown version"}
+        {i18n.t("This app: {{version}}", {
+          ns: "common",
+          version: requirement.observedClientAppVersion ?? i18n.t("unknown version", { ns: "common" }),
+        })}
       </span>
       <span>
-        Compatibility generation: host needs{" "}
-        {requirement.minimumCompatibilityEpoch}, this app declares{" "}
-        {requirement.observedCompatibilityEpoch ?? "none"}
+        {i18n.t(
+          "Compatibility generation: host needs {{required}}, this app declares {{observed}}",
+          {
+            ns: "common",
+            required: requirement.minimumCompatibilityEpoch,
+            observed:
+              requirement.observedCompatibilityEpoch ??
+              i18n.t("none", { ns: "common" }),
+          },
+        )}
       </span>
     </div>
   );
@@ -548,29 +574,44 @@ function modalCopy(
 ): WindowHostModalCopy {
   if (variant.kind === "plan-restricted") {
     return {
-      title: "Your plan doesn't include remote hosts",
-      description:
+      title: i18n.t("Your plan doesn't include remote hosts", { ns: "common" }),
+      description: i18n.t(
         "The hosts on this account are remote, and this plan can't attach to them. Upgrade to connect, or set up Traycer on this machine.",
-      reportTitle: "No host available on this plan",
-      reportMessage: "Every host on this account is plan-restricted.",
+        { ns: "common" },
+      ),
+      reportTitle: i18n.t("No host available on this plan", { ns: "common" }),
+      reportMessage: i18n.t("Every host on this account is plan-restricted.", {
+        ns: "common",
+      }),
       reportCode: "HOST_PLAN_RESTRICTED",
     };
   }
   if (variant.kind === "update-client") {
     const { requirement } = variant;
     return {
-      title: "Update Traycer to continue",
+      title: i18n.t("Update Traycer to continue", { ns: "common" }),
       // Two bodies, split on whether the host could identify what this app is
       // running. Naming the observed version is what makes the instruction
       // checkable ("am I on 1.1.10?"); when the host could not read it, saying
       // so is more honest than a sentence with a blank in it.
       description:
         requirement.observedClientAppVersion === null
-          ? "This Traycer installation is too old to identify a compatible generation. Install the latest Traycer app."
-          : `This host needs a newer Traycer generation. You are running ${requirement.observedClientAppVersion}; install the latest version.`,
-      reportTitle: "Traycer app update required",
-      reportMessage:
+          ? i18n.t(
+              "This Traycer installation is too old to identify a compatible generation. Install the latest Traycer app.",
+              { ns: "common" },
+            )
+          : i18n.t(
+              "This host needs a newer Traycer generation. You are running {{version}}; install the latest version.",
+              {
+                ns: "common",
+                version: requirement.observedClientAppVersion,
+              },
+            ),
+      reportTitle: i18n.t("Traycer app update required", { ns: "common" }),
+      reportMessage: i18n.t(
         "The host refused this app at its client-compatibility epoch gate.",
+        { ns: "common" },
+      ),
       reportCode: "CLIENT_INCOMPATIBLE",
     };
   }
@@ -586,29 +627,46 @@ function modalCopy(
       // continue" beside no button is an unexplained gap; naming the machine
       // and saying where it can be updated is an honest absence.
       description: variant.isTargetHost
-        ? "Traycer Host is running a version this app can't talk to. Update the host to continue - your agents and history are untouched."
-        : "Another host on this account is running a version this app can't talk to, and it can't be updated from here. Update Traycer on that machine, or switch to a host this one can reach.",
-      reportTitle: "Host update required",
-      reportMessage: "Traycer Host requires an update.",
+        ? i18n.t(
+            "Traycer Host is running a version this app can't talk to. Update the host to continue - your agents and history are untouched.",
+            { ns: "common" },
+          )
+        : i18n.t(
+            "Another host on this account is running a version this app can't talk to, and it can't be updated from here. Update Traycer on that machine, or switch to a host this one can reach.",
+            { ns: "common" },
+          ),
+      reportTitle: i18n.t("Host update required", { ns: "common" }),
+      reportMessage: i18n.t("Traycer Host requires an update.", {
+        ns: "common",
+      }),
       reportCode: "HOST_INCOMPATIBLE",
     };
   }
   if (cause === "cold-start") {
     return {
-      title: "Setting up Traycer",
-      description:
+      title: i18n.t("Setting up Traycer", { ns: "common" }),
+      description: i18n.t(
         "Traycer is getting this machine's host ready. This runs once, and the app opens as soon as it's done.",
-      reportTitle: "Traycer Host did not start",
-      reportMessage: "Traycer Host did not become available at launch.",
+        { ns: "common" },
+      ),
+      reportTitle: i18n.t("Traycer Host did not start", { ns: "common" }),
+      reportMessage: i18n.t(
+        "Traycer Host did not become available at launch.",
+        { ns: "common" },
+      ),
       reportCode: "HOST_COLD_START_FAILED",
     };
   }
   return {
-    title: "No host is available",
-    description:
+    title: i18n.t("No host is available", { ns: "common" }),
+    description: i18n.t(
       "Traycer can't reach any of this account's hosts right now. It will connect again on its own as soon as one comes back.",
-    reportTitle: "No Traycer Host is reachable",
-    reportMessage: "No host on this account could be reached.",
+      { ns: "common" },
+    ),
+    reportTitle: i18n.t("No Traycer Host is reachable", { ns: "common" }),
+    reportMessage: i18n.t("No host on this account could be reached.", {
+      ns: "common",
+    }),
     reportCode: "HOST_NONE_USABLE",
   };
 }

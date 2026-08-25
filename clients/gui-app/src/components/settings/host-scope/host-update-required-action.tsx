@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { SelectionIncompatibility } from "@traycer-clients/shared/host-selection/selection-authority-contract";
 import { Button } from "@/components/ui/button";
 import { getClientAppVersion } from "@/lib/app-version";
@@ -48,6 +49,7 @@ export function HostUpdateRequiredAction(props: {
   readonly onUpdateHost: () => void;
   readonly pending: boolean;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (!props.canManageHost) return null;
   if (!hostUpdateActionApplies(props.detail, getClientAppVersion()))
     return null;
@@ -60,7 +62,7 @@ export function HostUpdateRequiredAction(props: {
       onClick={props.onUpdateHost}
       data-testid="host-scope-update-host"
     >
-      Update host
+      {t("Update host")}
     </Button>
   );
 }

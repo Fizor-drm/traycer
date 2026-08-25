@@ -13,6 +13,7 @@ import {
   type ProvidersUsePackVersionResult,
 } from "@traycer/protocol/host/provider-schemas";
 import { compareHostVersions } from "@traycer-clients/shared/host-version/compare-host-versions";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 export function providerDisplayName(providerId: ProviderId): string {
   return PROVIDER_DISPLAY_NAMES[providerId];
@@ -27,11 +28,26 @@ export function formatSharedWithProvidersLine(
 ): string | null {
   if (sharedWithProviders.length === 0) return null;
   const names = sharedWithProviders.map(providerDisplayName);
-  if (names.length === 1) return `Shared by ${names[0]}`;
-  if (names.length === 2) return `Shared by ${names[0]} and ${names[1]}`;
+  if (names.length === 1) {
+    return i18n.t("Shared by {{provider}}", {
+      provider: names[0],
+      ns: "panels",
+    });
+  }
+  if (names.length === 2) {
+    return i18n.t("Shared by {{first}} and {{second}}", {
+      first: names[0],
+      second: names[1],
+      ns: "panels",
+    });
+  }
   const head = names.slice(0, -1).join(", ");
   const tail = names[names.length - 1];
-  return `Shared by ${head}, and ${tail}`;
+  return i18n.t("Shared by {{providers}}, and {{last}}", {
+    providers: head,
+    last: tail,
+    ns: "panels",
+  });
 }
 
 export type VersionDownloadEligibility =
@@ -53,22 +69,33 @@ export function versionDownloadEligibility(
     case "yanked":
       return {
         allowed: false,
-        reason: "Withdrawn by the publisher — not available for download",
+        reason: i18n.t(
+          "Withdrawn by the publisher — not available for download",
+          { ns: "panels" },
+        ),
       };
     case "below-security-floor":
       return {
         allowed: false,
-        reason: "Below the publisher's security minimum — cannot download",
+        reason: i18n.t(
+          "Below the publisher's security minimum — cannot download",
+          { ns: "panels" },
+        ),
       };
     case "host-ineligible":
       return {
         allowed: false,
-        reason: "This Traycer release cannot run this version",
+        reason: i18n.t("This Traycer release cannot run this version", {
+          ns: "panels",
+        }),
       };
     case "uncertified":
       return {
         allowed: false,
-        reason: "No longer published — not available for re-download",
+        reason: i18n.t(
+          "No longer published — not available for re-download",
+          { ns: "panels" },
+        ),
       };
     case "eligible":
       break;
@@ -76,14 +103,19 @@ export function versionDownloadEligibility(
 
   switch (version.installState.status) {
     case "installed":
-      return { allowed: false, reason: "Already installed" };
+      return { allowed: false, reason: i18n.t("Already installed", { ns: "panels" }) };
     case "downloading":
-      return { allowed: false, reason: "Download in progress" };
+      return {
+        allowed: false,
+        reason: i18n.t("Download in progress", { ns: "panels" }),
+      };
     case "unusable":
       if (version.installState.reason === "condemned") {
         return {
           allowed: false,
-          reason: "Install failed permanently on this machine",
+          reason: i18n.t("Install failed permanently on this machine", {
+            ns: "panels",
+          }),
         };
       }
       // quarantined / corrupt / unverified — still may re-fetch once cleared.
@@ -148,10 +180,13 @@ export function versionUseEligibility(
   version: ProviderPackVersion,
 ): VersionUseEligibility {
   if (version.current) {
-    return { allowed: false, reason: "Already current" };
+    return { allowed: false, reason: i18n.t("Already current", { ns: "panels" }) };
   }
   if (version.installState.status !== "installed") {
-    return { allowed: false, reason: "Install this version first" };
+    return {
+      allowed: false,
+      reason: i18n.t("Install this version first", { ns: "panels" }),
+    };
   }
   if (
     version.certification === "below-security-floor" ||
@@ -184,13 +219,16 @@ export function versionDeleteEligibility(
   version: ProviderPackVersion,
 ): VersionDeleteEligibility {
   if (version.current) {
-    return { allowed: false, reason: "Switch to another version first" };
+    return {
+      allowed: false,
+      reason: i18n.t("Switch to another version first", { ns: "panels" }),
+    };
   }
   if (
     version.installState.status !== "installed" &&
     version.installState.status !== "unusable"
   ) {
-    return { allowed: false, reason: "Not installed" };
+    return { allowed: false, reason: i18n.t("Not installed", { ns: "panels" }) };
   }
   if (
     version.installState.status === "unusable" &&
@@ -200,7 +238,9 @@ export function versionDeleteEligibility(
     // pre-empts, so the disabled reason and the refusal cannot drift apart.
     return {
       allowed: false,
-      reason: "Held by quarantine after a failed verification",
+      reason: i18n.t("Held by quarantine after a failed verification", {
+        ns: "panels",
+      }),
     };
   }
   return { allowed: true };
@@ -286,7 +326,9 @@ export function isBlockingCertification(
 export function versionRowChip(
   version: ProviderPackVersion,
 ): VersionRowChip | null {
-  if (version.current) return { label: "Current", tone: "current" };
+  if (version.current) {
+    return { label: i18n.t("Current", { ns: "panels" }), tone: "current" };
+  }
   if (isBlockingCertification(version.certification)) {
     const label = certificationBadgeLabel(version.certification);
     if (label !== null) return { label, tone: "blocked" };
@@ -296,9 +338,11 @@ export function versionRowChip(
     // sits inline beside the version it annotates, where three words crowd the
     // number. The longer sentence is still what the WITHDRAWN family says,
     // because those are refusals and deserve the room.
-    return { label: "Unpublished", tone: "unpublished" };
+    return { label: i18n.t("Unpublished", { ns: "panels" }), tone: "unpublished" };
   }
-  if (version.recommended) return { label: "Recommended", tone: "recommended" };
+  if (version.recommended) {
+    return { label: i18n.t("Recommended", { ns: "panels" }), tone: "recommended" };
+  }
   return null;
 }
 
@@ -307,13 +351,13 @@ export function certificationBadgeLabel(
 ): string | null {
   switch (certification) {
     case "yanked":
-      return "Withdrawn";
+      return i18n.t("Withdrawn", { ns: "panels" });
     case "uncertified":
-      return "No longer published";
+      return i18n.t("No longer published", { ns: "panels" });
     case "below-security-floor":
-      return "Below security minimum";
+      return i18n.t("Below security minimum", { ns: "panels" });
     case "host-ineligible":
-      return "Not supported on this host";
+      return i18n.t("Not supported on this host", { ns: "panels" });
     case "eligible":
       return null;
   }
@@ -324,14 +368,19 @@ export function unusableReasonLabel(
 ): string {
   switch (reason) {
     case "condemned":
-      return "Install failed permanently on this machine";
+      return i18n.t("Install failed permanently on this machine", {
+        ns: "panels",
+      });
     case "quarantined":
-      return "Quarantined after a failed verification";
+      return i18n.t("Quarantined after a failed verification", { ns: "panels" });
     case "corrupt":
-      return "Installed copy is corrupt";
+      return i18n.t("Installed copy is corrupt", { ns: "panels" });
     case "unverified":
       // Indeterminate — must not read as damage.
-      return "Could not verify this install (not necessarily damaged)";
+      return i18n.t(
+        "Could not verify this install (not necessarily damaged)",
+        { ns: "panels" },
+      );
   }
 }
 
@@ -340,21 +389,27 @@ export function installErrorReasonLabel(
 ): string {
   switch (reason) {
     case "disk-full":
-      return "Not enough disk space to install";
+      return i18n.t("Not enough disk space to install", { ns: "panels" });
     case "network":
-      return "Download failed — network error";
+      return i18n.t("Download failed — network error", { ns: "panels" });
     case "verification":
-      return "Downloaded bytes failed verification";
+      return i18n.t("Downloaded bytes failed verification", { ns: "panels" });
     case "live-owner-stalled":
-      return "Another process was downloading this and stalled";
+      return i18n.t("Another process was downloading this and stalled", {
+        ns: "panels",
+      });
     case "unknown":
-      return "Install failed";
+      return i18n.t("Install failed", { ns: "panels" });
     case "unrepairable":
-      return "This install cannot be repaired on this machine";
+      return i18n.t("This install cannot be repaired on this machine", {
+        ns: "panels",
+      });
     case "trust-unavailable":
-      return "Trust is unavailable on this host";
+      return i18n.t("Trust is unavailable on this host", { ns: "panels" });
     case "local-storage-mismatch":
-      return "The local copy does not match the published version";
+      return i18n.t("The local copy does not match the published version", {
+        ns: "panels",
+      });
   }
 }
 
@@ -415,14 +470,16 @@ export function certificationMetaLine(
 ): string | null {
   switch (certification) {
     case "yanked":
-      return "Withdrawn by publisher";
+      return i18n.t("Withdrawn by publisher", { ns: "panels" });
     case "uncertified":
       // Do not claim "still usable" — install-state is a separate axis (finding 7).
-      return "No longer published · remains on disk";
+      return i18n.t("No longer published · remains on disk", { ns: "panels" });
     case "below-security-floor":
-      return "Below the publisher's security minimum";
+      return i18n.t("Below the publisher's security minimum", { ns: "panels" });
     case "host-ineligible":
-      return "This Traycer release cannot drive this version";
+      return i18n.t("This Traycer release cannot drive this version", {
+        ns: "panels",
+      });
     case "eligible":
       return null;
   }
@@ -457,17 +514,30 @@ export function removeResultUserMessage(
 ): string {
   switch (result.code) {
     case "is-current":
-      return result.detail ?? "Switch to another version first";
+      return (
+        result.detail ??
+        i18n.t("Switch to another version first", { ns: "panels" })
+      );
     case "holder-reserved":
       return (
         result.detail ??
-        "In use by a running session — it will be free when that session ends"
+        i18n.t(
+          "In use by a running session — it will be free when that session ends",
+          { ns: "panels" },
+        )
       );
     case "quarantine-reserved":
-      return result.detail ?? "Held by quarantine after a failed verification";
+      return (
+        result.detail ??
+        i18n.t("Held by quarantine after a failed verification", {
+          ns: "panels",
+        })
+      );
     case "deferred-locked":
       // Not a failure — queued for boot GC.
-      return result.detail ?? "Removes when no longer in use";
+      return (
+        result.detail ?? i18n.t("Removes when no longer in use", { ns: "panels" })
+      );
   }
 }
 
@@ -481,17 +551,30 @@ export function installPackVersionRefusalMessage(
 ): string {
   switch (code) {
     case "condemned":
-      return "Install failed permanently on this machine";
+      return i18n.t("Install failed permanently on this machine", {
+        ns: "panels",
+      });
     case "unfetchable":
-      return "This version is not in the current channel — reconnect or refresh to download it";
+      return i18n.t(
+        "This version is not in the current channel — reconnect or refresh to download it",
+        { ns: "panels" },
+      );
     case "invalid-version":
-      return "This is not a valid version string";
+      return i18n.t("This is not a valid version string", { ns: "panels" });
     case "below-security-floor":
-      return "Below the publisher's security minimum — cannot download";
+      return i18n.t(
+        "Below the publisher's security minimum — cannot download",
+        { ns: "panels" },
+      );
     case "host-ineligible":
-      return "This Traycer release cannot run this version";
+      return i18n.t("This Traycer release cannot run this version", {
+        ns: "panels",
+      });
     case "yanked":
-      return "Withdrawn by the publisher — not available for download";
+      return i18n.t(
+        "Withdrawn by the publisher — not available for download",
+        { ns: "panels" },
+      );
   }
 }
 
@@ -507,11 +590,18 @@ export function packVersionUseRefusalMessage(
 ): string {
   switch (code) {
     case "verification-failed":
-      return "Could not verify this install before switching — the pin was not kept";
+      return i18n.t(
+        "Could not verify this install before switching — the pin was not kept",
+        { ns: "panels" },
+      );
     case "below-security-floor":
-      return "Below the publisher's security minimum — cannot select";
+      return i18n.t("Below the publisher's security minimum — cannot select", {
+        ns: "panels",
+      });
     case "host-ineligible":
-      return "This Traycer release cannot run this version";
+      return i18n.t("This Traycer release cannot run this version", {
+        ns: "panels",
+      });
   }
 }
 
@@ -528,8 +618,10 @@ export function updateBannerDownloadEligibility(
   if (row === undefined) {
     return {
       allowed: false,
-      reason:
+      reason: i18n.t(
         "Can't confirm this version is fetchable — reconnect to download updates",
+        { ns: "panels" },
+      ),
     };
   }
   return versionDownloadEligibility(row);
@@ -565,20 +657,29 @@ function nonRetryableErrorDownloadReason(
 ): string {
   switch (reason) {
     case "trust-unavailable":
-      return "Trust is unavailable on this host — cannot download";
+      return i18n.t("Trust is unavailable on this host — cannot download", {
+        ns: "panels",
+      });
     case "local-storage-mismatch":
-      return "Local storage does not match — cannot re-download";
+      return i18n.t("Local storage does not match — cannot re-download", {
+        ns: "panels",
+      });
     case "unrepairable":
-      return "This install cannot be repaired on this machine";
+      return i18n.t("This install cannot be repaired on this machine", {
+        ns: "panels",
+      });
     default:
-      return "This error cannot be retried from the version manager";
+      return i18n.t(
+        "This error cannot be retried from the version manager",
+        { ns: "panels" },
+      );
   }
 }
 
 function certificationBlockReason(
   certification: "below-security-floor" | "host-ineligible",
 ): string {
-  return certificationMetaLine(certification) ?? "Not usable";
+  return certificationMetaLine(certification) ?? i18n.t("Not usable", { ns: "panels" });
 }
 
 /**
@@ -597,15 +698,30 @@ export function managedVersionsUnavailableMessage(
 ): string {
   switch (cause) {
     case "host-unsupported":
-      return "This host is too old to manage provider CLI versions. Update the host to turn this on.";
+      return i18n.t(
+        "This host is too old to manage provider CLI versions. Update the host to turn this on.",
+        { ns: "panels" },
+      );
     case "registry-unconfigured":
-      return "This build has no provider registry configured, so there are no versions to manage. Waiting will not change it.";
+      return i18n.t(
+        "This build has no provider registry configured, so there are no versions to manage. Waiting will not change it.",
+        { ns: "panels" },
+      );
     case "registry-unreachable":
-      return "Traycer could not verify the provider registry's signing keys — usually no network, or the registry is down. It keeps retrying in the background.";
+      return i18n.t(
+        "Traycer could not verify the provider registry's signing keys — usually no network, or the registry is down. It keeps retrying in the background.",
+        { ns: "panels" },
+      );
     case "registry-not-yet-checked":
-      return "Traycer has not finished checking the provider registry yet. This should resolve on its own in a moment.";
+      return i18n.t(
+        "Traycer has not finished checking the provider registry yet. This should resolve on its own in a moment.",
+        { ns: "panels" },
+      );
     case "install-manager-unavailable":
-      return "The registry was verified, but Traycer could not start its installer, so versions cannot be listed. Restarting the host usually clears this.";
+      return i18n.t(
+        "The registry was verified, but Traycer could not start its installer, so versions cannot be listed. Restarting the host usually clears this.",
+        { ns: "panels" },
+      );
   }
 }
 
@@ -634,23 +750,50 @@ export function managedInstallFailureMessage(
   reason: ProviderManagedInstallErrorReason,
   version: string | null,
 ): string {
-  const build = version === null ? "the managed build" : `managed v${version}`;
+  const build =
+    version === null
+      ? i18n.t("the managed build", { ns: "panels" })
+      : i18n.t("managed v{{version}}", { version, ns: "panels" });
   switch (reason) {
     case "disk-full":
-      return `Not enough disk space to install ${build}. Free some space, then retry.`;
+      return i18n.t(
+        "Not enough disk space to install {{build}}. Free some space, then retry.",
+        { build, ns: "panels" },
+      );
     case "network":
-      return `Traycer could not download ${build}. That is usually a network problem, but it also happens when the registry carries no artifact for this version and platform - in which case retrying will not help.`;
+      return i18n.t(
+        "Traycer could not download {{build}}. That is usually a network problem, but it also happens when the registry carries no artifact for this version and platform - in which case retrying will not help.",
+        { build, ns: "panels" },
+      );
     case "verification":
-      return `${build} failed its signature check and was discarded. Traycer will not run bytes it cannot verify.`;
+      return i18n.t(
+        "{{build}} failed its signature check and was discarded. Traycer will not run bytes it cannot verify.",
+        { build, ns: "panels" },
+      );
     case "live-owner-stalled":
-      return `Another Traycer host on this machine was installing ${build} and stalled. Retrying takes the download over.`;
+      return i18n.t(
+        "Another Traycer host on this machine was installing {{build}} and stalled. Retrying takes the download over.",
+        { build, ns: "panels" },
+      );
     case "trust-unavailable":
-      return `Traycer cannot verify downloads on this host, so ${build} was not installed. Retrying will not help until the registry's signing keys load.`;
+      return i18n.t(
+        "Traycer cannot verify downloads on this host, so {{build}} was not installed. Retrying will not help until the registry's signing keys load.",
+        { build, ns: "panels" },
+      );
     case "local-storage-mismatch":
-      return `The stored copy of ${build} does not match what Traycer expects, and it cannot be re-downloaded on this machine.`;
+      return i18n.t(
+        "The stored copy of {{build}} does not match what Traycer expects, and it cannot be re-downloaded on this machine.",
+        { build, ns: "panels" },
+      );
     case "unrepairable":
-      return `${build} cannot be installed on this machine, and retrying will not change that.`;
+      return i18n.t(
+        "{{build}} cannot be installed on this machine, and retrying will not change that.",
+        { build, ns: "panels" },
+      );
     case "unknown":
-      return `Traycer could not install ${build}.`;
+      return i18n.t("Traycer could not install {{build}}.", {
+        build,
+        ns: "panels",
+      });
   }
 }

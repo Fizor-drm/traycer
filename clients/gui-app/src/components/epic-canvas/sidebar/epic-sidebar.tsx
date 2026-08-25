@@ -206,6 +206,8 @@ import {
   type ComponentType,
   type ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { SplitResizeHandle } from "@/components/epic-canvas/canvas/resize-handle";
 import {
   isSidebarBulkSelectionPanelId,
@@ -1206,6 +1208,7 @@ function CommentsPanelBodyLive(props: {
   readonly epicId: string;
   readonly tabId: string;
 }) {
+  const { t } = useTranslation("canvas");
   const activeArtifactId = useActiveEpicArtifactId(props.tabId);
   // Normally unreachable - the panel is revealed by an artifact that has
   // comments. Reachable once a user checks Comments in the rail context menu,
@@ -1214,8 +1217,8 @@ function CommentsPanelBodyLive(props: {
     return (
       <SidebarPanelEmptyState
         icon={MessageSquareText}
-        title="No artifact open"
-        description="Open an artifact to see and add comments on it."
+        title={t("No artifact open")}
+        description={t("Open an artifact to see and add comments on it.")}
         testId="epic-comments-empty"
       />
     );
@@ -1241,6 +1244,7 @@ function FileTreePanelBody(props: LeftPanelBodyProps) {
 }
 
 function FileTreePanelBodyLive(props: LeftPanelBodyProps) {
+  const { t } = useTranslation("canvas");
   const surfaceKey = useTabSurfaceKey("file-tree", props.tabId);
   const pin = useSurfaceHostPin(surfaceKey);
   // No dead arm: a pinned host that dies resolves to `effective`, so this
@@ -1305,6 +1309,7 @@ function FileTreePanelBodyLive(props: LeftPanelBodyProps) {
         resolvedHostId: pin.resolvedHostId,
         resolvedHostName: resolvedHostEntry?.label ?? null,
         onLatchHost: pin.latchOnFirstUse,
+        t,
       })}
     </div>
   );
@@ -1330,8 +1335,9 @@ function fileTreePanelBody(input: {
   readonly resolvedHostId: string | null;
   readonly resolvedHostName: string | null;
   readonly onLatchHost: () => void;
+  readonly t: TFunction<"canvas">;
 }): ReactNode {
-  const { selection } = input;
+  const { selection, t } = input;
   if (selection.failure !== null) {
     return (
       <FileTreeWorkspacesUnavailable
@@ -1345,7 +1351,7 @@ function fileTreePanelBody(input: {
     return (
       <SidebarPanelEmptyState
         icon={FolderOpen}
-        title="No workspace linked."
+        title={t("No workspace linked.")}
         description={null}
         testId="epic-file-tree-empty"
       />
@@ -1404,6 +1410,7 @@ function SidebarBulkDeleteController(props: {
   readonly epicId: string;
   readonly tabId: string;
 }) {
+  const { t } = useTranslation("canvas");
   const selection = useSidebarBulkSelection();
   const liveRecords = useEpicArtifactRecords();
   const tree = useEpicTreeIndex();
@@ -1545,10 +1552,11 @@ function SidebarBulkDeleteController(props: {
         panelId,
         pendingDeleteIds,
         recordById,
+        t,
       )}
-      description={describeSidebarBulkDeleteDescription(pendingDeleteIds)}
+      description={describeSidebarBulkDeleteDescription(pendingDeleteIds, t)}
       cascadeSummary={null}
-      actionLabel="Delete"
+      actionLabel={t("Delete")}
       isPending={deletePending}
       onConfirm={handleConfirmDelete}
     />
@@ -1664,15 +1672,19 @@ function describeSidebarBulkDeleteTitle(
   panelId: SidebarBulkSelectionPanelId,
   ids: readonly string[] | null,
   recordById: ReadonlyMap<string, EpicTreeRecord>,
+  t: TFunction<"canvas">,
 ): string {
   if (ids === null || ids.length === 0) return "";
   if (ids.length === 1) {
     const record = recordById.get(ids[0]);
     return record === undefined
-      ? "Delete selected item?"
-      : `Delete "${record.name}"?`;
+      ? t("Delete selected item?")
+      : t('Delete "{{name}}"?', { name: record.name });
   }
-  return `Delete ${ids.length} selected ${panelRowNoun(panelId, ids.length)}?`;
+  return t("Delete {{count}} selected {{noun}}?", {
+    count: ids.length,
+    noun: panelRowNoun(panelId, ids.length, t),
+  });
 }
 
 /**
@@ -1687,16 +1699,23 @@ function describeSidebarBulkDeleteTitle(
  * `count` selects number: the delete button is enabled from one row, so a
  * plural-only noun produced "Delete 1 selected agents".
  */
-function panelRowNoun(panelId: LeftPanelId, count: number): string {
-  if (panelId === "chats") return count === 1 ? "agent" : "agents";
-  return count === 1 ? "artifact" : "artifacts";
+function panelRowNoun(
+  panelId: LeftPanelId,
+  count: number,
+  t: TFunction<"canvas">,
+): string {
+  if (panelId === "chats") return t(count === 1 ? "agent" : "agents");
+  return t(count === 1 ? "artifact" : "artifacts");
 }
 
 function describeSidebarBulkDeleteDescription(
   ids: readonly string[] | null,
+  t: TFunction<"canvas">,
 ): string {
-  if (ids === null || ids.length < 2) return "This action cannot be undone.";
-  return "This action cannot be undone. Nested items under selected rows may also be deleted.";
+  if (ids === null || ids.length < 2) return t("This action cannot be undone.");
+  return t(
+    "This action cannot be undone. Nested items under selected rows may also be deleted.",
+  );
 }
 
 function usePanelRootIds(panelId: LeftPanelId): ReadonlyArray<string> {
@@ -2016,6 +2035,7 @@ function TreePanelActions(props: TreePanelActionsProps) {
 }
 
 function ChatsPanelActions(props: LeftPanelHeaderSlotProps) {
+  const { t } = useTranslation("canvas");
   const selection = useSidebarBulkSelection();
   const canArchive = useChatArchiveSupported();
   const collapseAll = useCollapseAllPanelAction(props.tabId, "chats");
@@ -2028,7 +2048,7 @@ function ChatsPanelActions(props: LeftPanelHeaderSlotProps) {
           tabId={props.tabId}
           panelId="chats"
           collapsed={props.collapsed}
-          addLabel="Add agent"
+          addLabel={t("Add agent")}
           menuTestId="epic-sidebar-add-chat-root-menu"
           triggerTestId="epic-sidebar-add-chat-root"
           itemTestId={(type) => `epic-sidebar-add-chat-root-${type}`}
@@ -2140,6 +2160,7 @@ function ChatHeaderMoreMenu(props: {
   readonly searching: boolean;
   readonly onCollapseAll: () => void;
 }) {
+  const { t } = useTranslation("canvas");
   const selection = useSidebarBulkSelection();
   const permissionRole = useEpicPermissionRole();
   const connectionStatus = useEpicConnectionStatus();
@@ -2150,7 +2171,7 @@ function ChatHeaderMoreMenu(props: {
   return (
     <DropdownMenu open={menu.open} onOpenChange={menu.handleOpenChange}>
       <PanelHeaderMoreMenuTrigger
-        label="More agent actions"
+        label={t("More agent actions")}
         testId="epic-sidebar-more-chats"
       />
       <DropdownMenuContent
@@ -2166,13 +2187,13 @@ function ChatHeaderMoreMenu(props: {
             data-testid="epic-sidebar-more-search-chats"
           >
             <Search className="size-4" />
-            Search agents
+            {t("Search agents")}
           </DropdownMenuItem>
         )}
         <CommGraphOpenMenuItem epicId={props.epicId} disabled={false} />
         <DropdownMenuItem onSelect={props.onCollapseAll}>
           <CopyMinus className="size-4" />
-          Collapse all
+          {t("Collapse all")}
         </DropdownMenuItem>
         {isEditableRole(permissionRole) ? (
           <DropdownMenuItem
@@ -2180,7 +2201,7 @@ function ChatHeaderMoreMenu(props: {
             onSelect={selection.enterSelectionMode}
           >
             <ListChecks className="size-4" />
-            Select agents
+            {t("Select agents")}
           </DropdownMenuItem>
         ) : null}
       </DropdownMenuContent>
@@ -2194,6 +2215,7 @@ function ArtifactHeaderMoreMenu(props: {
   readonly searching: boolean;
   readonly onCollapseAll: () => void;
 }) {
+  const { t } = useTranslation("canvas");
   const selection = useSidebarBulkSelection();
   const openSearch = usePanelHeaderSearchStore((state) => state.openSearch);
   const searchAvailable = useArtifactSearchAvailable();
@@ -2206,7 +2228,7 @@ function ArtifactHeaderMoreMenu(props: {
   return (
     <DropdownMenu open={menu.open} onOpenChange={menu.handleOpenChange}>
       <PanelHeaderMoreMenuTrigger
-        label="More artifact actions"
+        label={t("More artifact actions")}
         testId="epic-sidebar-more-artifacts"
       />
       <DropdownMenuContent
@@ -2225,19 +2247,19 @@ function ArtifactHeaderMoreMenu(props: {
             data-testid="epic-sidebar-more-search-artifacts"
           >
             <Search className="size-4" />
-            Search artifacts
+            {t("Search artifacts")}
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuItem onSelect={props.onCollapseAll}>
           <CopyMinus className="size-4" />
-          Collapse all
+          {t("Collapse all")}
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={!selection.canSelect}
           onSelect={selection.enterSelectionMode}
         >
           <ListChecks className="size-4" />
-          Select artifacts
+          {t("Select artifacts")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -2245,6 +2267,7 @@ function ArtifactHeaderMoreMenu(props: {
 }
 
 function ArtifactsPanelActions(props: LeftPanelHeaderSlotProps) {
+  const { t } = useTranslation("canvas");
   const selection = useSidebarBulkSelection();
   const unreadArtifacts = useUnreadArtifactReadTargets(props.epicId);
   const markRead = useArtifactReadStateStore((state) => state.markRead);
@@ -2263,7 +2286,7 @@ function ArtifactsPanelActions(props: LeftPanelHeaderSlotProps) {
           tabId={props.tabId}
           panelId="artifacts"
           collapsed={props.collapsed}
-          addLabel="Add artifact"
+          addLabel={t("Add artifact")}
           menuTestId="epic-sidebar-add-artifact-root-menu"
           triggerTestId="epic-sidebar-add-artifact-root"
           itemTestId={(type) => `epic-sidebar-add-artifact-root-${type}`}
@@ -2293,17 +2316,21 @@ function SidebarSelectedChatArchiveButton(props: {
   readonly canMutate: boolean;
   readonly action: SelectedChatArchiveAction;
 }) {
+  const { t } = useTranslation("canvas");
   if (!props.visible || !props.action.supported) return null;
   const label =
     props.selectedCount > 0
-      ? `Archive ${props.selectedCount} selected ${panelRowNoun("chats", props.selectedCount)}`
-      : "Archive selected agents";
+      ? t("Archive {{count}} selected {{noun}}", {
+          count: props.selectedCount,
+          noun: panelRowNoun("chats", props.selectedCount, t),
+        })
+      : t("Archive selected agents");
   return (
     <TooltipWrapper
       label={
         props.action.selectedHasActiveAgent
-          ? "Wait for selected agents to finish"
-          : "Archive selected agents"
+          ? t("Wait for selected agents to finish")
+          : t("Archive selected agents")
       }
       side="top"
       sideOffset={undefined}
@@ -2339,6 +2366,7 @@ function SidebarSelectedChatArchiveButton(props: {
   );
 }
 function SidebarBulkSelectionActions() {
+  const { t } = useTranslation("canvas");
   const selection = useSidebarBulkSelection();
   const permissionRole = useEpicPermissionRole();
   const connectionStatus = useEpicConnectionStatus();
@@ -2373,7 +2401,7 @@ function SidebarBulkSelectionActions() {
         data-testid="epic-sidebar-artifact-selection-count"
         aria-live="polite"
       >
-        {selection.selectedCount} selected
+        {selection.selectedCount} {t("selected")}
       </span>
       <Button
         type="button"
@@ -2386,10 +2414,10 @@ function SidebarBulkSelectionActions() {
             : selection.selectAllVisible
         }
       >
-        {selection.allVisibleSelected ? "Deselect all" : "Select all"}
+        {selection.allVisibleSelected ? t("Deselect all") : t("Select all")}
       </Button>
       <TooltipWrapper
-        label="Cancel selection"
+        label={t("Cancel selection")}
         side="top"
         sideOffset={undefined}
         align={undefined}
@@ -2399,7 +2427,7 @@ function SidebarBulkSelectionActions() {
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label="Cancel selection"
+            aria-label={t("Cancel selection")}
             disabled={selection.deletePending || chatArchive.pending}
             onClick={selection.cancelSelection}
           >
@@ -2414,7 +2442,7 @@ function SidebarBulkSelectionActions() {
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label="Export selected artifacts"
+              aria-label={t("Export selected artifacts")}
               disabled={!canExportSelected || exportArtifacts.isPending}
             >
               {exportArtifacts.isPending ? (
@@ -2436,7 +2464,7 @@ function SidebarBulkSelectionActions() {
                 exportSelected("markdown");
               }}
             >
-              Export as Markdown ZIP
+              {t("Export as Markdown ZIP")}
             </DropdownMenuItem>
             <DropdownMenuItem
               data-testid="epic-sidebar-export-selected-pdf"
@@ -2445,7 +2473,7 @@ function SidebarBulkSelectionActions() {
                 exportSelected("pdf");
               }}
             >
-              Export as PDF ZIP
+              {t("Export as PDF ZIP")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -2462,8 +2490,13 @@ function SidebarBulkSelectionActions() {
         size="icon-sm"
         aria-label={
           selection.selectedCount > 0
-            ? `Delete ${selection.selectedCount} selected ${panelRowNoun(selection.panelId, selection.selectedCount)}`
-            : `Delete selected ${panelRowNoun(selection.panelId, 0)}`
+            ? t("Delete {{count}} selected {{noun}}", {
+                count: selection.selectedCount,
+                noun: panelRowNoun(selection.panelId, selection.selectedCount, t),
+              })
+            : t("Delete selected {{noun}}", {
+                noun: panelRowNoun(selection.panelId, 0, t),
+              })
         }
         data-testid={`epic-sidebar-delete-selected-${selection.panelId}`}
         disabled={
@@ -2482,13 +2515,14 @@ function SidebarBulkSelectionActions() {
 }
 
 function CommentsPanelActions(props: LeftPanelHeaderSlotProps) {
+  const { t } = useTranslation("canvas");
   const setActivePanelId = useEpicLeftPanelStore((s) => s.setActivePanelId);
   return (
     <Button
       type="button"
       variant="ghost"
       size="icon-sm"
-      aria-label="Close comments"
+      aria-label={t("Close comments")}
       data-testid="epic-sidebar-comments-close"
       className="text-muted-foreground hover:text-foreground"
       onClick={() => setActivePanelId(props.tabId, DEFAULT_LEFT_PANEL_ID)}

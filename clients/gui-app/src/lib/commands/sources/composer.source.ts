@@ -28,6 +28,7 @@ import {
   type GuiHarnessCatalog,
 } from "@/hooks/harnesses/use-gui-harness-catalog";
 import { isHarnessRowSignedOut } from "@/lib/providers/provider-ambient-auth";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { useHostBinding } from "@/lib/host";
 import { resolveSubtreeHostClient } from "@/lib/host/binding-host-client";
 import { useEffectiveHostId } from "@/hooks/host/use-effective-host-id";
@@ -126,8 +127,11 @@ export const composerSource: ReactCommandSource = {
 function buildStashPromptItem(shortcut: ChordString | null): CommandItem {
   return {
     id: "composer:stash-prompt",
-    label: "Stash prompt",
-    description: "Save this prompt so it can be restored in any composer.",
+    label: i18n.t("Stash prompt", { ns: "palette" }),
+    description: i18n.t(
+      "Save this prompt so it can be restored in any composer.",
+      { ns: "palette" },
+    ),
     keywords: ["stash", "save", "prompt", "draft"],
     group: "suggested",
     scope: "actions",
@@ -152,7 +156,7 @@ function buildChangeModelItem(
 ): CommandItem {
   return {
     id: "composer:open-model-picker",
-    label: "Change model…",
+    label: i18n.t("Change model…", { ns: "palette" }),
     description,
     keywords: ["model", "change", "picker", "harness", "provider", "reasoning"],
     group: "suggested",
@@ -173,30 +177,34 @@ function buildChangeModelItem(
 function buildSwitchProviderItem(): CommandItem {
   return {
     id: "composer:switch-provider",
-    label: "Switch provider",
-    description: "Pick a provider for the focused composer.",
+    label: i18n.t("Switch provider", { ns: "palette" }),
+    description: i18n.t("Pick a provider for the focused composer.", {
+      ns: "palette",
+    }),
     keywords: ["provider", "switch"],
     group: "suggested",
     scope: "actions",
     shortcut: null,
     actionId: null,
     run: () => undefined,
-    subpage: PROVIDER_SUBPAGE,
+    subpage: makeProviderSubpage(),
   };
 }
 
 function buildSwitchModelItem(): CommandItem {
   return {
     id: "composer:switch-model",
-    label: "Switch model",
-    description: "Pick a model for the focused composer.",
+    label: i18n.t("Switch model", { ns: "palette" }),
+    description: i18n.t("Pick a model for the focused composer.", {
+      ns: "palette",
+    }),
     keywords: ["model", "switch"],
     group: "suggested",
     scope: "actions",
     shortcut: null,
     actionId: null,
     run: () => undefined,
-    subpage: MODEL_SUBPAGE,
+    subpage: makeModelSubpage(),
   };
 }
 
@@ -229,9 +237,11 @@ function buildNewChatReplaceItem(args: {
   const { epicId, tabId } = args;
   return {
     id: "composer:new-chat:replace",
-    label: "New agent in active tile",
-    description:
+    label: i18n.t("New agent in active tile", { ns: "palette" }),
+    description: i18n.t(
       "Compose a new Chat-interface agent in place of the currently active tile.",
+      { ns: "palette" },
+    ),
     keywords: ["new", "chat", "agent", "replace"],
     group: "suggested",
     scope: "actions",
@@ -249,14 +259,26 @@ function buildNewChatSplitItem(args: {
   readonly position: "right" | "bottom";
 }): CommandItem {
   const { epicId, tabId, position } = args;
+  // Two full-sentence keys (rather than interpolating the English position
+  // word) so each side reads as natural Japanese.
   const label =
     position === "right"
-      ? "New agent in split (right)"
-      : "New agent in split (bottom)";
+      ? i18n.t("New agent in split (right)", { ns: "palette" })
+      : i18n.t("New agent in split (bottom)", { ns: "palette" });
+  const description =
+    position === "right"
+      ? i18n.t(
+          "Split the active tile and compose a new Chat-interface agent on the right.",
+          { ns: "palette" },
+        )
+      : i18n.t(
+          "Split the active tile and compose a new Chat-interface agent on the bottom.",
+          { ns: "palette" },
+        );
   return {
     id: `composer:new-chat:split:${position}`,
     label,
-    description: `Split the active tile and compose a new Chat-interface agent on the ${position}.`,
+    description,
     keywords: ["new", "chat", "agent", "split", position],
     group: "suggested",
     scope: "actions",
@@ -283,8 +305,11 @@ function buildNewTerminalAgentItem(args: {
   const { epicId, tabId } = args;
   return {
     id: "composer:new-terminal-agent",
-    label: "New Terminal-interface agent",
-    description: "Compose a new Terminal-interface agent in the active tile.",
+    label: i18n.t("New Terminal-interface agent", { ns: "palette" }),
+    description: i18n.t(
+      "Compose a new Terminal-interface agent in the active tile.",
+      { ns: "palette" },
+    ),
     keywords: ["new", "terminal", "agent", "tui"],
     group: "suggested",
     scope: "actions",
@@ -302,17 +327,23 @@ function buildNewTerminalAgentItem(args: {
 // Sub-pages
 // ---------------------------------------------------------------------------
 
-const PROVIDER_SUBPAGE: CommandSubpage = {
-  id: "composer:provider",
-  title: "Pick provider",
-  useItems: () => useProviderSubpageItems(),
-};
+// Built per item construction (not module constants) so the titles resolve
+// through i18n at palette-open time and follow a language switch on reopen.
+function makeProviderSubpage(): CommandSubpage {
+  return {
+    id: "composer:provider",
+    title: i18n.t("Pick provider", { ns: "palette" }),
+    useItems: () => useProviderSubpageItems(),
+  };
+}
 
-const MODEL_SUBPAGE: CommandSubpage = {
-  id: "composer:model",
-  title: "Pick model",
-  useItems: () => useModelSubpageItems(),
-};
+function makeModelSubpage(): CommandSubpage {
+  return {
+    id: "composer:model",
+    title: i18n.t("Pick model", { ns: "palette" }),
+    useItems: () => useModelSubpageItems(),
+  };
+}
 
 /**
  * The catalog the composer subpages list: the FOCUSED composer's target
@@ -433,7 +464,7 @@ function useModelSubpageItems(): ReadonlyArray<CommandItem> {
  */
 function signedOutBadge(provider: HarnessOption): { statusBadge?: string } {
   return providerSignedOutInPalette(provider)
-    ? { statusBadge: "Signed out" }
+    ? { statusBadge: i18n.t("Signed out", { ns: "palette" }) }
     : {};
 }
 

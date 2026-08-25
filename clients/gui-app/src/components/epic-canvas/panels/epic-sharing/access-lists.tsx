@@ -1,5 +1,7 @@
 import { Trash2, UserPlus, Users } from "lucide-react";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -75,11 +77,12 @@ const TEAMS_LOAD_ERROR_CONTEXT = createReportIssueContext({
 });
 
 export function PeopleWithAccess(props: PeopleWithAccessProps) {
+  const { t } = useTranslation("canvas");
   if (props.loadState === "loading") return <SharingLoadingRows />;
   if (props.loadState === "error") {
     return (
       <SharingError
-        label="Couldn't load collaborators."
+        label={t("Couldn't load collaborators.")}
         reportContext={COLLABORATORS_LOAD_ERROR_CONTEXT}
       />
     );
@@ -88,7 +91,7 @@ export function PeopleWithAccess(props: PeopleWithAccessProps) {
     return (
       <SharingEmpty
         icon={<UserPlus className="size-3.5" />}
-        label="No direct collaborators yet."
+        label={t("No direct collaborators yet.")}
       />
     );
   }
@@ -121,11 +124,12 @@ export function PeopleWithAccess(props: PeopleWithAccessProps) {
 }
 
 export function TeamsAccess(props: TeamsAccessProps) {
+  const { t } = useTranslation("canvas");
   if (props.loadState === "loading") return <SharingLoadingRows />;
   if (props.loadState === "error") {
     return (
       <SharingError
-        label="Couldn't load teams."
+        label={t("Couldn't load teams.")}
         reportContext={TEAMS_LOAD_ERROR_CONTEXT}
       />
     );
@@ -134,7 +138,7 @@ export function TeamsAccess(props: TeamsAccessProps) {
     return (
       <SharingEmpty
         icon={<Users className="size-3.5" />}
-        label="No teams available."
+        label={t("No teams available.")}
       />
     );
   }
@@ -233,6 +237,7 @@ function CollaboratorRow(props: {
   onRoleChange: (newRole: AssignableCollaboratorRole) => void;
   onRevokeRequest: () => void;
 }) {
+  const { t } = useTranslation("canvas");
   const {
     collaborator,
     isOwner,
@@ -249,7 +254,9 @@ function CollaboratorRow(props: {
     collaborator.email || formatGithubHandle(collaborator.handle);
   const canChangeRole = isOwner && !isLastOwner && collaborator.userId !== null;
   const canRevoke = isOwner && !isLastOwner && collaborator.userId !== null;
-  const lastOwnerTitle = isLastOwner ? "Transfer ownership first." : undefined;
+  const lastOwnerTitle = isLastOwner
+    ? t("Transfer ownership first.")
+    : undefined;
 
   return (
     <li
@@ -295,7 +302,9 @@ function CollaboratorRow(props: {
               size="icon-xs"
               onClick={canRevoke ? props.onRevokeRequest : undefined}
               disabled={!canRevoke || isRevokePending}
-              aria-label={`Remove ${collaborator.displayName}`}
+              aria-label={t("Remove {{name}}", {
+                name: collaborator.displayName,
+              })}
               className="text-muted-foreground hover:text-destructive disabled:opacity-30"
               data-testid="collaborator-revoke-button"
             >
@@ -338,9 +347,12 @@ function TeamAccessRow(props: {
     isRevokePending,
     pendingRole,
   } = props;
+  const { t } = useTranslation("canvas");
   const initials = row.name.slice(0, 1).toUpperCase();
   const memberLabel =
-    row.kind === "shared" ? buildMemberLabel(row.members.length) : "Not shared";
+    row.kind === "shared"
+      ? buildMemberLabel(row.members.length, t)
+      : t("Not shared");
 
   return (
     <li
@@ -368,7 +380,7 @@ function TeamAccessRow(props: {
             canChange={isOwner}
             disabled={isPending}
             isPending={isRoleUpdatePending}
-            ariaLabel={`Change role for ${row.name}`}
+            ariaLabel={t("Change role for {{name}}", { name: row.name })}
             testId="team-role-select"
             onChange={props.onRoleChange}
           />
@@ -379,7 +391,7 @@ function TeamAccessRow(props: {
               size="icon-xs"
               onClick={props.onRevoke}
               disabled={isPending}
-              aria-label={`Remove ${row.name}`}
+              aria-label={t("Remove {{name}}", { name: row.name })}
               className="text-muted-foreground hover:text-destructive disabled:opacity-30"
               data-testid="team-revoke-button"
             >
@@ -402,7 +414,7 @@ function TeamAccessRow(props: {
             canChange={isOwner}
             disabled={isPending}
             isPending={false}
-            ariaLabel={`Role for ${row.name}`}
+            ariaLabel={t("Role for {{name}}", { name: row.name })}
             testId="team-pending-role-select"
             onChange={props.onPendingRoleChange}
           />
@@ -421,7 +433,7 @@ function TeamAccessRow(props: {
                   variant={undefined}
                 />
               ) : null}
-              Share
+              {t("Share")}
             </Button>
           ) : null}
         </>
@@ -439,6 +451,7 @@ function CollaboratorRoleControl(props: {
   readonly lastOwnerTitle: string | undefined;
   readonly onRoleChange: (newRole: AssignableCollaboratorRole) => void;
 }): ReactNode {
+  const { t } = useTranslation("canvas");
   const {
     collaborator,
     canChangeRole,
@@ -457,7 +470,9 @@ function CollaboratorRoleControl(props: {
         disabled={batchUpdateRolesPending}
         isPending={isPending}
         className={ROLE_PILL_CLASS}
-        aria-label={`Change role for ${collaborator.displayName}`}
+        aria-label={t("Change role for {{name}}", {
+          name: collaborator.displayName,
+        })}
         data-testid="collaborator-role-select"
       />
     );
@@ -470,14 +485,19 @@ function CollaboratorRoleControl(props: {
         isLastOwner ? "collaborator-role-last-owner" : "collaborator-role-badge"
       }
       ariaLabel={
-        isLastOwner ? `Change role for ${collaborator.displayName}` : undefined
+        isLastOwner
+          ? t("Change role for {{name}}", { name: collaborator.displayName })
+          : undefined
       }
     />
   );
 }
 
-function buildMemberLabel(count: number): string {
-  if (count === 0) return "No active members listed";
-  if (count === 1) return "1 active member";
-  return `${count} active members`;
+function buildMemberLabel(
+  count: number,
+  t: TFunction<"canvas">,
+): string {
+  if (count === 0) return t("No active members listed");
+  if (count === 1) return t("1 active member");
+  return t("{{count}} active members", { count });
 }

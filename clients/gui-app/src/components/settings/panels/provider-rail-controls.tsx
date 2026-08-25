@@ -10,6 +10,7 @@
  * never grows, so there is no "too small to be worth it" state to gate on.
  */
 import { ListFilter, Search, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,6 +35,7 @@ import {
   type ProviderRailStatus,
   type ProviderRailView,
 } from "./provider-rail-filter";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 export function ProviderRailControls(props: {
   readonly view: ProviderRailView;
@@ -41,6 +43,7 @@ export function ProviderRailControls(props: {
   readonly resultCount: number;
 }) {
   const { view, onViewChange } = props;
+  const { t } = useTranslation("panels");
   const setQuery = (query: string): void => onViewChange({ ...view, query });
 
   // NOTE: no Escape-to-clear here, deliberately. Escape belongs to the Settings
@@ -64,8 +67,8 @@ export function ProviderRailControls(props: {
           type="text"
           value={view.query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search"
-          aria-label="Search providers"
+          placeholder={t("Search")}
+          aria-label={t("Search providers")}
           autoComplete="off"
           spellCheck={false}
           className="text-ui-sm"
@@ -76,7 +79,7 @@ export function ProviderRailControls(props: {
             <InputGroupButton
               type="button"
               size="icon-xs"
-              aria-label="Clear provider search"
+              aria-label={t("Clear provider search")}
               onClick={() => setQuery("")}
               data-testid="provider-rail-search-clear"
             >
@@ -98,21 +101,26 @@ export function ProviderRailControls(props: {
 
 function railStatusMessage(view: ProviderRailView, count: number): string {
   if (!isProviderRailViewActive(view)) return "";
-  if (count === 0) return "No providers match.";
-  return `${count} ${count === 1 ? "provider" : "providers"} shown.`;
+  if (count === 0) return i18n.t("No providers match.", { ns: "panels" });
+  return count === 1
+    ? i18n.t("{{count}} provider shown.", { count, ns: "panels" })
+    : i18n.t("{{count}} providers shown.", { count, ns: "panels" });
 }
 
 function ProviderRailFilterMenu(props: {
   readonly status: ProviderRailStatus;
   readonly onStatusChange: (status: ProviderRailStatus) => void;
 }) {
+  const { t } = useTranslation("panels");
   const active = props.status !== PROVIDER_RAIL_STATUS.All;
   // The accessible name carries the CURRENT value, not just "Filter" - the dot
   // below says only that something is filtered, and a screen reader gets no
   // other reading of the trigger while the menu is closed.
   const label = active
-    ? `Filter providers, showing ${providerRailStatusLabel(props.status).toLowerCase()}`
-    : "Filter providers";
+    ? t("Filter providers, showing {{status}}", {
+        status: t(providerRailStatusLabel(props.status)).toLowerCase(),
+      })
+    : t("Filter providers");
   return (
     <DropdownMenu>
       <TooltipWrapper
@@ -145,7 +153,7 @@ function ProviderRailFilterMenu(props: {
       </TooltipWrapper>
       <DropdownMenuContent align="start" className="min-w-40">
         <DropdownMenuLabel className="text-overline uppercase tracking-wide">
-          Show
+          {t("Show")}
         </DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={props.status}
@@ -158,7 +166,7 @@ function ProviderRailFilterMenu(props: {
         >
           {PROVIDER_RAIL_STATUS_OPTIONS.map((option) => (
             <DropdownMenuRadioItem key={option.value} value={option.value}>
-              {option.label}
+              {t(option.label)}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>

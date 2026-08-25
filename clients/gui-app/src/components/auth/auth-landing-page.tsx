@@ -2,6 +2,7 @@ import { BrandMark, PhotoBloom } from "@/components/auth/cinematic-backdrop";
 import { SignInButton } from "@/components/layout/header/sign-in-button";
 import { getClientAppVersionLabel } from "@/lib/app-version";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const SIGN_IN_COLOR_VARS =
   "[--primary:#f8f7f2] [--primary-foreground:#050505] [--ring:#f8f7f2]";
@@ -9,6 +10,7 @@ const SIGN_IN_LANE_CLASS =
   "w-[min(100%,31rem)] pt-[clamp(0.35rem,1.2vh,0.8rem)]";
 
 export function AuthLandingPage() {
+  const { t } = useTranslation("common");
   return (
     // min-h-full, not min-h-svh: the standalone shell owns the viewport
     // height and reserves the Windows title-bar band above this page.
@@ -19,7 +21,7 @@ export function AuthLandingPage() {
         <div className="flex w-full max-w-[min(88vw,31rem)] flex-col items-center gap-[clamp(1.2rem,2.8vh,2rem)]">
           <BrandMark className="h-auto w-[clamp(3.75rem,8vw,5.4rem)] drop-shadow-[0_1.5rem_2.5rem_rgba(0,0,0,0.42)]" />
           <h1 className="mb-2 text-[clamp(2rem,5vw,2.75rem)] font-semibold leading-[clamp(2.25rem,5.5vw,3rem)] tracking-tight">
-            Welcome to Traycer
+            {t("Welcome to Traycer")}
           </h1>
           <div className={cn(SIGN_IN_COLOR_VARS, SIGN_IN_LANE_CLASS)}>
             <SignInButton layout="hero" />

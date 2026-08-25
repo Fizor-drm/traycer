@@ -7,6 +7,7 @@
 import { useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { UNKNOWN_HOST_PLACEHOLDER } from "@/lib/host/constants";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { openerExistingLeaf } from "@/lib/commands/sources/open/open-leaf";
 import {
   useActiveEpicHostId,
@@ -40,7 +41,10 @@ export function useArtifactsOpenerItems(
             name:
               artifact.title.length > 0
                 ? artifact.title
-                : `Untitled ${artifact.kind}`,
+                : i18n.t("Untitled {{kind}}", {
+                    ns: "palette",
+                    kind: artifact.kind,
+                  }),
             hostId: defaultHostId,
           },
           // Artifacts carry no per-item hostId (verified host-agnostic, audit

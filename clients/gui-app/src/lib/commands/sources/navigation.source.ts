@@ -11,6 +11,7 @@
  * Runs as a `ReactCommandSource` so the Open-Settings chord
  * refreshes live when the user rebinds `app.settings.open`.
  */
+import { i18n } from "@/lib/i18n/init-i18n";
 import { useMemo } from "react";
 import {
   SETTINGS_SECTIONS,
@@ -33,51 +34,59 @@ export const navigationSource: ReactCommandSource = {
     const settingsChord = useKeybindingStore(
       (state) => state.bindings["app.settings.open"] ?? null,
     );
-    const sectionItems = SETTINGS_SUBPAGE.useItems(ctx);
+    const sectionItems = buildSettingsSubpage().useItems(ctx);
     return useMemo<ReadonlyArray<CommandItem>>(() => {
+      const settingsSubpage = buildSettingsSubpage();
       const items: Array<CommandItem> = [];
-      if (ctx.pathname !== "/epics") items.push(OPEN_EPICS_ITEM);
-      items.push(buildSettingsEntryItem(settingsChord, sectionItems));
+      if (ctx.pathname !== "/epics") items.push(buildOpenEpicsItem());
+      items.push(
+        buildSettingsEntryItem(settingsChord, sectionItems, settingsSubpage),
+      );
       return items;
     }, [ctx.pathname, settingsChord, sectionItems]);
   },
 };
 
-const OPEN_EPICS_ITEM: CommandItem = {
-  id: "nav:epics",
-  label: "Open Tasks",
-  description: null,
-  keywords: ["tasks", "epics", "history", "list", "browse"],
-  group: "navigation",
-  scope: "actions",
-  shortcut: null,
-  actionId: null,
-  run: (ctx) => ctx.router.navigateToEpicList(),
-  subpage: null,
-};
+function buildOpenEpicsItem(): CommandItem {
+  return {
+    id: "nav:epics",
+    label: i18n.t("Open Tasks", { ns: "palette" }),
+    description: null,
+    keywords: ["tasks", "epics", "history", "list", "browse"],
+    group: "navigation",
+    scope: "actions",
+    shortcut: null,
+    actionId: null,
+    run: (ctx) => ctx.router.navigateToEpicList(),
+    subpage: null,
+  };
+}
 
-const SETTINGS_SUBPAGE: CommandSubpage = {
-  id: "nav:settings",
-  title: "Open settings",
-  useItems: (ctx: CommandContext) =>
-    useMemo<ReadonlyArray<CommandItem>>(
-      () =>
-        SETTINGS_SECTIONS.flatMap((section) =>
-          ctx.pathname !== `/settings/${section.id}`
-            ? [buildSectionItem(section)]
-            : [],
-        ),
-      [ctx.pathname],
-    ),
-};
+function buildSettingsSubpage(): CommandSubpage {
+  return {
+    id: "nav:settings",
+    title: i18n.t("Open settings", { ns: "palette" }),
+    useItems: (ctx: CommandContext) =>
+      useMemo<ReadonlyArray<CommandItem>>(
+        () =>
+          SETTINGS_SECTIONS.flatMap((section) =>
+            ctx.pathname !== `/settings/${section.id}`
+              ? [buildSectionItem(section)]
+              : [],
+          ),
+        [ctx.pathname],
+      ),
+  };
+}
 
 function buildSettingsEntryItem(
   shortcut: string | null,
   sectionItems: ReadonlyArray<CommandItem>,
+  settingsSubpage: CommandSubpage,
 ): CommandItem {
   return {
     id: "nav:settings",
-    label: "Open App Settings",
+    label: i18n.t("Open App Settings", { ns: "palette" }),
     description: null,
     keywords: withSubpageLabels(
       ["settings", "preferences", "config"],
@@ -91,7 +100,7 @@ function buildSettingsEntryItem(
     // `app.settings.open`.
     shortcut,
     actionId: null,
-    subpage: SETTINGS_SUBPAGE,
+    subpage: settingsSubpage,
     run: () => undefined,
   };
 }

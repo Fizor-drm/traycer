@@ -1,5 +1,7 @@
 import { Info, Mail, X } from "lucide-react";
 import { useId, type KeyboardEvent } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +30,7 @@ export interface InviteCardProps {
 }
 
 export function InviteCard(props: InviteCardProps) {
+  const { t } = useTranslation("canvas");
   const errorId = useId();
   const {
     inviteInput,
@@ -67,12 +70,12 @@ export function InviteCard(props: InviteCardProps) {
             onInputChange(event.target.value);
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Enter email or GitHub handle"
+          placeholder={t("Enter email or GitHub handle")}
           className={cn(
             "h-9 w-full min-w-0 pr-14",
             inputError !== null && "border-destructive",
           )}
-          aria-label="Email or GitHub handle"
+          aria-label={t("Email or GitHub handle")}
           aria-describedby={inputError !== null ? errorId : undefined}
           aria-invalid={inputError !== null}
           disabled={isPending}
@@ -87,7 +90,7 @@ export function InviteCard(props: InviteCardProps) {
           data-testid="invite-add-button"
           className="absolute top-1/2 right-2 -translate-y-1/2 text-ui-sm text-muted-foreground disabled:opacity-40"
         >
-          Add
+          {t("Add")}
         </Button>
       </div>
 
@@ -104,7 +107,7 @@ export function InviteCard(props: InviteCardProps) {
       {queuedInvites.length > 0 ? (
         <ul
           className="flex flex-wrap gap-2"
-          aria-label="Pending invites"
+          aria-label={t("Pending invites")}
           data-testid="invite-queue"
         >
           {queuedInvites.map((invite) => (
@@ -128,7 +131,7 @@ export function InviteCard(props: InviteCardProps) {
           disabled={isPending}
           isPending={false}
           className="h-9 min-w-0 rounded-md border border-input bg-background px-3"
-          aria-label="Role for new invites"
+          aria-label={t("Role for new invites")}
           data-testid="invite-role-select"
         />
         <Button
@@ -148,7 +151,7 @@ export function InviteCard(props: InviteCardProps) {
               variant={undefined}
             />
           ) : null}
-          {buildInviteActionLabel(queuedInvites.length)}
+          {buildInviteActionLabel(queuedInvites.length, t)}
         </Button>
       </div>
     </div>
@@ -160,6 +163,7 @@ function InviteChip(props: {
   isPending: boolean;
   onRemove: () => void;
 }) {
+  const { t } = useTranslation("canvas");
   const { invite, isPending, onRemove } = props;
   const label = formatInviteLabel(invite);
   return (
@@ -180,7 +184,7 @@ function InviteChip(props: {
         onClick={onRemove}
         disabled={isPending}
         className="size-5 rounded-full text-muted-foreground hover:text-destructive"
-        aria-label={`Remove ${label} from queue`}
+        aria-label={t("Remove {{name}} from queue", { name: label })}
         data-testid="invite-queue-remove"
       >
         <X className="size-3.5" />
@@ -203,10 +207,13 @@ function GithubMarkIcon(props: { readonly className: string }) {
 }
 
 function GithubHandleInviteInfo() {
+  const { t } = useTranslation("canvas");
   return (
     <li className="inline-flex items-center">
       <TooltipWrapper
-        label="GitHub handle invites may not receive an email notification."
+        label={t(
+          "GitHub handle invites may not receive an email notification.",
+        )}
         side="top"
         sideOffset={6}
         align="center"
@@ -216,7 +223,7 @@ function GithubHandleInviteInfo() {
           variant="ghost"
           size="icon-sm"
           className="size-7 rounded-full text-muted-foreground"
-          aria-label="GitHub handle invite email notification note"
+          aria-label={t("GitHub handle invite email notification note")}
           data-testid="github-handle-invite-info"
         >
           <Info className="size-3.5" />
@@ -226,8 +233,11 @@ function GithubHandleInviteInfo() {
   );
 }
 
-function buildInviteActionLabel(count: number): string {
-  if (count === 0) return "Invite";
-  if (count === 1) return "Invite 1 person";
-  return `Invite ${count} people`;
+function buildInviteActionLabel(
+  count: number,
+  t: TFunction<"canvas">,
+): string {
+  if (count === 0) return t("Invite");
+  if (count === 1) return t("Invite 1 person");
+  return t("Invite {{count}} people", { count });
 }

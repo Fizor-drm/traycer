@@ -3,6 +3,7 @@ import type {
   MutationLaneStatus,
   MutationProgress,
 } from "@traycer-clients/shared/platform/runner-host";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 /**
  * THE host-progress copy table (F19). One wording per event, shared by the
@@ -69,34 +70,44 @@ const DOWNLOAD_STAGE = "download";
  */
 export const HOST_PROGRESS_IDLE_HEADING = "Starting Traycer…";
 
+/**
+ * The idle heading resolved through i18n at read time (the const above is the
+ * English source key). Kept as a function so a language switch is picked up
+ * whenever the boot card re-renders, instead of freezing at module load.
+ */
+export function hostProgressIdleHeading(): string {
+  return i18n.t(HOST_PROGRESS_IDLE_HEADING, { ns: "common" });
+}
+
 export function hostProgressHeading(
   kind: MutationKind,
   stage: string | null,
 ): string {
-  if (stage === DOWNLOAD_STAGE) return "Downloading Traycer Host…";
+  if (stage === DOWNLOAD_STAGE)
+    return i18n.t("Downloading Traycer Host…", { ns: "common" });
   switch (kind) {
     case "ensure":
-      return "Setting up Traycer Host…";
+      return i18n.t("Setting up Traycer Host…", { ns: "common" });
     case "apply":
-      return "Applying the host update…";
+      return i18n.t("Applying the host update…", { ns: "common" });
     case "activate":
-      return "Activating Traycer Host…";
+      return i18n.t("Activating Traycer Host…", { ns: "common" });
     case "install":
-      return "Installing Traycer Host…";
+      return i18n.t("Installing Traycer Host…", { ns: "common" });
     case "register":
-      return "Registering the host service…";
+      return i18n.t("Registering the host service…", { ns: "common" });
     case "deregister":
-      return "Removing the host service…";
+      return i18n.t("Removing the host service…", { ns: "common" });
     case "respawn":
-      return "Restarting Traycer Host…";
+      return i18n.t("Restarting Traycer Host…", { ns: "common" });
     case "recoverIfDown":
-      return "Recovering Traycer Host…";
+      return i18n.t("Recovering Traycer Host…", { ns: "common" });
     case "freePortAndRestart":
-      return "Freeing the host port…";
+      return i18n.t("Freeing the host port…", { ns: "common" });
     case "uninstallHost":
-      return "Uninstalling Traycer Host…";
+      return i18n.t("Uninstalling Traycer Host…", { ns: "common" });
     case "removeTraycer":
-      return "Removing Traycer…";
+      return i18n.t("Removing Traycer…", { ns: "common" });
   }
 }
 
@@ -110,8 +121,11 @@ export function hostProgressShortLabel(
   kind: MutationKind,
   stage: string | null,
 ): string {
-  if (stage === DOWNLOAD_STAGE) return "Downloading…";
-  return kind === "ensure" ? "Setting up…" : "Working…";
+  if (stage === DOWNLOAD_STAGE)
+    return i18n.t("Downloading…", { ns: "common" });
+  return kind === "ensure"
+    ? i18n.t("Setting up…", { ns: "common" })
+    : i18n.t("Working…", { ns: "common" });
 }
 
 /**

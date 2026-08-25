@@ -1,4 +1,5 @@
 import { Terminal } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { CopyTextButton } from "@/components/copy-text-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,7 @@ export interface InstallGuidanceDialogProps {
  */
 export function InstallGuidanceDialog(props: InstallGuidanceDialogProps) {
   const { open, onOpenChange, guidance } = props;
+  const { t } = useTranslation("common");
   const runnerHost = useRunnerHost();
 
   return (
@@ -40,7 +42,7 @@ export function InstallGuidanceDialog(props: InstallGuidanceDialogProps) {
           <div className="min-w-0 flex-1 space-y-3">
             <div className="space-y-1.5">
               <DialogTitle className="text-ui font-semibold leading-snug">
-                Finish updating Traycer
+                {t("Finish updating Traycer")}
               </DialogTitle>
               <DialogDescription className="text-ui-sm leading-relaxed text-muted-foreground">
                 {guidance.summary}
@@ -64,7 +66,7 @@ export function InstallGuidanceDialog(props: InstallGuidanceDialogProps) {
                 <CopyTextButton
                   value={guidance.command}
                   label={null}
-                  ariaLabel="Copy command"
+                  ariaLabel={t("Copy command")}
                   disabled={false}
                 />
               </div>
@@ -82,7 +84,7 @@ export function InstallGuidanceDialog(props: InstallGuidanceDialogProps) {
               void runnerHost.openExternalLink(guidance.releaseUrl);
             }}
           >
-            View release page
+            {t("View release page")}
           </Button>
           <Button
             type="button"
@@ -92,7 +94,7 @@ export function InstallGuidanceDialog(props: InstallGuidanceDialogProps) {
             }}
             data-testid="install-guidance-close"
           >
-            Got it
+            {t("Got it")}
           </Button>
         </div>
       </DialogContent>

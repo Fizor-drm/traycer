@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { ConfirmDestructiveDialog } from "@/components/ui/confirm-destructive-dialog";
 import { HostDoctorIssueCard } from "@/components/settings/panels/host-doctor-issue-card";
@@ -40,11 +41,15 @@ export function HostDoctorReportContent(props: HostDoctorReportContentProps) {
     onFreePortOpenChange,
     onConfirmFreePort,
   } = props;
+  const { t } = useTranslation("panels");
   return (
     <div className="space-y-3">
       <div className="text-ui-sm text-muted-foreground">
-        Diagnostics found {issues.length} issue
-        {issues.length === 1 ? "" : "s"}.
+        {issues.length === 1
+          ? t("Diagnostics found 1 issue.")
+          : t("Diagnostics found {{count}} issues.", {
+              count: issues.length,
+            })}
       </div>
       {issues.map((issue) => (
         <HostDoctorIssueCard
@@ -60,12 +65,16 @@ export function HostDoctorReportContent(props: HostDoctorReportContentProps) {
       <div className="flex flex-wrap items-center gap-2">
         {recurrence.locked ? (
           <span className="min-w-0 flex-1 text-ui-sm text-rose-300">
-            Doctor paused after {RECURRENCE_THRESHOLD} failed fixes - re-run to
-            retry.
+            {t(
+              "Doctor paused after {{count}} failed fixes - re-run to retry.",
+              { count: RECURRENCE_THRESHOLD },
+            )}
           </span>
         ) : (
           <span className="min-w-0 flex-1 text-ui-xs text-muted-foreground">
-            Failures this minute: {recurrence.failures.length}
+            {t("Failures this minute: {{count}}", {
+              count: recurrence.failures.length,
+            })}
           </span>
         )}
         <Button
@@ -82,17 +91,17 @@ export function HostDoctorReportContent(props: HostDoctorReportContentProps) {
               variant={undefined}
             />
           ) : null}
-          Re-run Doctor
+          {t("Re-run Doctor")}
         </Button>
       </div>
 
       <ConfirmDestructiveDialog
         open={freePortPrompt !== null}
         onOpenChange={onFreePortOpenChange}
-        title="Free port and restart?"
+        title={t("Free port and restart?")}
         description={describeFreePortPrompt(freePortPrompt)}
         cascadeSummary={null}
-        actionLabel="Free port + restart"
+        actionLabel={t("Free port + restart")}
         isPending={freePortPending}
         onConfirm={onConfirmFreePort}
       />

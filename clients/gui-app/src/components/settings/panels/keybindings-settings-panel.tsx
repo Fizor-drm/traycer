@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, type UseMutationResult } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -38,6 +39,7 @@ type SummonHotkeyMutation = UseMutationResult<
 >;
 
 export function KeybindingsSettingsPanel() {
+  const { t } = useTranslation("panels");
   const bindings = useKeybindingStore((s) => s.bindings);
   const setBinding = useKeybindingStore((s) => s.setBinding);
   const clearBinding = useKeybindingStore((s) => s.clearBinding);
@@ -57,7 +59,7 @@ export function KeybindingsSettingsPanel() {
     mutationFn: (intent: GlobalShortcutIntent) => {
       if (summonBridge === null) {
         return Promise.reject(
-          new Error("Desktop global shortcuts are unavailable"),
+          new Error(t("Desktop global shortcuts are unavailable")),
         );
       }
       return summonBridge.set("summon", intent);
@@ -66,14 +68,14 @@ export function KeybindingsSettingsPanel() {
       trackSettingChanged("keybindings", "summonHotkeyChord");
     },
     onError: (error) =>
-      toastFromRunnerError(error, "Couldn't update the summon shortcut."),
+      toastFromRunnerError(error, t("Couldn't update the summon shortcut.")),
   });
 
   return (
     <section className="mx-auto w-full max-w-5xl px-8 py-10">
       <header className="sticky top-0 z-10 -mx-8 mb-8 bg-background/95 px-8 py-2 backdrop-blur">
         <h1 className="text-title-lg font-semibold text-foreground">
-          Keybindings
+          {t("Keybindings")}
         </h1>
       </header>
       <KeybindingList
@@ -107,7 +109,7 @@ export function KeybindingsSettingsPanel() {
             }
           }}
         >
-          Reset all to defaults
+          {t("Reset all to defaults")}
           {summonMutation.isPending ? (
             <AgentSpinningDots
               className="size-3"
@@ -129,6 +131,7 @@ interface KeybindingListProps {
 }
 
 function KeybindingList(props: KeybindingListProps) {
+  const { t } = useTranslation("panels");
   const { actionIds, bindings, setBinding, clearBinding } = props;
   return (
     <div className="overflow-hidden rounded-xl border border-border/60 bg-card/40">
@@ -142,7 +145,7 @@ function KeybindingList(props: KeybindingListProps) {
               className="flex items-center justify-between gap-6 px-5 py-3"
             >
               <span className="truncate text-ui-sm text-foreground">
-                {meta.label}
+                {t(meta.label)}
               </span>
               {meta.kind === "digit" ? (
                 <DigitBindingDisplay actionId={id} chord={chord} />
@@ -170,16 +173,22 @@ interface SubLeaderSectionProps {
 }
 
 function SubLeaderSection(props: SubLeaderSectionProps) {
+  const { t } = useTranslation("panels");
   return (
     <div className="mt-8">
       <header className="mb-3">
         <h2 className="text-title-sm font-semibold text-foreground">
-          Sub-leader
+          {t("Sub-leader")}
         </h2>
         <p className="mt-1 text-ui-xs text-muted-foreground">
-          The primary leader (default <Kbd>⌘</Kbd>) drives the active Epic
-          group. The sub-leader (default <Kbd>⌥</Kbd>) drives the header tab
-          strip, and settings sections while Settings is frontmost.
+          {t("The primary leader (default")} <Kbd>⌘</Kbd>
+          {t(
+            ") drives the active Epic group. The sub-leader (default",
+          )}{" "}
+          <Kbd>⌥</Kbd>{" "}
+          {t(
+            ") drives the header tab strip, and settings sections while Settings is frontmost.",
+          )}
         </p>
       </header>
       <KeybindingList
@@ -198,9 +207,12 @@ interface DigitBindingDisplayProps {
 }
 
 function DigitBindingDisplay(props: DigitBindingDisplayProps) {
+  const { t } = useTranslation("panels");
   const { actionId, chord } = props;
   if (chord === null) {
-    return <span className="text-ui-xs text-muted-foreground">Unbound</span>;
+    return (
+      <span className="text-ui-xs text-muted-foreground">{t("Unbound")}</span>
+    );
   }
   const first = formatModifierChordForDisplay(chord, "1");
   const last = formatModifierChordForDisplay(chord, "9");
@@ -239,15 +251,17 @@ interface GlobalShortcutsSectionProps {
  * when the desktop global-shortcuts bridge is present.
  */
 function GlobalShortcutsSection(props: GlobalShortcutsSectionProps) {
+  const { t } = useTranslation("panels");
   return (
     <div className="mt-8">
       <header className="mb-3">
         <h2 className="text-title-sm font-semibold text-foreground">
-          Global shortcuts
+          {t("Global shortcuts")}
         </h2>
         <p className="mt-1 text-ui-xs text-muted-foreground">
-          Registered system-wide - fires from anywhere, even when Traycer isn't
-          focused.
+          {t(
+            "Registered system-wide - fires from anywhere, even when Traycer isn't focused.",
+          )}
         </p>
       </header>
       <div className="overflow-hidden rounded-xl border border-border/60 bg-card/40">
@@ -266,6 +280,7 @@ interface SummonHotkeyRowProps {
 
 function SummonHotkeyRow(props: SummonHotkeyRowProps) {
   const { status, mutation } = props;
+  const { t } = useTranslation("panels");
   const bindings = useKeybindingStore((s) => s.bindings);
   // Local, capture-session-scoped: a blocked ENABLE attempt (R1) is a
   // distinct event from the OS `rejected` status and from a capture-time
@@ -279,7 +294,7 @@ function SummonHotkeyRow(props: SummonHotkeyRowProps) {
     return (
       <li className="flex items-center justify-between gap-6 px-5 py-3">
         <span className="truncate text-ui-sm text-foreground">
-          Summon Traycer
+          {t("Summon Traycer")}
         </span>
       </li>
     );
@@ -292,17 +307,16 @@ function SummonHotkeyRow(props: SummonHotkeyRowProps) {
   const rejected =
     mutation.data?.status === "rejected" || status.status === "rejected";
   const statusMessage =
-    enableConflictMessage ??
-    (rejected ? "In use by another application." : null);
+    enableConflictMessage ?? (rejected ? t("In use by another application.") : null);
 
   return (
     <li className="flex items-center justify-between gap-6 px-5 py-3">
       <div className="flex flex-col gap-0.5">
         <span className="truncate text-ui-sm text-foreground">
-          Summon Traycer
+          {t("Summon Traycer")}
         </span>
         <span className="text-ui-xs text-muted-foreground">
-          Shows and focuses Traycer from anywhere.
+          {t("Shows and focuses Traycer from anywhere.")}
         </span>
       </div>
       <div className="flex flex-col items-end gap-1">
@@ -339,7 +353,7 @@ function SummonHotkeyRow(props: SummonHotkeyRowProps) {
               trackSettingChanged("keybindings", "summonHotkeyEnabled");
               mutation.mutate({ enabled: checked, chord: status.intent.chord });
             }}
-            aria-label="Enable summon shortcut"
+            aria-label={t("Enable summon shortcut")}
           />
           <ChordCaptureCore
             value={status.effectiveChord}

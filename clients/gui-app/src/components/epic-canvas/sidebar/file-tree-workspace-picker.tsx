@@ -14,6 +14,7 @@
  * `[epicId, hostId]` so multi-host users keep distinct selections.
  */
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { WorktreeBindingSelectorRowV12 } from "@traycer/protocol/host";
 import { useWorktreeListBindingsForEpicForClient } from "@/hooks/worktree/use-worktree-list-bindings-for-epic-query";
 import { useSurfaceHostClient } from "@/hooks/host/use-surface-host-pin";
@@ -33,6 +34,7 @@ export interface FileTreeWorkspacePickerProps {
 }
 
 export function FileTreeWorkspacePicker(props: FileTreeWorkspacePickerProps) {
+  const { t } = useTranslation("canvas");
   // Controlled so a folder/worktree pick closes the popover. Left
   // uncontrolled, the popover stays open over the file tree after a
   // selection - the first click on a tree row then only dismisses the
@@ -63,10 +65,9 @@ export function FileTreeWorkspacePicker(props: FileTreeWorkspacePickerProps) {
   const selectedRoot = selectedWorkspaceRoot(rows, props.selectedPath);
   const triggerWorktreeLabel =
     selectedRow === null
-      ? (selectedRoot?.folderName ?? "Select workspace")
+      ? (selectedRoot?.folderName ?? t("Select workspace"))
       : formatGitWorktreeLabel(selectedRow);
-  const triggerSecondaryLabel =
-    props.selectedPath ?? "Choose a workspace folder";
+  const triggerSecondaryLabel = props.selectedPath ?? t("Choose a workspace folder");
 
   return (
     <CompactWorkspaceSwitcher
@@ -93,7 +94,7 @@ export function FileTreeWorkspacePicker(props: FileTreeWorkspacePickerProps) {
           setOpen(false);
         }}
         autoFocusSearch={false}
-        emptyMessage="No worktrees found."
+        emptyMessage={t("No worktrees found.")}
       />
     </CompactWorkspaceSwitcher>
   );

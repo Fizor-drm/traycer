@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle } from "lucide-react";
 import type {
   ProviderCliState,
@@ -20,6 +21,7 @@ import { useProvidersCancelLogin } from "@/hooks/providers/use-providers-cancel-
 import { useProvidersSubmitLoginCode } from "@/hooks/providers/use-providers-submit-login-code-mutation";
 import { useProvidersTouchLogin } from "@/hooks/providers/use-providers-touch-login-mutation";
 import { useRunnerOpenExternalLink } from "@/hooks/runner/use-open-external-link-mutation";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { redactEmail } from "@/lib/providers/redact-email";
 import {
   AddProfileIdentityStep,
@@ -61,6 +63,7 @@ export function ProviderProfileReauthPanel({
   onCancel,
   onDone,
 }: ProviderProfileReauthPanelProps): ReactNode {
+  const { t } = useTranslation("panels");
   const openExternalLink = useRunnerOpenExternalLink();
   const startLogin = useProvidersStartLogin();
   const awaitLogin = useHostScopedProvidersAwaitLogin();
@@ -90,8 +93,8 @@ export function ProviderProfileReauthPanel({
     submitLoginCode,
     touchLogin,
     failureMessages: {
-      notStarted: "Sign-in did not start. Try again when ready.",
-      notFinished: "Sign-in did not finish. Try again.",
+      notStarted: t("Sign-in did not start. Try again when ready."),
+      notFinished: t("Sign-in did not finish. Try again."),
     },
     onFailed: noop,
   });
@@ -157,13 +160,13 @@ export function ProviderProfileReauthPanel({
       <div>
         <div className="text-ui-sm font-medium text-foreground">
           {entryProfile.auth.status === "unauthenticated"
-            ? "Signing in"
-            : "Switching account"}
+            ? t("Signing in")
+            : t("Switching account")}
         </div>
         <p className="mt-0.5 text-ui-xs text-muted-foreground">
           {entryProfile.auth.status === "unauthenticated"
-            ? "Reconnect this profile. Its name and color will not change."
-            : "The profile name and color will not change."}
+            ? t("Reconnect this profile. Its name and color will not change.")
+            : t("The profile name and color will not change.")}
         </p>
       </div>
 
@@ -215,6 +218,7 @@ function ProviderProfileReauthState({
   readonly onSignInAgain: () => void;
   readonly onDone: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <>
       {showWaiting ? (
@@ -245,10 +249,14 @@ function ProviderProfileReauthState({
             <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-ui-xs text-amber-900 dark:text-amber-200">
               <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
               <span>
-                {entryProfile.label} is now signed in as{" "}
-                {profileIdentityCopy(flow.state.profile)} (was{" "}
-                {profileIdentityCopy(entryProfile)}). Sign in again if this is
-                not the intended account.
+                {t(
+                  "{{label}} is now signed in as {{identity}} (was {{previous}}). Sign in again if this is not the intended account.",
+                  {
+                    label: entryProfile.label,
+                    identity: profileIdentityCopy(flow.state.profile),
+                    previous: profileIdentityCopy(entryProfile),
+                  },
+                )}
               </span>
             </div>
           ) : null}
@@ -261,10 +269,10 @@ function ProviderProfileReauthState({
           <span>{flow.state.message}</span>
           <ReportIssueAction
             context={createReportIssueContext({
-              title: "Provider reauthentication failed",
+              title: t("Provider reauthentication failed"),
               message: null,
               code: null,
-              source: "Provider reauth",
+              source: t("Provider reauth"),
             })}
             presentation="link"
             className="h-auto p-0 text-current"
@@ -305,6 +313,7 @@ function ProviderProfileReauthActions({
   readonly onSignInAgain: () => void;
   readonly onDone: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (showWaiting) return null;
   // Nothing to act on - the settled-and-handing-off frame, whose card is
   // suppressed above. Without this the row still reserves its gap under an
@@ -316,7 +325,7 @@ function ProviderProfileReauthActions({
       {flow.state.kind === "failed" ? (
         <>
           <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
-            Cancel sign-in
+            {t("Cancel sign-in")}
           </Button>
           <Button
             type="button"
@@ -326,7 +335,7 @@ function ProviderProfileReauthActions({
             onClick={onRetry}
           >
             {flow.busy ? <MutedAgentSpinner /> : null}
-            Retry
+            {t("Retry")}
           </Button>
         </>
       ) : null}
@@ -339,12 +348,12 @@ function ProviderProfileReauthActions({
           onClick={onSignInAgain}
         >
           {flow.busy ? <MutedAgentSpinner /> : null}
-          Sign in again
+          {t("Sign in again")}
         </Button>
       ) : null}
       {showIdentity ? (
         <Button type="button" size="sm" variant="secondary" onClick={onDone}>
-          {identityChanged ? "Keep new account" : "Done"}
+          {identityChanged ? t("Keep new account") : t("Done")}
         </Button>
       ) : null}
     </div>
@@ -367,6 +376,8 @@ function profileIdentityCopy(profile: ProviderProfile): string {
   const email = profile.identity?.email ?? null;
   if (email !== null) return redactEmail(email);
   const uuid = profile.identity?.accountUuid ?? null;
-  if (uuid !== null) return "another account";
-  return "an unknown account";
+  if (uuid !== null) {
+    return i18n.t("another account", { ns: "panels" });
+  }
+  return i18n.t("an unknown account", { ns: "panels" });
 }

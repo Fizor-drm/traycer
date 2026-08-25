@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from "react";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import type { NotificationHookConfig } from "@traycer/protocol/host/notifications/host-notifications";
 import { AlertCircle, CheckCircle2, Copy, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -37,10 +39,11 @@ export function NotificationHooksSection(props: {
   readonly testHook: NotificationHooksTestMutation;
   readonly saveHooks: NotificationHooksSaveMutation;
 }) {
+  const { t } = useTranslation("panels");
   const { data, error, isLoading, refetch } = props.statusQuery;
   return (
     <SettingsGroup
-      title="Notification hooks"
+      title={t("Notification hooks")}
       tone="default"
       dataTestId="notification-hooks-manager"
       fill
@@ -54,6 +57,7 @@ export function NotificationHooksSection(props: {
         },
         testHook: props.testHook,
         saveHooks: props.saveHooks,
+        t,
       })}
     </SettingsGroup>
   );
@@ -66,8 +70,9 @@ function renderManager(args: {
   readonly onRefresh: () => void;
   readonly testHook: NotificationHooksTestMutation;
   readonly saveHooks: NotificationHooksSaveMutation;
+  readonly t: TFunction<"panels">;
 }): ReactNode {
-  const { data, errorMessage, isLoading, onRefresh, testHook, saveHooks } =
+  const { data, errorMessage, isLoading, onRefresh, testHook, saveHooks, t } =
     args;
   if (isLoading) {
     return (
@@ -84,7 +89,7 @@ function renderManager(args: {
             testId={undefined}
             variant={undefined}
           />
-          Loading hook status
+          {t("Loading hook status")}
         </div>
       </ManagerShell>
     );
@@ -102,12 +107,11 @@ function renderManager(args: {
           tone={errorMessage === null ? "neutral" : "error"}
           title={
             errorMessage === null
-              ? "Notification hooks unavailable"
-              : "Couldn't load notification hooks"
-          }
-          detail={
+              ? t("Notification hooks unavailable")
+              : t("Couldn't load notification hooks")
+          }          detail={
             errorMessage ??
-            "Reconnect to the current host to view and manage hooks."
+            t("Reconnect to the current host to view and manage hooks.")
           }
         />
       </ManagerShell>
@@ -127,8 +131,10 @@ function renderManager(args: {
         <div className="flex min-h-0 flex-1 items-start gap-2 overflow-auto px-4 py-3 text-ui-sm text-destructive">
           <AlertCircle aria-hidden className="mt-0.5 size-4 shrink-0" />
           <span>
-            Hooks are disabled and editing is unavailable until the file parses:{" "}
-            {data.configError}.
+            {t(
+              "Hooks are disabled and editing is unavailable until the file parses: {{error}}.",
+              { error: data.configError },
+            )}
           </span>
         </div>
       </ManagerShell>
@@ -174,12 +180,19 @@ function HooksToolbar(props: {
   readonly onAdd: () => void;
   readonly onRefresh: () => void;
 }) {
+  const { t } = useTranslation("panels");
+  let countLabel = "";
+  if (props.count === null) {
+    countLabel = t("Current host");
+  } else if (props.count === 1) {
+    countLabel = t("1 hook");
+  } else {
+    countLabel = t("{{count}} hooks", { count: props.count });
+  }
   return (
     <div className="flex items-center gap-2 border-b border-border/40 px-3 py-2">
       <span className="shrink-0 text-ui-xs text-muted-foreground">
-        {props.count === null
-          ? "Current host"
-          : `${props.count} ${props.count === 1 ? "hook" : "hooks"}`}
+        {countLabel}
       </span>
       <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-1.5">
         {props.configPath === null ? null : (
@@ -192,7 +205,7 @@ function HooksToolbar(props: {
           onClick={props.onRefresh}
         >
           <RefreshCw aria-hidden className="size-3.5" />
-          Refresh
+          {t("Refresh")}
         </Button>
         <Button
           type="button"
@@ -201,7 +214,7 @@ function HooksToolbar(props: {
           onClick={props.onAdd}
         >
           <Plus aria-hidden className="size-3.5" />
-          Add hook
+          {t("Add hook")}
         </Button>
       </div>
     </div>
@@ -209,6 +222,7 @@ function HooksToolbar(props: {
 }
 
 function ConfigPathAccess(props: { readonly configPath: string }) {
+  const { t } = useTranslation("panels");
   return (
     <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
       <code className="min-w-0 flex-1 truncate rounded bg-foreground/8 px-2 py-1 font-mono text-ui-xs text-muted-foreground">
@@ -218,11 +232,11 @@ function ConfigPathAccess(props: { readonly configPath: string }) {
         type="button"
         variant="ghost"
         size="icon-sm"
-        aria-label="Copy config file path"
+        aria-label={t("Copy config file path")}
         onClick={() => {
           void navigator.clipboard.writeText(props.configPath).then(
-            () => toast.success("Path copied to clipboard"),
-            () => toast.error("Couldn't copy the path"),
+            () => toast.success(t("Path copied to clipboard")),
+            () => toast.error(t("Couldn't copy the path")),
           );
         }}
       >
@@ -270,6 +284,7 @@ function HooksEditor(props: {
   // host switch remounts through the gate's key and correctly starts closed.
   const [editor, setEditor] = useState<EditorState>({ kind: "closed" });
   const [pendingDelete, setPendingDelete] = useState<HookEntry | null>(null);
+  const { t } = useTranslation("panels");
 
   // Every write rebuilds the whole file from the hooks this render read, so
   // there is no long-lived draft of the entire file to drift out of date.
@@ -305,11 +320,12 @@ function HooksEditor(props: {
           >
             <div className="space-y-1">
               <div className="text-ui-sm font-medium text-foreground">
-                No notification hooks
+                {t("No notification hooks")}
               </div>
               <p className="max-w-md text-ui-sm text-muted-foreground">
-                Hooks run a script or send an HTTP request for enabled
-                notification severities.
+                {t(
+                  "Hooks run a script or send an HTTP request for enabled notification severities.",
+                )}
               </p>
             </div>
             <Button
@@ -321,7 +337,7 @@ function HooksEditor(props: {
               }}
             >
               <Plus aria-hidden className="size-3.5" />
-              Add hook
+              {t("Add hook")}
             </Button>
           </div>
         ) : (
@@ -340,7 +356,7 @@ function HooksEditor(props: {
                     configs.map((entry) =>
                       entry.id === hook.id ? { ...entry, enabled } : entry,
                     ),
-                    enabled ? "Hook enabled" : "Hook disabled",
+                    enabled ? t("Hook enabled") : t("Hook disabled"),
                   );
                 }}
                 onDelete={() => {
@@ -359,7 +375,7 @@ function HooksEditor(props: {
               ? emptyDraft()
               : draftFromHook(toConfig(editor.hook))
           }
-          title={editor.kind === "add" ? "Add hook" : "Edit hook"}
+          title={editor.kind === "add" ? t("Add hook") : t("Edit hook")}
           saving={props.saveHooks.isPending}
           onCancel={() => {
             setEditor({ kind: "closed" });
@@ -369,7 +385,10 @@ function HooksEditor(props: {
               editor.kind === "add"
                 ? [...configs, hook]
                 : configs.map((entry) => (entry.id === hook.id ? hook : entry));
-            saveAll(next, editor.kind === "add" ? "Hook added" : "Hook saved");
+            saveAll(
+              next,
+              editor.kind === "add" ? t("Hook added") : t("Hook saved"),
+            );
           }}
         />
       )}
@@ -377,10 +396,13 @@ function HooksEditor(props: {
       {pendingDelete === null ? null : (
         <ConfirmDestructiveDialog
           open
-          title="Delete hook?"
-          description={`"${pendingDelete.name ?? pendingDelete.id}" will be removed from the hooks file on the host.`}
+          title={t("Delete hook?")}
+          description={t(
+            '"{{name}}" will be removed from the hooks file on the host.',
+            { name: pendingDelete.name ?? pendingDelete.id },
+          )}
           cascadeSummary={null}
-          actionLabel="Delete"
+          actionLabel={t("Delete")}
           isPending={props.saveHooks.isPending}
           onOpenChange={(open) => {
             if (!open) setPendingDelete(null);
@@ -388,7 +410,7 @@ function HooksEditor(props: {
           onConfirm={() => {
             saveAll(
               configs.filter((entry) => entry.id !== pendingDelete.id),
-              "Hook deleted",
+              t("Hook deleted"),
             );
           }}
         />
@@ -416,6 +438,7 @@ function HookRow(props: {
   readonly onDelete: () => void;
 }) {
   const { hook, testHook } = props;
+  const { t } = useTranslation("panels");
   const testingThisHook =
     testHook.isPending && testHook.variables.hookId === hook.id;
   return (
@@ -429,9 +452,11 @@ function HookRow(props: {
             {hook.name ?? hook.id}
           </span>
           <Badge variant="outline">
-            {hook.action.type === "http" ? "HTTP" : "Script"}
+            {hook.action.type === "http" ? t("HTTP") : t("Script")}
           </Badge>
-          {hook.enabled ? null : <Badge variant="secondary">disabled</Badge>}
+          {hook.enabled ? null : (
+            <Badge variant="secondary">{t("disabled")}</Badge>
+          )}
         </div>
         <p className="truncate font-mono text-ui-xs text-muted-foreground">
           {hook.action.type === "http"
@@ -439,10 +464,10 @@ function HookRow(props: {
             : [hook.action.command, ...hook.action.args].join(" ")}
         </p>
         <p className="truncate text-ui-xs text-muted-foreground">
-          {severitySummary(hook.severities)}
+          {severitySummary(hook.severities, t)}
         </p>
         {hook.lastResult === null ? (
-          <p className="text-ui-xs text-muted-foreground">No test yet</p>
+          <p className="text-ui-xs text-muted-foreground">{t("No test yet")}</p>
         ) : (
           <p
             className={cn(
@@ -463,7 +488,7 @@ function HookRow(props: {
         <Switch
           checked={hook.enabled}
           disabled={props.saving}
-          aria-label={`${hook.name ?? hook.id} enabled`}
+          aria-label={t("{{name}} enabled", { name: hook.name ?? hook.id })}
           onCheckedChange={props.onToggleEnabled}
         />
         <Button
@@ -477,9 +502,18 @@ function HookRow(props: {
               {
                 onSuccess: (result) => {
                   if (result.outcome === "ok") {
-                    toast.success(`Hook "${hook.name ?? hook.id}" delivered`);
+                    toast.success(
+                      t('Hook "{{name}}" delivered', {
+                        name: hook.name ?? hook.id,
+                      }),
+                    );
                   } else {
-                    toast.error(`Test ${result.outcome}: ${result.detail}`);
+                    toast.error(
+                      t("Test {{outcome}}: {{detail}}", {
+                        outcome: result.outcome,
+                        detail: result.detail,
+                      }),
+                    );
                   }
                 },
               },
@@ -493,7 +527,7 @@ function HookRow(props: {
               variant={undefined}
             />
           ) : null}
-          Test
+          {t("Test")}
         </Button>
         <Button
           type="button"
@@ -502,7 +536,7 @@ function HookRow(props: {
           disabled={props.saving}
           onClick={props.onEdit}
         >
-          Edit
+          {t("Edit")}
         </Button>
         <Button
           type="button"
@@ -511,7 +545,7 @@ function HookRow(props: {
           disabled={props.saving}
           onClick={props.onDelete}
         >
-          Delete
+          {t("Delete")}
         </Button>
       </div>
     </div>
@@ -519,9 +553,14 @@ function HookRow(props: {
 }
 
 /** `null` in the file means "any severity" - name it rather than show blank. */
-function severitySummary(severities: HookEntry["severities"]): string {
-  if (severities === null) return "Every severity";
+function severitySummary(
+  severities: HookEntry["severities"],
+  t: TFunction<"panels">,
+): string {
+  if (severities === null) return t("Every severity");
   return severities
-    .map((id) => HOOK_SEVERITIES.find((entry) => entry.id === id)?.label ?? id)
+    .map((id) =>
+      t(HOOK_SEVERITIES.find((entry) => entry.id === id)?.label ?? id),
+    )
     .join(", ");
 }

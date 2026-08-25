@@ -4,6 +4,7 @@ import type {
   ProviderSkillInspectCandidate,
   ProvidersSkillsMutateAction,
 } from "@traycer/protocol/host/provider-native-schemas";
+import { useTranslation } from "react-i18next";
 import { MarkdownEditPreview } from "@/components/markdown-edit-preview";
 import { MutedAgentSpinner } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import { SelectAllToggle } from "@/components/ui/select-all-toggle";
 import { StartTruncatedText } from "@/components/ui/start-truncated-text";
 import { Textarea } from "@/components/ui/textarea";
 import type { SkillsMutateData } from "@/hooks/providers/native-response-map";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { cn } from "@/lib/utils";
 import { submitComposer } from "./provider-skill-composer-flow";
 import {
@@ -59,6 +61,7 @@ export function ProviderSkillComposerDialog(props: {
   readonly onClose: () => void;
 }): ReactNode {
   const draft = useComposerDraft(props);
+  const { t } = useTranslation("panels");
 
   return (
     <Dialog
@@ -174,7 +177,7 @@ export function ProviderSkillComposerDialog(props: {
               disabled={props.pending}
               onClick={props.onClose}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               type="button"
@@ -315,28 +318,31 @@ function ComposerDescription({
 }: {
   readonly step: SkillComposerStep;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (step === "picker") {
-    return "Selecting an installed skill overwrites it from this source.";
+    return t("Selecting an installed skill overwrites it from this source.");
   }
   if (step === "import") {
-    return "Paste a source. The host clones or copies it and finds every SKILL.md.";
+    return t(
+      "Paste a source. The host clones or copies it and finds every SKILL.md.",
+    );
   }
-  return (
-    <>
-      A skill is a folder with a <code>SKILL.md</code> inside it. The agent
-      loads one on its own when the work matches, or you can invoke it directly
-      with <code>/name</code> in chat.
-    </>
+  return t(
+    "A skill is a folder with a {{file}} inside it. The agent loads one on its own when the work matches, or you can invoke it directly with {{command}} in chat.",
+    { file: "SKILL.md", command: "/name" },
   );
 }
 
 function titleForStep(step: SkillComposerStep, candidateCount: number): string {
   if (step === "picker") {
     return candidateCount === 1
-      ? "1 skill found"
-      : `${String(candidateCount)} skills found`;
+      ? i18n.t("1 skill found", { ns: "panels" })
+      : i18n.t("{{count}} skills found", {
+          count: candidateCount,
+          ns: "panels",
+        });
   }
-  return "Add a skill";
+  return i18n.t("Add a skill", { ns: "panels" });
 }
 
 function submitLabel(
@@ -344,13 +350,18 @@ function submitLabel(
   selectedCount: number,
   canInspect: boolean,
 ): string {
-  if (step === "write") return "Create skill";
+  if (step === "write") return i18n.t("Create skill", { ns: "panels" });
   if (step === "picker") {
     return selectedCount === 1
-      ? "Install 1 skill"
-      : `Install ${String(selectedCount)} skills`;
+      ? i18n.t("Install 1 skill", { ns: "panels" })
+      : i18n.t("Install {{count}} skills", {
+          count: selectedCount,
+          ns: "panels",
+        });
   }
-  return canInspect ? "Add skill" : "Import skill";
+  return canInspect
+    ? i18n.t("Add skill", { ns: "panels" })
+    : i18n.t("Import skill", { ns: "panels" });
 }
 
 function WriteFields({
@@ -378,12 +389,13 @@ function WriteFields({
 }): ReactNode {
   const overSoftLimit =
     description.trim().length > SKILL_DESCRIPTION_SOFT_LIMIT;
+  const { t } = useTranslation("panels");
   return (
     <>
       <Field
         htmlFor="skill-name"
-        label="Name"
-        hint="Becomes the folder name and the /command you type in chat."
+        label={t("Name")}
+        hint={t("Becomes the folder name and the /command you type in chat.")}
         error={nameError}
       >
         <Input
@@ -399,8 +411,10 @@ function WriteFields({
 
       <Field
         htmlFor="skill-description"
-        label="Description"
-        hint="The agent reads this - and only this - to decide whether to load the skill. Say what it does and when it applies, including the words someone would actually use."
+        label={t("Description")}
+        hint={t(
+          "The agent reads this - and only this - to decide whether to load the skill. Say what it does and when it applies, including the words someone would actually use.",
+        )}
         error={null}
       >
         <Textarea
@@ -413,9 +427,13 @@ function WriteFields({
         />
         {overSoftLimit ? (
           <p className="text-ui-xs text-muted-foreground">
-            {description.trim().length} characters - over the{" "}
-            {SKILL_DESCRIPTION_SOFT_LIMIT}-character guideline. Long
-            descriptions are harder for the agent to match against.
+            {t(
+              "{{count}} characters - over the {{limit}}-character guideline. Long descriptions are harder for the agent to match against.",
+              {
+                count: description.trim().length,
+                limit: SKILL_DESCRIPTION_SOFT_LIMIT,
+              },
+            )}
           </p>
         ) : null}
       </Field>
@@ -423,12 +441,12 @@ function WriteFields({
       <div className="flex min-h-48 flex-col gap-1.5">
         <div className="flex flex-col gap-1">
           <span className="text-ui-sm font-medium text-foreground">
-            Instructions
+            {t("Instructions")}
           </span>
           <p className="text-ui-xs text-muted-foreground">
-            Markdown the agent follows once the skill loads. The name and
-            description above become the YAML frontmatter - you don&apos;t write
-            it yourself.
+            {t(
+              "Markdown the agent follows once the skill loads. The name and description above become the YAML frontmatter - you don't write it yourself.",
+            )}
           </p>
         </div>
         <div className="flex min-h-48 flex-1 flex-col overflow-hidden rounded-md border border-border/60">
@@ -437,7 +455,7 @@ function WriteFields({
             onChange={setBody}
             readOnly={disabled}
             placeholder={undefined}
-            ariaLabel="Instructions"
+            ariaLabel={t("Instructions")}
             testId="skill-composer-instructions"
             showPreview
           />
@@ -450,7 +468,7 @@ function WriteFields({
           disabled={disabled}
           onClick={onImport}
         >
-          or import an existing one
+          {t("or import an existing one")}
         </button>
       ) : null}
     </>
@@ -470,12 +488,15 @@ function ImportFields({
   readonly canWrite: boolean;
   readonly onWrite: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <>
       <Field
         htmlFor="skill-import-source"
-        label="Skill source"
-        hint="Paste an npx skills command, owner/repo, git or tree URL, or a folder path."
+        label={t("Skill source")}
+        hint={t(
+          "Paste an npx skills command, owner/repo, git or tree URL, or a folder path.",
+        )}
         error={null}
       >
         <Input
@@ -494,7 +515,7 @@ function ImportFields({
           disabled={disabled}
           onClick={onWrite}
         >
-          or write one from scratch
+          {t("or write one from scratch")}
         </button>
       ) : null}
     </>
@@ -519,6 +540,7 @@ function PickerFields({
   readonly onBack: () => void;
 }): ReactNode {
   const selected = new Set(selectedNames);
+  const { t } = useTranslation("panels");
   return (
     <div className="flex flex-col gap-3">
       {note === null ? null : (
@@ -528,10 +550,13 @@ function PickerFields({
       )}
       <div className="flex items-center justify-between gap-3">
         <span className="text-ui-xs text-muted-foreground">
-          {selectedNames.length} of {candidates.length} selected
+          {t("{{selected}} of {{total}} selected", {
+            selected: selectedNames.length,
+            total: candidates.length,
+          })}
         </span>
         <SelectAllToggle
-          accessibleLabel="Select all skills"
+          accessibleLabel={t("Select all skills")}
           selectableCount={candidates.length}
           selectedCount={selectedNames.length}
           disabled={disabled}
@@ -556,7 +581,7 @@ function PickerFields({
         disabled={disabled}
         onClick={onBack}
       >
-        Choose a different source
+        {t("Choose a different source")}
       </button>
     </div>
   );
@@ -577,6 +602,7 @@ function PickerRow({
     candidate.description !== null && candidate.description.length > 0
       ? candidate.description
       : null;
+  const { t } = useTranslation("panels");
   return (
     <li>
       <label
@@ -601,7 +627,7 @@ function PickerRow({
             </span>
             {candidate.installed ? (
               <span className="rounded-full border border-border/60 px-1.5 py-0.5 text-ui-xs text-muted-foreground">
-                installed
+                {t("installed")}
               </span>
             ) : null}
           </span>
@@ -657,10 +683,11 @@ function DestinationLine({
   readonly exact: boolean;
   readonly filePath: string;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const shown = step === "write" ? filePath : destination;
   return (
     <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5 text-ui-xs text-muted-foreground">
-      <span className="shrink-0">Saves to</span>
+      <span className="shrink-0">{t("Saves to")}</span>
       {exact ? (
         <StartTruncatedText className="block min-w-0 flex-1 font-mono text-ui-xs">
           {shown}
@@ -683,10 +710,11 @@ function SkillScopeFieldset({
   readonly disabled: boolean;
   readonly onChange: (providerScoped: boolean) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <fieldset className="flex flex-col gap-1.5">
       <legend className="text-ui-sm font-medium text-foreground">
-        Available to
+        {t("Available to")}
       </legend>
       <label
         className={cn(
@@ -703,10 +731,11 @@ function SkillScopeFieldset({
           disabled={disabled}
         />
         <span className="min-w-0">
-          Every provider
+          {t("Every provider")}
           <span className="block text-ui-xs text-muted-foreground">
-            Stored once in the shared skills folder and picked up by any agent
-            that reads it.
+            {t(
+              "Stored once in the shared skills folder and picked up by any agent that reads it.",
+            )}
           </span>
         </span>
       </label>
@@ -725,9 +754,11 @@ function SkillScopeFieldset({
           disabled={disabled}
         />
         <span className="min-w-0">
-          {providerLabel} only
+          {t("{{provider}} only", { provider: providerLabel })}
           <span className="block text-ui-xs text-muted-foreground">
-            Stored in {providerLabel}&apos;s own skills folder.
+            {t("Stored in {{provider}}'s own skills folder.", {
+              provider: providerLabel,
+            })}
           </span>
         </span>
       </label>

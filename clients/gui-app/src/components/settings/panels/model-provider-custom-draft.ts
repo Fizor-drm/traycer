@@ -41,6 +41,8 @@ type StoredRow = {
 };
 
 /** One model the endpoint serves. Upstream requires a display name per row. */
+import { i18n } from "@/lib/i18n/init-i18n";
+
 export type CustomProviderModelRow = StoredRow & {
   /** Stable identity for the list; never sent. */
   readonly row: string;
@@ -318,14 +320,20 @@ function providerIdError(
   id: string,
   scope: CustomProviderIdScope,
 ): string | null {
-  if (id.length === 0) return "Provider ID is required";
-  if (id === FORBIDDEN_PROVIDER_ID) return "That provider ID isn't allowed";
+  if (id.length === 0) {
+    return i18n.t("Provider ID is required", { ns: "panels" });
+  }
+  if (id === FORBIDDEN_PROVIDER_ID) {
+    return i18n.t("That provider ID isn't allowed", { ns: "panels" });
+  }
   if (scope.existing) return null;
   if (!PROVIDER_ID_PATTERN.test(id)) {
-    return "Use lowercase letters, numbers, hyphens, or underscores";
+    return i18n.t("Use lowercase letters, numbers, hyphens, or underscores", {
+      ns: "panels",
+    });
   }
   if (scope.takenIds.includes(id) && !scope.disabledIds.includes(id)) {
-    return "That provider ID already exists";
+    return i18n.t("That provider ID already exists", { ns: "panels" });
   }
   return null;
 }
@@ -338,15 +346,19 @@ function providerIdError(
  * endpoint answers is not knowable from the string.
  */
 function baseUrlError(baseUrl: string): string | null {
-  if (baseUrl.length === 0) return "Base URL is required";
+  if (baseUrl.length === 0) {
+    return i18n.t("Base URL is required", { ns: "panels" });
+  }
   if (!/^https?:\/\//.test(baseUrl)) {
-    return "Must start with http:// or https://";
+    return i18n.t("Must start with http:// or https://", { ns: "panels" });
   }
   return null;
 }
 
 function requiredRowError(value: string, duplicate: boolean): string | null {
-  if (value.length === 0) return "Required";
+  if (value.length === 0) {
+    return i18n.t("Required", { ns: "panels" });
+  }
   return duplicate ? "Duplicate" : null;
 }
 

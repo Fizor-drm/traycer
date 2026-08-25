@@ -1,5 +1,7 @@
 import { Info } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import type { CloudChatVisibility } from "@traycer/protocol/host/epic/cloud-chat";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
@@ -39,6 +41,7 @@ export function MyAgentsSharingSection(props: {
 function MyAgentsSharingSectionBody(props: {
   readonly epicId: string;
 }): ReactNode {
+  const { t } = useTranslation("canvas");
   const sessionHostClient = useEpicSessionHostClient();
   const cloudChats = useCloudChatList({
     client: sessionHostClient,
@@ -64,7 +67,7 @@ function MyAgentsSharingSectionBody(props: {
   // inert; `isSuccess` is the only state whose count is evidence.
   const canArm = cloudChats.isSuccess;
 
-  const confirm = sharingDefaultConfirmCopy(pendingDirection, privateCount);
+  const confirm = sharingDefaultConfirmCopy(pendingDirection, privateCount, t);
 
   return (
     <section
@@ -77,10 +80,10 @@ function MyAgentsSharingSectionBody(props: {
             htmlFor="epic-sharing-my-agents-switch"
             className="truncate text-ui-sm font-normal text-muted-foreground"
           >
-            Share my agents
+            {t("Share my agents")}
           </Label>
           <TooltipWrapper
-            label={MY_AGENTS_HINT}
+            label={t(MY_AGENTS_HINT)}
             side="top"
             sideOffset={undefined}
             align={undefined}
@@ -90,7 +93,7 @@ function MyAgentsSharingSectionBody(props: {
             <button
               type="button"
               tabIndex={0}
-              aria-label="About sharing my agents"
+              aria-label={t("About sharing my agents")}
               className="shrink-0 cursor-default text-muted-foreground/70 outline-none focus-visible:text-foreground"
               data-testid="epic-sharing-my-agents-hint"
             >
@@ -144,6 +147,7 @@ function MyAgentsSharingSectionBody(props: {
 function sharingDefaultConfirmCopy(
   direction: PendingDirection | null,
   privateCount: number,
+  t: TFunction<"canvas">,
 ): {
   readonly title: string;
   readonly description: string;
@@ -153,27 +157,34 @@ function sharingDefaultConfirmCopy(
   if (direction === null) return null;
   if (direction === "task") {
     return {
-      title: "Share your agents with this task?",
-      description: shareConfirmDescription(privateCount),
-      actionLabel: "Share",
+      title: t("Share your agents with this task?"),
+      description: shareConfirmDescription(privateCount, t),
+      actionLabel: t("Share"),
       destructive: false,
     };
   }
   return {
-    title: "Make your agents private?",
-    description:
+    title: t("Make your agents private?"),
+    description: t(
       "This makes all of your agents on this task private, including future ones. You can share an individual agent from its row menu.",
-    actionLabel: "Make private",
+    ),
+    actionLabel: t("Make private"),
     destructive: true,
   };
 }
 
-function shareConfirmDescription(privateCount: number): string {
+function shareConfirmDescription(
+  privateCount: number,
+  t: TFunction<"canvas">,
+): string {
   if (privateCount === 0) {
-    return "Collaborators will be able to view and clone future agent chats you create on this task, but never act in them.";
+    return t(
+      "Collaborators will be able to view and clone future agent chats you create on this task, but never act in them.",
+    );
   }
-  const noun = privateCount === 1 ? "agent chat" : "agent chats";
-  return `Collaborators will be able to view and clone ${String(privateCount)} of your ${noun}, but never act in them.`;
+  return privateCount === 1
+    ? t("Collaborators will be able to view and clone {{count}} of your agent chat, but never act in them.", { count: privateCount })
+    : t("Collaborators will be able to view and clone {{count}} of your agent chats, but never act in them.", { count: privateCount });
 }
 
 function SharingDefaultConfirmDialog(props: {
@@ -186,6 +197,7 @@ function SharingDefaultConfirmDialog(props: {
   readonly isPending: boolean;
   readonly onConfirm: () => void;
 }): ReactNode {
+  const { t } = useTranslation("canvas");
   return (
     <Dialog
       open={props.open}
@@ -215,7 +227,7 @@ function SharingDefaultConfirmDialog(props: {
             }}
             data-testid="epic-sharing-my-agents-confirm-cancel"
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"

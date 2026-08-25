@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -94,6 +95,7 @@ export function AddHostDialog(): ReactNode {
 
 function AddHostDialogBody(): ReactNode {
   const scope = useHostScope();
+  const { t } = useTranslation("panels");
   const knownHostIds = useAddHostDialogStore((s) => s.knownHostIds);
   const closeDialog = useAddHostDialogStore((s) => s.closeDialog);
 
@@ -170,12 +172,14 @@ function AddHostDialogBody(): ReactNode {
       <>
         <DialogHeader>
           <DialogTitle>
-            {arrived.connectable ? "Host connected" : "Host registered"}
+            {arrived.connectable ? t("Host connected") : t("Host registered")}
           </DialogTitle>
           <DialogDescription>
             {arrived.connectable
-              ? "It registered itself and is ready to run agents."
-              : "It's in your account. This window doesn't have a live connection to it, but you can manage it from Settings."}
+              ? t("It registered itself and is ready to run agents.")
+              : t(
+                  "It's in your account. This window doesn't have a live connection to it, but you can manage it from Settings.",
+                )}
           </DialogDescription>
         </DialogHeader>
         <div
@@ -221,7 +225,7 @@ function AddHostDialogBody(): ReactNode {
             className="w-full sm:w-auto"
             onClick={closeDialog}
           >
-            Close
+            {t("Close")}
           </Button>
           <Button
             type="button"
@@ -233,7 +237,7 @@ function AddHostDialogBody(): ReactNode {
             }}
             data-testid="add-host-manage-arrived"
           >
-            Set up host
+            {t("Set up host")}
           </Button>
         </div>
       </>
@@ -243,19 +247,20 @@ function AddHostDialogBody(): ReactNode {
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Add host</DialogTitle>
+        <DialogTitle>{t("Add host")}</DialogTitle>
         <DialogDescription className="text-pretty">
-          Run these commands on the computer you want to reach. This window
-          detects it when it connects.
+          {t(
+            "Run these commands on the computer you want to reach. This window detects it when it connects.",
+          )}
         </DialogDescription>
       </DialogHeader>
 
       <ol className="flex min-w-0 flex-col" data-testid="add-host-steps">
-        <Step index={1} title="Install the Traycer CLI">
+        <Step index={1} title={t("Install the Traycer CLI")}>
           <Tabs defaultValue="npm" className="gap-1.5">
             <TabsList
               variant="line"
-              aria-label="Install method"
+              aria-label={t("Install method")}
               className="justify-start border-b border-border group-data-[orientation=horizontal]/tabs:h-7"
             >
               <TabsTrigger
@@ -273,24 +278,24 @@ function AddHostDialogBody(): ReactNode {
             </TabsList>
             <TabsContent value="npm" className="grid gap-1.5">
               <CommandBlock command={CLI_NPM_COMMAND} />
-              <StepNote>Requires Node 20.18 or newer.</StepNote>
+              <StepNote>{t("Requires Node 20.18 or newer.")}</StepNote>
             </TabsContent>
             <TabsContent value="homebrew" className="grid gap-1.5">
               <CommandBlock command={CLI_HOMEBREW_COMMAND} />
-              <StepNote>Available on macOS and Linux.</StepNote>
+              <StepNote>{t("Available on macOS and Linux.")}</StepNote>
             </TabsContent>
           </Tabs>
         </Step>
-        <Step index={2} title="Sign in">
+        <Step index={2} title={t("Sign in")}>
           <CommandBlock command={LOGIN_COMMAND} />
           <StepNote>
-            Open the link on any device, enter the code, and approve sign-in.
+            {t("Open the link on any device, enter the code, and approve sign-in.")}
           </StepNote>
         </Step>
-        <Step index={3} title="Install and start the host">
+        <Step index={3} title={t("Install and start the host")}>
           <CommandBlock command={HOST_ENSURE_COMMAND} />
           <StepNote>
-            Installs, registers, and starts the host. Safe to run again.
+            {t("Installs, registers, and starts the host. Safe to run again.")}
           </StepNote>
         </Step>
       </ol>
@@ -340,10 +345,11 @@ function CommandBlock(props: { readonly command: string }): ReactNode {
   // check when the write rejects (denied permission, insecure context) and
   // clears its reset timer on unmount, both of which the inline version got
   // wrong.
+  const { t } = useTranslation("panels");
   const clipboard = useClipboardCopy({
     resetMs: 1600,
     onSuccess: null,
-    onError: () => toast.error("Couldn't copy the command"),
+    onError: () => toast.error(t("Couldn't copy the command")),
   });
   return (
     <div className="group flex min-w-0 items-center gap-2 rounded-lg border border-border bg-foreground/5 px-2.5 py-1.5 transition-colors hover:bg-foreground/6">
@@ -355,7 +361,7 @@ function CommandBlock(props: { readonly command: string }): ReactNode {
         variant="ghost"
         size="sm"
         className="size-6 shrink-0 p-0 opacity-60 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-        aria-label={`Copy: ${props.command}`}
+        aria-label={t("Copy: {{command}}", { command: props.command })}
         onClick={() => clipboard.copy(props.command)}
       >
         {clipboard.copied ? (

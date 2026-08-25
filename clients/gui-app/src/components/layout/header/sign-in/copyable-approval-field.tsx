@@ -1,17 +1,23 @@
 import { Check, Copy } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useClipboardCopy } from "@/hooks/ui/use-clipboard-copy";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { cn } from "@/lib/utils";
 import { COPY_CONFIRMATION_RESET_MS } from "./styles";
 import { reportableErrorToast } from "@/lib/reportable-error-toast";
 
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 const handleCopyError = (): void => {
-  reportableErrorToast("Couldn't copy to clipboard.", undefined, {
-    title: "Could not copy to clipboard",
-    message: null,
-    code: null,
-    source: "Sign in",
-  });
+  reportableErrorToast(
+    i18n.t("Couldn't copy to clipboard.", { ns: "common" }),
+    undefined,
+    {
+      title: "Could not copy to clipboard",
+      message: null,
+      code: null,
+      source: "Sign in",
+    },
+  );
 };
 
 export function CopyableApprovalField(props: {
@@ -22,6 +28,7 @@ export function CopyableApprovalField(props: {
   readonly isHero: boolean;
   readonly valueKind: "code" | "url";
 }) {
+  const { t } = useTranslation("common");
   const { copied, copy } = useClipboardCopy({
     resetMs: COPY_CONFIRMATION_RESET_MS,
     onSuccess: null,
@@ -68,7 +75,7 @@ export function CopyableApprovalField(props: {
         <button
           type="button"
           onClick={() => copy(props.value)}
-          aria-label={copied ? "Copied" : props.copyLabel}
+          aria-label={copied ? t("Copied") : props.copyLabel}
           className={cn(
             "mr-1 inline-flex size-8 shrink-0 items-center justify-center rounded-md transition-colors focus-visible:ring-1 focus-visible:outline-none",
             props.isHero
@@ -91,7 +98,7 @@ export function CopyableApprovalField(props: {
         )}
         aria-live="polite"
       >
-        {copied ? "Copied" : ""}
+        {copied ? t("Copied") : ""}
       </span>
     </div>
   );

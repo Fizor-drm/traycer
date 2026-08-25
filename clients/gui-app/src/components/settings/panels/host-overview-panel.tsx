@@ -47,6 +47,7 @@ import {
 } from "@/components/settings/panels/my-hosts-model";
 import { persistedDraftFromIdentity } from "@/components/settings/panels/host-settings-panel-model";
 import { LocalPackageManagerUpgradeHint } from "@/components/settings/panels/host-settings-package-manager-upgrade-hint";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { useRunnerConvergeReady } from "@/hooks/runner/use-runner-converge-ready-mutation";
 import { useRunnerHostRemovalStateQuery } from "@/hooks/runner/use-runner-host-removal-state-query";
 import { useRunnerReinstallTraycer } from "@/hooks/runner/use-runner-reinstall-traycer-mutation";
@@ -80,6 +81,7 @@ import { toastFromRunnerError } from "@/lib/runner-error-toast";
 import { useRunnerHostOrNull } from "@/providers/use-runner-host";
 import type { HostRestartRequestResult } from "@traycer-clients/shared/platform/runner-host";
 import { useSettingsDensity } from "@/providers/settings-density-context";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { isHostScopeUsable } from "@/components/settings/host-scope/host-scope-status";
 import type { HostScope } from "@/components/settings/host-scope/use-host-scope";
@@ -144,6 +146,7 @@ export function HostOverviewPanel(props: {
 }): ReactNode {
   const { scope } = props;
   const compact = useSettingsDensity() === "compact";
+  const { t } = useTranslation("panels");
   const host = scope.host;
 
   // THE SCOPE'S OWN CLIENT, read directly rather than through the ambient
@@ -215,8 +218,8 @@ export function HostOverviewPanel(props: {
   const armedRestartIdRef = useRef<string | null>(null);
   const hostIdCopy = useClipboardCopy({
     resetMs: 1600,
-    onSuccess: () => toast.success("Host ID copied"),
-    onError: () => toast.error("Couldn't copy the host ID"),
+    onSuccess: () => toast.success(t("Host ID copied")),
+    onError: () => toast.error(t("Couldn't copy the host ID")),
   });
 
   // The pre-rework recovery console offered Force restart when the host
@@ -333,7 +336,9 @@ export function HostOverviewPanel(props: {
     mutationKey: runnerMutationKeys.hostRestart(),
     mutationFn: () => {
       if (management === null) {
-        return Promise.reject(new Error("No local host bridge is available."));
+        return Promise.reject(
+          new Error(i18n.t("No local host bridge is available.", { ns: "panels" })),
+        );
       }
       // The REFUSING respawn, for both of this page's callers — the busy-force
       // offer and the fallback confirm. `restartHost()` queues behind whatever
@@ -352,7 +357,11 @@ export function HostOverviewPanel(props: {
       // this render saw it, and main refuses if that is no longer true.
       const expectedHostId = forceRestartLocalHostId;
       if (expectedHostId === null) {
-        return Promise.reject(new Error("No local host bridge is available."));
+        return Promise.reject(
+          new Error(
+            i18n.t("No local host bridge is available.", { ns: "panels" }),
+          ),
+        );
       }
       return management.restartHostIfIdle({ expectedHostId });
     },
@@ -375,7 +384,10 @@ export function HostOverviewPanel(props: {
     onError: (error) => {
       setForceRestartOffer(null);
       setRestartConfirmOpen(false);
-      toastFromRunnerError(error, "Couldn't restart host");
+      toastFromRunnerError(
+        error,
+        t("Couldn't restart host"),
+      );
     },
   });
   // The Doctor sheet's log read for a host with no `diagnostics.*` family —
@@ -388,7 +400,9 @@ export function HostOverviewPanel(props: {
     mutationKey: runnerMutationKeys.hostDoctorBridgeLogs(),
     mutationFn: async () => {
       if (management === null) {
-        throw new Error("No local host bridge is available.");
+        throw new Error(
+          i18n.t("No local host bridge is available.", { ns: "panels" }),
+        );
       }
       // Fenced on the SAME id the page's other bridge writes use. Without it
       // this read is the one place a replaced local host still gets rendered
@@ -398,7 +412,9 @@ export function HostOverviewPanel(props: {
       // has nothing to do with the report; refused rather than read, exactly
       // like `restartHostIfIdle`'s own null arm above.
       if (forceRestartLocalHostId === null) {
-        throw new Error("This page's host is not this computer.");
+        throw new Error(
+          i18n.t("This page's host is not this computer.", { ns: "panels" }),
+        );
       }
       const result = await management.getHostLogs({
         tailLines: DOCTOR_BRIDGE_LOG_TAIL_LINES,
@@ -456,7 +472,7 @@ export function HostOverviewPanel(props: {
       {
         onSuccess: (next) => {
           setFailedRename(null);
-          toast.success(`Renamed to ${next.effectiveName}`);
+          toast.success(t("Renamed to {{name}}", { name: next.effectiveName }));
         },
         onError: (error) => {
           // The reopen happens in the EFFECT below, one render later, not
@@ -468,7 +484,7 @@ export function HostOverviewPanel(props: {
             draft: customName ?? "",
             attempt: (previous?.attempt ?? 0) + 1,
           }));
-          toastFromHostError(error, "Couldn't rename this host.");
+          toastFromHostError(error, t("Couldn't rename this host."));
         },
       },
     );
@@ -807,7 +823,7 @@ export function HostOverviewPanel(props: {
             <input
               {...rename.inputProps}
               className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1 font-semibold text-foreground text-title-sm outline-hidden focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-              aria-label="Host name"
+              aria-label={t("Host name")}
               data-testid="host-overview-name-input"
             />
           )
@@ -923,7 +939,7 @@ export function HostOverviewPanel(props: {
             const liveHostId = liveLocalHostIdNow();
             if (liveHostId !== null && liveHostId !== forceRestartLocalHostId) {
               setRestartConfirmOpen(false);
-              toast.info("Host changed", {
+              toast.info(t("Host changed"), {
                 description: HOST_CHANGED_DESCRIPTION,
               });
               return;
@@ -977,7 +993,7 @@ export function HostOverviewPanel(props: {
                 // Deliberately NOT cleared: a transport failure says nothing
                 // about whether the host granted the claim, so the id stays
                 // armed for the retry that adopts it.
-                toastFromHostError(error, "Couldn't restart this host.");
+                toastFromHostError(error, t("Couldn't restart this host."));
               },
             },
           );
@@ -1005,7 +1021,7 @@ export function HostOverviewPanel(props: {
         // inert for ANY respawn in flight, not just the one pressed here —
         // deliberately, so a second respawn cannot be stacked on the first.
         isForcing={forceRestartInFlight}
-        forceLabel="Force restart"
+        forceLabel={t("Force restart")}
         onForce={() => {
           if (forceRestartOffer === null) return;
           // Refuse on a POSITIVE mismatch only. `null` here is "cannot tell"
@@ -1016,7 +1032,7 @@ export function HostOverviewPanel(props: {
           const liveHostId = liveLocalHostIdNow();
           if (liveHostId !== null && liveHostId !== forceRestartOffer.hostId) {
             setForceRestartOffer(null);
-            toast.info("Host changed", {
+            toast.info(t("Host changed"), {
               description: HOST_CHANGED_DESCRIPTION,
             });
             return;
@@ -1121,6 +1137,7 @@ export function HostUpdateRequiredSlot(props: {
   readonly host: HostScopeOption;
   readonly canManageHost: boolean;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const lease = useHostLease(props.host.hostId);
   const convergeReady = useRunnerConvergeReady();
   if (props.host.health.state !== "update-required") return null;
@@ -1136,12 +1153,12 @@ export function HostUpdateRequiredSlot(props: {
           { force: true },
           {
             onSuccess: () => {
-              toast.success(`Updating ${props.host.name}…`);
+              toast.success(t("Updating {{name}}…", { name: props.host.name }));
             },
             onError: (error) =>
               toastFromRunnerError(
                 error,
-                `Couldn't update ${props.host.name}.`,
+                t("Couldn't update {{name}}.", { name: props.host.name }),
               ),
           },
         );
@@ -1206,6 +1223,7 @@ function LocalHostDownActions(props: {
   // sentinel refetch lands, which is why it needs its own test.
   const removalRepairable = removed || reinstall.isError || reinstall.isPending;
   const busy = props.settingUp || reinstall.isPending;
+  const { t } = useTranslation("panels");
   return (
     <div className="flex shrink-0 items-center gap-1.5">
       {removalRepairable ? (
@@ -1218,12 +1236,18 @@ function LocalHostDownActions(props: {
           onClick={() => {
             reinstall.mutate(undefined, {
               onSuccess: () => {
-                toast.success(`Reinstalling Traycer on ${props.hostName}…`);
+                toast.success(
+                  t("Reinstalling Traycer on {{name}}…", {
+                    name: props.hostName,
+                  }),
+                );
               },
               onError: (error) =>
                 toastFromRunnerError(
                   error,
-                  `Couldn't reinstall Traycer on ${props.hostName}.`,
+                  t("Couldn't reinstall Traycer on {{name}}.", {
+                    name: props.hostName,
+                  }),
                 ),
             });
           }}
@@ -1235,7 +1259,7 @@ function LocalHostDownActions(props: {
               variant={undefined}
             />
           ) : null}
-          Reinstall Traycer
+          {t("Reinstall Traycer")}
         </Button>
       ) : null}
       <Button
@@ -1246,7 +1270,7 @@ function LocalHostDownActions(props: {
         data-testid="host-overview-recovery-doctor"
         onClick={props.onOpenDoctor}
       >
-        Run doctor
+        {t("Run doctor")}
       </Button>
     </div>
   );
@@ -1546,9 +1570,10 @@ function HostOverviewInstallationCard(props: {
   /** Advanced, built by the page so its state is shared with the card above. */
   readonly advanced: ReactNode;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <SettingsGroup
-      title="Installation"
+      title={t("Installation")}
       tone="default"
       dataTestId="host-installation"
       fill={false}
@@ -1580,6 +1605,7 @@ function HostOverviewInstallationBody(props: {
   readonly loading: boolean;
   readonly readFailed: boolean;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (props.degrade !== null) {
     return (
       <HostOverviewNotice testId="host-overview-installation-degraded">
@@ -1590,7 +1616,9 @@ function HostOverviewInstallationBody(props: {
   if (props.readFailed && props.record === null) {
     return (
       <HostOverviewNotice testId="host-overview-installation-unreadable">
-        {`Couldn't read ${props.hostName}'s installation record.`}
+        {t("Couldn't read {{name}}'s installation record.", {
+          name: props.hostName,
+        })}
       </HostOverviewNotice>
     );
   }
@@ -1598,7 +1626,10 @@ function HostOverviewInstallationBody(props: {
     <InstallationDetailsDisclosure
       record={props.record}
       loading={props.loading}
-      emptyMessage={`${props.hostName} is running from a checkout or an unpacked tree, so it has no installation record.`}
+      emptyMessage={t(
+        "{{name}} is running from a checkout or an unpacked tree, so it has no installation record.",
+        { name: props.hostName },
+      )}
     />
   );
 }

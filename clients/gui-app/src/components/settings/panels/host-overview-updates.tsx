@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import { HostOverviewNotice } from "@/components/settings/panels/host-overview-status-card";
@@ -22,6 +23,7 @@ export function HostOverviewUpdatesRegion(props: {
   readonly degrade: OverviewDegradeReason | null;
 }): ReactNode {
   const { summary } = props;
+  const { t } = useTranslation("panels");
   if (props.degrade !== null) {
     return (
       <HostOverviewNotice testId="host-overview-updates-degraded">
@@ -58,7 +60,7 @@ export function HostOverviewUpdatesRegion(props: {
                   variant={undefined}
                 />
               ) : null}
-              Update now
+              {t("Update now")}
             </Button>
           )}
           <Button
@@ -76,7 +78,7 @@ export function HostOverviewUpdatesRegion(props: {
                 variant={undefined}
               />
             ) : null}
-            Check now
+            {t("Check now")}
           </Button>
         </div>
       </div>

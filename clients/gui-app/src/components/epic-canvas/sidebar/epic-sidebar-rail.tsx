@@ -5,11 +5,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  useDraggable,
-  useDroppable,
-  type DraggableSyntheticListeners,
-} from "@dnd-kit/core";
+import { useTranslation } from "react-i18next";
+import { useDraggable, useDroppable, type DraggableSyntheticListeners } from "@dnd-kit/core";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 import { Button } from "@/components/ui/button";
@@ -168,6 +165,7 @@ export function EpicLeftPanelStaticRail(props: EpicLeftPanelStaticRailProps) {
 }
 
 function EpicLeftPanelRailContent(props: EpicLeftPanelRailContentProps) {
+  const { t } = useTranslation("canvas");
   const { epicId, tabId, orientation, hasActiveCommentableArtifact } = props;
   const activePanelId = useActiveLeftPanelId(tabId);
   const collapsed = useMainPanelCollapsed(tabId);
@@ -267,7 +265,7 @@ function EpicLeftPanelRailContent(props: EpicLeftPanelRailContentProps) {
             ref={railDropRef}
             onContextMenuCapture={handleRailContextMenuCapture}
             role="toolbar"
-            aria-label="Epic left panels"
+            aria-label={t("Epic left panels")}
             aria-orientation={orientation}
             data-testid="epic-sidebar-rail"
             data-orientation={orientation}
@@ -343,6 +341,7 @@ function RailContextMenuContent(props: {
   readonly context: LeftPanelAvailabilityContext;
   readonly contextPanelId: LeftPanelId | null;
 }): ReactNode {
+  const { t } = useTranslation("canvas");
   const setOverride = useEpicLeftPanelStore(
     (s) => s.setPanelVisibilityOverride,
   );
@@ -376,7 +375,7 @@ function RailContextMenuContent(props: {
             onSelect={() => setOverride(pointedEntry.definition.id, false)}
             data-testid="epic-rail-hide-pointed-panel"
           >
-            {`Hide '${pointedEntry.definition.title}'`}
+            {t("Hide '{{title}}'", { title: t(pointedEntry.definition.title) })}
           </ContextMenuItem>
           <ContextMenuSeparator />
         </>
@@ -398,10 +397,12 @@ function RailContextMenuContent(props: {
             className="text-muted-foreground"
             aria-hidden
           />
-          {entry.definition.title}
+          {t(entry.definition.title)}
           {entry.visible && !entry.autoVisible ? (
             <span className="ml-auto pl-4 text-ui-xs text-muted-foreground">
-              {entry.definition.forcedOnHint}
+              {entry.definition.forcedOnHint === null
+                ? null
+                : t(entry.definition.forcedOnHint)}
             </span>
           ) : null}
         </ContextMenuCheckboxItem>
@@ -413,7 +414,7 @@ function RailContextMenuContent(props: {
             onSelect={clearOverrides}
             data-testid="epic-rail-reset-panel-visibility"
           >
-            Reset panel visibility
+            {t("Reset panel visibility")}
           </ContextMenuItem>
         </>
       ) : null}
@@ -486,6 +487,7 @@ interface RailGroupButtonProps {
 }
 
 function RailGroupButton(props: RailGroupButtonProps) {
+  const { t } = useTranslation("canvas");
   const {
     tabId,
     panelIds,
@@ -539,7 +541,7 @@ function RailGroupButton(props: RailGroupButtonProps) {
       handleListeners={listeners}
       icons={panelIds.map((panelId) => getPanelDefinition(panelId).icon)}
       label={panelIds
-        .map((panelId) => getPanelDefinition(panelId).title)
+        .map((panelId) => t(getPanelDefinition(panelId).title))
         .join(" + ")}
       orientation={orientation}
       active={active}

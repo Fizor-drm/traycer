@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Check, Copy, ExternalLink, Info } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ReportIssueAction } from "@/components/report-issue/report-issue-action";
 import { useClipboardCopy } from "@/hooks/ui/use-clipboard-copy";
@@ -13,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { DesktopSupportSnapshot } from "@/lib/windows/types";
+import { i18n } from "@/lib/i18n/init-i18n";
 import type { AboutDetailsDialogProps } from "./types";
 
 export function AboutDetailsDialog(props: AboutDetailsDialogProps): ReactNode {
@@ -37,13 +39,14 @@ interface AboutDetailsDialogContentProps {
 function AboutDetailsDialogContent(
   props: AboutDetailsDialogContentProps,
 ): ReactNode {
+  const { t } = useTranslation("common");
   const snapshot = useSupportSnapshot(props.open, props.support);
   const [linkError, setLinkError] = useState<string | null>(null);
 
   const openLink = (url: string): void => {
     setLinkError(null);
     void props.openExternalLink(url).catch(() => {
-      setLinkError("Could not open the selected link.");
+      setLinkError(t("Could not open the selected link."));
     });
   };
 
@@ -61,7 +64,7 @@ function AboutDetailsDialogContent(
         <span>{snapshot.message}</span>
         <ReportIssueAction
           context={createReportIssueContext({
-            title: "Couldn't load desktop details",
+            title: t("Couldn't load desktop details"),
             message: null,
             code: null,
             source: "About Traycer",
@@ -82,10 +85,10 @@ function AboutDetailsDialogContent(
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <Info className="size-4" />
-          About Traycer
+          {t("About Traycer")}
         </DialogTitle>
         <DialogDescription className="sr-only">
-          Desktop runtime and diagnostics details.
+          {t("Desktop runtime and diagnostics details.")}
         </DialogDescription>
       </DialogHeader>
       <div className="grid gap-3">{snapshotContent}</div>
@@ -97,7 +100,7 @@ function AboutDetailsDialogContent(
           <span>{linkError}</span>
           <ReportIssueAction
             context={createReportIssueContext({
-              title: "Couldn't open the link",
+              title: t("Couldn't open the link"),
               message: null,
               code: null,
               source: "About Traycer",
@@ -154,7 +157,9 @@ function useSupportSnapshot(
             support,
             snapshot: {
               status: "unavailable",
-              message: "Could not load desktop details.",
+              message: i18n.t("Could not load desktop details.", {
+                ns: "common",
+              }),
             },
           });
         }
@@ -166,18 +171,18 @@ function useSupportSnapshot(
   }, [open, support]);
 
   if (!open) {
-    return { status: "loading", message: "Loading details..." };
+    return { status: "loading", message: i18n.t("Loading details...", { ns: "common" }) };
   }
   if (support === null) {
     return {
       status: "unavailable",
-      message: "Desktop support bridge unavailable.",
+      message: i18n.t("Desktop support bridge unavailable.", { ns: "common" }),
     };
   }
   if (resource?.support === support) {
     return resource.snapshot;
   }
-  return { status: "loading", message: "Loading details..." };
+  return { status: "loading", message: i18n.t("Loading details...", { ns: "common" }) };
 }
 
 interface DetailsGridProps {
@@ -191,6 +196,7 @@ interface DetailsGridProps {
 function CopyDetailsButton(props: {
   readonly snapshot: DesktopSupportSnapshot;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const { copied, copy } = useClipboardCopy({
     resetMs: 1500,
     onSuccess: null,
@@ -201,7 +207,7 @@ function CopyDetailsButton(props: {
     <Button
       type="button"
       variant="outline"
-      aria-label={copied ? "Copied details" : "Copy details"}
+      aria-label={copied ? t("Copied details") : t("Copy details")}
       onClick={() =>
         copy(
           buildDetailRows(props.snapshot)
@@ -211,7 +217,7 @@ function CopyDetailsButton(props: {
       }
     >
       {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
-      Copy Details
+      {t("Copy Details")}
     </Button>
   );
 }
@@ -220,20 +226,23 @@ function buildDetailRows(
   snapshot: DesktopSupportSnapshot,
 ): readonly (readonly [string, string])[] {
   return [
-    ["Version", snapshot.appVersion],
-    ["Signed In", formatSignedInUser(snapshot)],
-    ["Support", snapshot.supportEmail],
-    ["Platform", `${snapshot.platform} ${snapshot.arch}`],
+    [i18n.t("Version", { ns: "common" }), snapshot.appVersion],
+    [i18n.t("Signed In", { ns: "common" }), formatSignedInUser(snapshot)],
+    [i18n.t("Support", { ns: "common" }), snapshot.supportEmail],
+    [
+      i18n.t("Platform", { ns: "common" }),
+      `${snapshot.platform} ${snapshot.arch}`,
+    ],
     ["Electron", snapshot.versions.electron],
     ["Chrome", snapshot.versions.chrome],
     ["Node", snapshot.versions.node],
     [
-      "Host",
+      i18n.t("Host", { ns: "common" }),
       snapshot.host.status === "ready"
-        ? `${snapshot.host.version ?? "unknown"} (pid ${
-            snapshot.host.pid ?? "unknown"
+        ? `${snapshot.host.version ?? i18n.t("unknown", { ns: "common" })} (pid ${
+            snapshot.host.pid ?? i18n.t("unknown", { ns: "common" })
           })`
-        : "starting",
+        : i18n.t("starting", { ns: "common" }),
     ],
   ];
 }
@@ -277,10 +286,12 @@ function SupportLinks(props: SupportLinksProps): ReactNode {
 
 function formatSignedInUser(snapshot: DesktopSupportSnapshot): string {
   if (snapshot.user.status !== "signed-in") {
-    return snapshot.user.status === "signing-in" ? "Signing in" : "Signed out";
+    return snapshot.user.status === "signing-in"
+      ? i18n.t("Signing in", { ns: "common" })
+      : i18n.t("Signed out", { ns: "common" });
   }
   if (snapshot.user.userName !== null && snapshot.user.email !== null) {
     return `${snapshot.user.userName} <${snapshot.user.email}>`;
   }
-  return snapshot.user.email ?? snapshot.user.userName ?? "Signed in";
+  return snapshot.user.email ?? snapshot.user.userName ?? i18n.t("Signed in", { ns: "common" });
 }

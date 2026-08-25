@@ -1,4 +1,5 @@
 import type { ProviderMcpCapabilities } from "@traycer/protocol/host/provider-native-schemas";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 /**
  * The sentence a user is owed when the host could not resolve this provider's
@@ -38,18 +39,25 @@ export function mcpBinaryAbsentNotice(
   const scopes = capabilities.actionScopes;
   const lost: string[] = [];
   if (capabilities.addServer === "cli" && scopes.add.length === 0) {
-    lost.push("adding");
+    lost.push(i18n.t("adding", { ns: "panels" }));
   }
   if (capabilities.removeServer === "cli" && scopes.remove.length === 0) {
-    lost.push("removing");
+    lost.push(i18n.t("removing", { ns: "panels" }));
   }
   if (capabilities.updateServer === "cli" && scopes.update.length === 0) {
-    lost.push("editing");
+    lost.push(i18n.t("editing", { ns: "panels" }));
   }
   if (lost.length === 0) return null;
   const verbs =
     lost.length === 1
       ? lost[0]
-      : `${lost.slice(0, -1).join(", ")} and ${lost[lost.length - 1]}`;
-  return `Traycer couldn't find the ${providerLabel} CLI on this machine, so ${verbs} MCP servers is unavailable here. Point Traycer at a binary under CLI & Args, or install ${providerLabel}.`;
+      : i18n.t("{{list}} and {{last}}", {
+          list: lost.slice(0, -1).join(", "),
+          last: lost[lost.length - 1],
+          ns: "panels",
+        });
+  return i18n.t(
+    "Traycer couldn't find the {{provider}} CLI on this machine, so {{verbs}} MCP servers is unavailable here. Point Traycer at a binary under CLI & Args, or install {{provider}}.",
+    { provider: providerLabel, verbs, ns: "panels" },
+  );
 }

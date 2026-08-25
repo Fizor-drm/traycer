@@ -41,6 +41,7 @@ import { toastFromRunnerError } from "@/lib/runner-error-toast";
 import { toastHostRestartRequested } from "@/lib/host-restart-toast";
 import { newTransitionId } from "@/components/settings/panels/host-overview-transition-id";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import type { HostRpcRegistry } from "@/lib/host";
 
 const DOCTOR_LOG_TAIL_LINES = 200;
@@ -110,6 +111,7 @@ export function HostDoctorRpcCard(props: {
   readonly localFixPendingCode: string | null;
 }): ReactNode {
   const { client, hostName } = props;
+  const { t } = useTranslation("panels");
   // The bridge reads THIS computer's log, so it may stand in for
   // `diagnostics.logs.tail` only when the host being shown IS this computer.
   // Without the local check a remote host that advertises `host.doctor` but
@@ -190,9 +192,13 @@ export function HostDoctorRpcCard(props: {
     setLogTail(null);
     runDoctor(undefined, {
       onSuccess: setReport,
-      onError: (error) => toastFromHostError(error, "Couldn't run Doctor."),
+      onError: (error) =>
+        toastFromHostError(
+          error,
+          t("Couldn't run Doctor."),
+        ),
     });
-  }, [runDoctor]);
+  }, [runDoctor, t]);
 
   // Run once when the sheet mounts. The sheet only mounts this on open, so
   // "opened the sheet" IS the request — but the effect must not re-fire on
@@ -221,7 +227,10 @@ export function HostDoctorRpcCard(props: {
     return (
       <div className="space-y-3" data-testid="host-doctor-run-failed">
         <DoctorMessage>
-          {`Couldn't run Doctor on ${hostName}. The host may have gone away mid-check.`}
+          {t(
+            "Couldn't run Doctor on {{name}}. The host may have gone away mid-check.",
+            { name: hostName },
+          )}
         </DoctorMessage>
         <DoctorRerunRow pending={doctorRun.isPending} onRerun={run} />
       </div>
@@ -235,7 +244,7 @@ export function HostDoctorRpcCard(props: {
           testId={undefined}
           variant={undefined}
         />
-        Running Doctor…
+        {t("Running Doctor…")}
       </div>
     );
   }
@@ -255,12 +264,19 @@ export function HostDoctorRpcCard(props: {
     report.triviallyGreenIssueCodes,
   );
 
+  let actionableSummary = t("Doctor: no issues detected.");
+  if (split.actionable.length === 1) {
+    actionableSummary = t("Diagnostics found 1 issue.");
+  } else if (split.actionable.length > 1) {
+    actionableSummary = t("Diagnostics found {{count}} issues.", {
+      count: split.actionable.length,
+    });
+  }
+
   return (
     <div className="space-y-3">
       <div className="text-ui-sm text-muted-foreground">
-        {split.actionable.length === 0
-          ? "Doctor: no issues detected."
-          : `Diagnostics found ${split.actionable.length} issue${split.actionable.length === 1 ? "" : "s"}.`}
+        {actionableSummary}
       </div>
       {split.actionable.map((issue) => (
         <DoctorRpcIssueCard
@@ -302,14 +318,19 @@ export function HostDoctorRpcCard(props: {
                   armedFixRestartIdRef.current = null;
                   if (response.outcome === "busy") {
                     toast.message(
-                      `Not restarted. ${busyRestartVerdictSentence(response.verdict)}`,
+                      t("Not restarted. {{sentence}}", {
+                        sentence: busyRestartVerdictSentence(response.verdict),
+                      }),
                     );
                     return;
                   }
                   toastHostRestartRequested();
                 },
                 onError: (error) =>
-                  toastFromHostError(error, "Couldn't restart this host."),
+                  toastFromHostError(
+                    error,
+                    t("Couldn't restart this host."),
+                  ),
               },
             );
           }}
@@ -321,7 +342,10 @@ export function HostDoctorRpcCard(props: {
               void props.onBridgeLogs().then(
                 (lines) => setLogTail(lines),
                 (error: unknown) =>
-                  toastFromRunnerError(error, "Couldn't read this host's log."),
+                  toastFromRunnerError(
+                    error,
+                    t("Couldn't read this host's log."),
+                  ),
               );
               return;
             }
@@ -332,7 +356,7 @@ export function HostDoctorRpcCard(props: {
                 );
               },
               onError: (error) =>
-                toastFromHostError(error, "Couldn't read this host's log."),
+                toastFromHostError(error, t("Couldn't read this host's log.")),
             });
           }}
           onLocalFix={() => {
@@ -360,7 +384,13 @@ export function HostDoctorRpcCard(props: {
       ))}
       {split.disprovenByTransport.length === 0 ? null : (
         <HostSettingsDisclosure
-          label={`${split.disprovenByTransport.length} check${split.disprovenByTransport.length === 1 ? "" : "s"} this connection already answers`}
+          label={
+            split.disprovenByTransport.length === 1
+              ? t("1 check this connection already answers")
+              : t("{{count}} checks this connection already answers", {
+                  count: split.disprovenByTransport.length,
+                })
+          }
           defaultOpen={false}
         >
           <div
@@ -368,10 +398,10 @@ export function HostDoctorRpcCard(props: {
             data-testid="host-doctor-disproven-by-transport"
           >
             <p className="text-ui-xs text-muted-foreground">
-              Doctor ran on {hostName} and reported these, but the connection
-              carrying its report contradicts them — this app is talking to the
-              very listener they say is unavailable. Listed for completeness,
-              not as something to fix.
+              {t(
+                "Doctor ran on {{name}} and reported these, but the connection carrying its report contradicts them — this app is talking to the very listener they say is unavailable. Listed for completeness, not as something to fix.",
+                { name: hostName },
+              )}
             </p>
             {split.disprovenByTransport.map((issue) => (
               <div
@@ -394,12 +424,12 @@ export function HostDoctorRpcCard(props: {
         onOpenChange={(open) => {
           if (!open) setFreePortIssue(null);
         }}
-        title="Free port and restart?"
+        title={t("Free port and restart?")}
         description={describeFreePortPrompt(
           freePortIssue === null ? null : parseFreePortInput(freePortIssue),
         )}
         cascadeSummary={null}
-        actionLabel="Free port + restart"
+        actionLabel={t("Free port + restart")}
         isPending={props.localFixPendingCode === freePortIssue?.code}
         onConfirm={() => {
           if (freePortIssue === null) return;
@@ -434,6 +464,7 @@ function DoctorRpcIssueCard(props: {
   readonly onLocalFix: () => void;
 }): ReactNode {
   const { issue, route } = props;
+  const { t } = useTranslation("panels");
   const [expanded, setExpanded] = useState(false);
   return (
     <div
@@ -463,8 +494,14 @@ function DoctorRpcIssueCard(props: {
               data-testid={`host-doctor-run-on-host-${issue.code}`}
             >
               {issue.terminalCommand === null
-                ? `This repair has to run on ${props.hostName} itself, and Doctor didn't supply a command for it.`
-                : `This repair has to run on ${props.hostName} itself — copy the command and run it there.`}
+                ? t(
+                    "This repair has to run on {{name}} itself, and Doctor didn't supply a command for it.",
+                    { name: props.hostName },
+                  )
+                : t(
+                    "This repair has to run on {{name}} itself — copy the command and run it there.",
+                    { name: props.hostName },
+                  )}
             </p>
           ) : null}
           <div className="mt-2 flex max-w-full flex-wrap items-center gap-2">
@@ -487,7 +524,7 @@ function DoctorRpcIssueCard(props: {
                 onClick={() => copyTerminalCommand(issue.terminalCommand ?? "")}
                 data-testid={`host-doctor-copy-command-${issue.code}`}
               >
-                Copy command
+                {t("Copy command")}
               </Button>
             ) : null}
             <Button
@@ -495,7 +532,7 @@ function DoctorRpcIssueCard(props: {
               size="sm"
               onClick={() => setExpanded((value) => !value)}
             >
-              {expanded ? "Hide details" : "Show details"}
+              {expanded ? t("Hide details") : t("Show details")}
             </Button>
           </div>
           {expanded && issue.terminalCommand !== null ? (
@@ -517,7 +554,7 @@ function DoctorRpcIssueCard(props: {
               data-testid="host-doctor-log-tail"
             >
               {props.logTail.length === 0
-                ? "This host's log is empty or no longer there."
+                ? t("This host's log is empty or no longer there.")
                 : props.logTail.join("\n")}
             </pre>
           ) : null}
@@ -594,6 +631,7 @@ function DoctorRerunRow(props: {
   readonly pending: boolean;
   readonly onRerun: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div className="flex justify-end">
       <Button
@@ -610,7 +648,7 @@ function DoctorRerunRow(props: {
             variant={undefined}
           />
         ) : null}
-        Re-run Doctor
+        {t("Re-run Doctor")}
       </Button>
     </div>
   );

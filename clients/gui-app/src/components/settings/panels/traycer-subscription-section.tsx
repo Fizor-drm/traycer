@@ -11,6 +11,7 @@
  * header popover's Traycer tab can never disagree.
  */
 import { ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { AuthenticatedUser } from "@traycer/protocol/auth";
 import type { AccountContext } from "@traycer/protocol/common/schemas";
@@ -40,6 +41,7 @@ import {
 
 export function TraycerSubscriptionSection() {
   const query = useAuthUser();
+  const { t } = useTranslation("panels");
   // Keep the balance live: a Traycer turn finishing while this card is open
   // refetches credits. Only mounted here, so it costs nothing elsewhere.
   useRefreshCreditsOnTraycerTurn();
@@ -59,7 +61,7 @@ export function TraycerSubscriptionSection() {
     <div className="mb-3 flex flex-col gap-3 rounded-lg border border-border/60 p-3">
       <div className="flex items-center justify-between gap-2">
         <div className="text-ui-sm font-medium text-foreground">
-          Subscription
+          {t("Subscription")}
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -73,7 +75,7 @@ export function TraycerSubscriptionSection() {
             }}
             className="inline-flex w-fit items-center gap-1.5 rounded px-1 text-ui-xs font-medium text-primary transition-colors hover:text-primary/80 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
           >
-            Manage subscription
+            {t("Manage subscription")}
             <ExternalLink className="size-3" />
           </button>
           <RefreshIconButton
@@ -86,7 +88,7 @@ export function TraycerSubscriptionSection() {
                 );
               }
             }}
-            label="Refresh subscription"
+            label={t("Refresh subscription")}
             refreshing={query.isFetching}
           />
         </div>
@@ -118,23 +120,24 @@ function SubscriptionBody({
   readonly subscription: TraycerSubscription | null;
   readonly accountContext: AccountContext;
 }) {
+  const { t } = useTranslation("panels");
   if (query.isPending) {
     return (
       <div className="flex items-center gap-2 text-ui-sm text-muted-foreground">
-        <MutedAgentSpinner /> Loading subscription
+        <MutedAgentSpinner /> {t("Loading subscription")}
       </div>
     );
   }
   if (query.isError) {
     return (
       <div className="text-ui-sm text-destructive">
-        Couldn't load your subscription. Try refreshing.
+        {t("Couldn't load your subscription. Try refreshing.")}
         <ReportIssueAction
           context={createReportIssueContext({
-            title: "Couldn't load your subscription",
+            title: t("Couldn't load your subscription"),
             message: null,
             code: null,
-            source: "Subscription",
+            source: t("Subscription"),
           })}
           presentation="link"
           className="ml-1 h-auto p-0 text-current"
@@ -145,7 +148,7 @@ function SubscriptionBody({
   if (subscription === null) {
     return (
       <div className="text-ui-sm text-muted-foreground">
-        No subscription found for this account.
+        {t("No subscription found for this account.")}
       </div>
     );
   }

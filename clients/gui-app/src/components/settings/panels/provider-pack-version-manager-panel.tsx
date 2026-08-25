@@ -13,6 +13,7 @@ import {
   Trash2,
   type LucideIcon,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type {
   ProviderManagedVersions,
   ProviderPackVersion,
@@ -161,6 +162,7 @@ export function ProviderPackVersionManagerPanel(
   props: ProviderPackVersionManagerPanelProps,
 ): JSX.Element {
   const { hostId, packId, packDisplayName, managedVersions } = props;
+  const { t } = useTranslation("panels");
   // Gate against the settings-scoped host only. The hook already returns null
   // when hostId is null (no handshake possible yet).
   const methodSupport = useProviderPackVersionManagerSupport(hostId);
@@ -381,10 +383,10 @@ export function ProviderPackVersionManagerPanel(
         data-pack-id={packId}
         className="flex w-full items-center gap-2 px-4 py-3 text-ui-sm text-muted-foreground"
         aria-busy="true"
-        aria-label={`${packDisplayName} versions loading`}
+        aria-label={t("{{pack}} versions loading", { pack: packDisplayName })}
       >
         <MutedAgentSpinner />
-        <span>Checking host support for version management…</span>
+        <span>{t("Checking host support for version management…")}</span>
       </div>
     );
   }
@@ -397,9 +399,9 @@ export function ProviderPackVersionManagerPanel(
         className="w-full px-4 py-3 text-ui-sm text-muted-foreground"
         role="status"
       >
-        Managing managed CLI versions requires a newer Traycer host. The
-        provider table still works; update this host to download, switch, or
-        delete individual versions.
+        {t(
+          "Managing managed CLI versions requires a newer Traycer host. The provider table still works; update this host to download, switch, or delete individual versions.",
+        )}
       </div>
     );
   }
@@ -432,7 +434,7 @@ export function ProviderPackVersionManagerPanel(
       // behind the card's — the frayed edge in the report. `bg-card` over
       // `bg-popover` was a second, quieter mismatch of the same kind.
       className="flex w-full min-h-0 flex-col overflow-hidden"
-      aria-label={`${packDisplayName} versions`}
+      aria-label={t("{{pack}} versions", { pack: packDisplayName })}
     >
       <VersionManagerBanners
         sharedLine={sharedLine}
@@ -497,7 +499,7 @@ export function ProviderPackVersionManagerPanel(
         ))}
         {rows.length === 0 ? (
           <li className="px-4 py-6 text-center text-ui-sm text-muted-foreground">
-            No versions listed for this pack yet.
+            {t("No versions listed for this pack yet.")}
           </li>
         ) : null}
       </ul>
@@ -532,6 +534,7 @@ function VersionManagerBanners(props: {
   readonly actionsDisabled: boolean;
   readonly onClearPin: () => void;
 }): JSX.Element | null {
+  const { t } = useTranslation("panels");
   const hasPin = props.pinnedVersion !== null;
   if (props.sharedLine === null && !hasPin && props.pinNotice === null) {
     return null;
@@ -553,12 +556,12 @@ function VersionManagerBanners(props: {
           className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
         >
           <p className="text-ui-xs text-muted-foreground">
-            Pinned to{" "}
+            {t("Pinned to")}{" "}
             <span className="font-medium text-foreground">
               {props.pinnedVersion}
             </span>
             {" · "}
-            newer versions notify only until you switch or clear the pin
+            {t("newer versions notify only until you switch or clear the pin")}
           </p>
           <Button
             type="button"
@@ -568,7 +571,7 @@ function VersionManagerBanners(props: {
             disabled={props.actionsDisabled}
             onClick={props.onClearPin}
           >
-            Use latest automatically
+            {t("Use latest automatically")}
             {props.clearPinPending ? <MutedAgentSpinner /> : null}
           </Button>
         </div>
@@ -597,16 +600,17 @@ function VersionManagerFooter(props: {
   readonly policyPending: boolean;
   readonly onToggleAutoDownload: (next: boolean) => void;
 }): JSX.Element {
+  const { t } = useTranslation("panels");
   return (
     <label className="flex w-full shrink-0 cursor-pointer items-center justify-between gap-3 border-t border-border bg-foreground/5 px-4 py-2.5 text-ui-xs text-muted-foreground">
-      <span>Auto-download updates</span>
+      <span>{t("Auto-download updates")}</span>
       <span className="flex shrink-0 items-center gap-2">
         {props.policyPending ? <MutedAgentSpinner /> : null}
         <Switch
           checked={props.autoDownload}
           onCheckedChange={props.onToggleAutoDownload}
           disabled={props.policyPending}
-          aria-label="Auto-download updates"
+          aria-label={t("Auto-download updates")}
         />
       </span>
     </label>
@@ -622,6 +626,7 @@ function UpdateAvailableBanner(props: {
   readonly actionsDisabled: boolean;
   readonly onDownload: (version: string) => void;
 }): JSX.Element {
+  const { t } = useTranslation("panels");
   return (
     // A full-width strip, not the inset rounded card this was. Floating a
     // second bordered box inside a bordered popover, inset from both edges,
@@ -638,8 +643,9 @@ function UpdateAvailableBanner(props: {
     >
       <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-ui-sm text-foreground">
-          New version <span className="font-semibold">{props.version}</span> is
-          available.
+          {t("New version {{version}} is available.", {
+            version: props.version,
+          })}
         </p>
         <Button
           type="button"
@@ -648,7 +654,7 @@ function UpdateAvailableBanner(props: {
           disabled={!props.canDownload || props.actionsDisabled}
           onClick={() => props.onDownload(props.version)}
         >
-          Download
+          {t("Download")}
           {props.downloadPending ? <MutedAgentSpinner /> : null}
         </Button>
       </div>
@@ -902,6 +908,7 @@ function VersionRowActions(props: {
     onArmDelete,
     onDelete,
   } = props;
+  const { t } = useTranslation("panels");
 
   const downloading = row.installState.status === "downloading";
   const showUse = row.installState.status === "installed" && !row.current;
@@ -921,7 +928,7 @@ function VersionRowActions(props: {
           size="icon-sm"
           variant="ghost"
           disabled
-          aria-label={`Downloading ${row.version}`}
+          aria-label={t("Downloading {{version}}", { version: row.version })}
         >
           <MutedAgentSpinner />
         </Button>
@@ -929,7 +936,7 @@ function VersionRowActions(props: {
 
       {showFetch ? (
         <ActionButton
-          label={fetchLabel}
+          label={t(fetchLabel)}
           version={row.version}
           icon={fetchLabel === "Retry" ? RotateCw : Download}
           disabled={fetchDisabled}
@@ -941,7 +948,7 @@ function VersionRowActions(props: {
 
       {showUse ? (
         <ActionButton
-          label="Use"
+          label={t("Use")}
           version={row.version}
           icon={Check}
           disabled={useDisabled}
@@ -988,6 +995,7 @@ function DeleteAction(props: {
   readonly onArm: (version: string) => void;
   readonly onConfirm: (version: string) => void;
 }): JSX.Element {
+  const { t } = useTranslation("panels");
   if (props.armed && props.eligibility.allowed) {
     return (
       <ArmedDeleteButton
@@ -1001,7 +1009,7 @@ function DeleteAction(props: {
 
   return (
     <ActionButton
-      label="Delete"
+      label={t("Delete")}
       version={props.version}
       icon={Trash2}
       destructive
@@ -1035,6 +1043,7 @@ function ArmedDeleteButton(props: {
   readonly disabled: boolean;
   readonly onConfirm: (version: string) => void;
 }): JSX.Element {
+  const { t } = useTranslation("panels");
   const confirmRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -1049,10 +1058,10 @@ function ArmedDeleteButton(props: {
       variant="destructive"
       data-testid={`version-delete-confirm-${props.version}`}
       disabled={props.disabled}
-      aria-label={`Confirm delete ${props.version}`}
+      aria-label={t("Confirm delete {{version}}", { version: props.version })}
       onClick={() => props.onConfirm(props.version)}
     >
-      Delete?
+      {t("Delete?")}
       {props.pending ? <MutedAgentSpinner /> : null}
     </Button>
   );
@@ -1120,6 +1129,7 @@ function ActionButton(props: {
 function DownloadProgress(props: {
   readonly percent: number | null;
 }): JSX.Element {
+  const { t } = useTranslation("panels");
   // percent null = sibling host owns the transfer — indeterminate, not error.
   if (props.percent === null) {
     return (
@@ -1127,7 +1137,7 @@ function DownloadProgress(props: {
         data-testid="download-progress-indeterminate"
         className="mt-2 h-1 w-full max-w-xs overflow-hidden rounded-full bg-foreground/8"
         role="progressbar"
-        aria-valuetext="Download in progress on another host"
+        aria-valuetext={t("Download in progress on another host")}
         aria-busy="true"
       >
         <div className="h-full w-1/3 animate-pulse rounded-full bg-primary" />

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronDown, Plus, Settings, type LucideIcon } from "lucide-react";
 import {
   Command,
@@ -13,6 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { HostOptionRow } from "@/components/settings/host-scope/host-option-row";
 import {
   AVAILABLE_HOST_ROW_SURFACE_STATE,
@@ -47,10 +49,28 @@ function hostSwitcherLabel(
   selected: HostScopeOption | null,
   status: string | null,
 ): string {
-  const subject = intent === "view" ? "Settings host" : "Host";
-  return selected === null
-    ? `${subject}: none selected`
-    : `${subject}: ${selected.name}${status === null ? "" : `, ${status}`}`;
+  const subject =
+    intent === "view"
+      ? i18n.t("Settings host", { ns: "panels" })
+      : i18n.t("Host", { ns: "panels" });
+  if (selected === null) {
+    return i18n.t("{{subject}}: none selected", {
+      ns: "panels",
+      subject,
+    });
+  }
+  return status === null
+    ? i18n.t("{{subject}}: {{name}}", {
+        ns: "panels",
+        subject,
+        name: selected.name,
+      })
+    : i18n.t("{{subject}}: {{name}}, {{status}}", {
+        ns: "panels",
+        subject,
+        name: selected.name,
+        status,
+      });
 }
 
 export type HostSwitcherActionKind = "add-host" | "manage-hosts";
@@ -242,6 +262,7 @@ export function HostSwitcher(props: {
   readonly onRetryLists: () => void;
 }): ReactNode {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation("panels");
   const binding = useHostBinding();
   useRefreshHostDirectoryOnOpen(open, binding?.directory ?? null);
   const { hosts, selected } = props;
@@ -272,7 +293,7 @@ export function HostSwitcher(props: {
           data-testid="settings-host-switcher-lists-failed"
         >
           <span className="text-ui-xs text-muted-foreground">
-            Couldn&apos;t load your hosts
+            {t("Couldn't load your hosts")}
           </span>
           <button
             type="button"
@@ -280,7 +301,7 @@ export function HostSwitcher(props: {
             className="inline-flex items-center gap-1.5 self-start rounded-md px-1 py-0.5 text-ui-xs text-primary transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             data-testid="settings-host-switcher-retry-lists"
           >
-            Try again
+            {t("Try again")}
           </button>
         </div>
       );
@@ -291,7 +312,7 @@ export function HostSwitcher(props: {
         data-testid="settings-host-switcher-empty"
       >
         <span className="text-ui-xs text-muted-foreground">
-          {props.isLoading ? "Finding your hosts…" : "No hosts yet"}
+          {props.isLoading ? t("Finding your hosts…") : t("No hosts yet")}
         </span>
         {/* Genuinely zero hosts is exactly when this action matters most, and
             it used to be unreachable here — the only opener lived in a popover
@@ -304,7 +325,7 @@ export function HostSwitcher(props: {
             data-testid={action.emptyTestId}
           >
             <ActionIcon className="size-3.5 shrink-0" />
-            {action.label}
+            {t(action.label)}
           </button>
         )}
       </div>
@@ -339,11 +360,11 @@ export function HostSwitcher(props: {
       >
         <Command>
           {hosts.length >= SEARCH_THRESHOLD ? (
-            <CommandInput placeholder="Search hosts…" />
+            <CommandInput placeholder={t("Search hosts…")} />
           ) : null}
           <CommandList>
-            <CommandEmpty>No hosts match.</CommandEmpty>
-            <CommandGroup heading="Host">
+            <CommandEmpty>{t("No hosts match.")}</CommandEmpty>
+            <CommandGroup heading={t("Host")}>
               {hosts.map((host) => (
                 <HostSwitcherRow
                   key={host.hostId}
@@ -377,7 +398,7 @@ export function HostSwitcher(props: {
               >
                 <ActionIcon className="size-4 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 flex-1 truncate text-ui-sm">
-                  {action.label}
+                  {t(action.label)}
                 </span>
               </CommandItem>
             </CommandGroup>
@@ -395,7 +416,7 @@ export function HostSwitcher(props: {
             data-testid="settings-host-switcher-partial-failure"
           >
             <span className="text-ui-xs text-muted-foreground">
-              Some hosts may be missing
+              {t("Some hosts may be missing")}
             </span>
             <button
               type="button"
@@ -403,7 +424,7 @@ export function HostSwitcher(props: {
               className="shrink-0 rounded-md px-1 py-0.5 text-ui-xs text-primary transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               data-testid="settings-host-switcher-retry-lists"
             >
-              Try again
+              {t("Try again")}
             </button>
           </div>
         ) : null}
@@ -421,6 +442,7 @@ function HostSwitcherTrigger(props: {
   readonly surface: HostSwitcherSurfacePresentation;
 }): ReactNode {
   const { selected } = props;
+  const { t } = useTranslation("panels");
   const triggerStatus =
     selected === null
       ? null
@@ -465,7 +487,7 @@ function HostSwitcherTrigger(props: {
           !props.disabled && "group-hover/host-switcher:text-foreground",
         )}
       >
-        {selected === null ? "Select a host" : selected.name}
+        {selected === null ? t("Select a host") : selected.name}
       </span>
       {triggerStatus === null ? null : (
         <span

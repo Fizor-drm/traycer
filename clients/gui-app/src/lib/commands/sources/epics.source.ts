@@ -32,6 +32,7 @@ import {
   type HistorySearchState,
 } from "@/lib/history-search";
 import { displayTitle, epicDisplayTitle } from "@/lib/display-title";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { usePaletteLiveQuery } from "@/lib/commands/palette-query-context";
 import { parseScopePrefix } from "@/lib/commands/scopes";
 import { useEpicCanvasStore } from "@/stores/epics/canvas/store";
@@ -140,7 +141,7 @@ function buildOpenItem(
   return {
     id: `epic:${epicId}`,
     label: displayTitle(name, "epic"),
-    description: "Open",
+    description: i18n.t("Open", { ns: "palette" }),
     keywords: [
       "task",
       "epic",

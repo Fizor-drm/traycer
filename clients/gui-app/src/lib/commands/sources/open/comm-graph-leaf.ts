@@ -12,6 +12,7 @@
  * Invoking this twice focuses the open graph instead.
  */
 import { openSingletonTileIntoTargetGroup } from "@/lib/commands/actions";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { openerActionLeaf } from "@/lib/commands/sources/open/open-leaf";
 import { makeCommGraphTileRef } from "@/stores/epics/canvas/tile-schema/comm-graph-tile";
 import type { CommandContext, CommandItem } from "@/lib/commands/types";
@@ -19,7 +20,7 @@ import type { CommandContext, CommandItem } from "@/lib/commands/types";
 export function commGraphOpenerItem(ctx: CommandContext): CommandItem {
   return openerActionLeaf({
     id: "open:comm-graph",
-    label: "Communication graph",
+    label: i18n.t("Communication graph", { ns: "palette" }),
     keywords: [
       "communication",
       "graph",

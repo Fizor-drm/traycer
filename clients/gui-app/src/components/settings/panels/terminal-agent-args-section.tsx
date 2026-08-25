@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   PROVIDER_DISPLAY_NAMES,
   type ProviderCliState,
@@ -7,34 +8,24 @@ import { MutedAgentSpinner } from "@/components/ui/agent-spinning-dots";
 import { Input } from "@/components/ui/input";
 import { useProvidersSetTerminalAgentArgs } from "@/hooks/providers/use-providers-set-terminal-agent-args-mutation";
 import { useGuiHarnessesQuery } from "@/hooks/harnesses/use-gui-harness-catalog";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { providerIdToGuiHarnessId } from "@/lib/provider-ordering";
 
 type ProviderId = ProviderCliState["providerId"];
 
-const TERMINAL_AGENT_ARGS_PLACEHOLDER: Record<ProviderId, string> = {
+// Provider-specific CLI flag examples; providers without one fall back to the
+// translated generic placeholder.
+const TERMINAL_AGENT_ARGS_EXAMPLE: Partial<Record<ProviderId, string>> = {
   "claude-code": "--dangerously-skip-permissions",
   codex: "--full-auto",
   opencode: "--model anthropic/claude-opus-4-8",
-  cursor: "CLI arguments (optional)",
-  traycer: "CLI arguments (optional)",
-  openrouter: "CLI arguments (optional)",
-  huggingface: "CLI arguments (optional)",
-  grok: "CLI arguments (optional)",
-  qwen: "CLI arguments (optional)",
-  kiro: "CLI arguments (optional)",
-  copilot: "CLI arguments (optional)",
-  droid: "CLI arguments (optional)",
-  kimi: "CLI arguments (optional)",
-  kilocode: "CLI arguments (optional)",
-  amp: "CLI arguments (optional)",
-  devin: "CLI arguments (optional)",
-  pi: "CLI arguments (optional)",
-  hermes: "CLI arguments (optional)",
-  omp: "CLI arguments (optional)",
 };
 
 function terminalAgentArgsPlaceholder(providerId: ProviderId): string {
-  return TERMINAL_AGENT_ARGS_PLACEHOLDER[providerId];
+  return (
+    TERMINAL_AGENT_ARGS_EXAMPLE[providerId] ??
+    i18n.t("CLI arguments (optional)", { ns: "panels" })
+  );
 }
 
 // Extra CLI args appended when launching this provider as a terminal agent.
@@ -47,6 +38,7 @@ export function TerminalAgentArgsSection({
 }: {
   readonly state: ProviderCliState;
 }) {
+  const { t } = useTranslation("panels");
   const providerId = state.providerId;
   const inputId = useId();
   const harnessesQuery = useGuiHarnessesQuery({
@@ -88,7 +80,7 @@ export function TerminalAgentArgsSection({
         htmlFor={inputId}
         className="text-ui-sm font-medium text-foreground"
       >
-        Terminal interface CLI arguments
+        {t("Terminal interface CLI arguments")}
       </label>
       <div className="flex items-center gap-2">
         <Input
@@ -106,9 +98,10 @@ export function TerminalAgentArgsSection({
         {setArgs.isPending ? <MutedAgentSpinner /> : null}
       </div>
       <p className="text-ui-xs text-muted-foreground">
-        Appended to the {PROVIDER_DISPLAY_NAMES[providerId]} CLI when starting
-        an agent on the Terminal interface. Pre-fills the launch picker, where
-        you can override it per launch.
+        {t(
+          "Appended to the {{provider}} CLI when starting an agent on the Terminal interface. Pre-fills the launch picker, where you can override it per launch.",
+          { provider: PROVIDER_DISPLAY_NAMES[providerId] },
+        )}
       </p>
     </div>
   );

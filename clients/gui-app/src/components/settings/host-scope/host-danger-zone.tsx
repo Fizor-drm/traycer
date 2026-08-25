@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { SettingsGroup } from "@/components/settings/settings-group";
@@ -45,6 +46,7 @@ export function HostDangerZone(props: {
   readonly scope: HostScope;
 }): ReactNode {
   const { scope } = props;
+  const { t } = useTranslation("panels");
   if (scope.host === null) return null;
   // The two rows sit on DIFFERENT capability planes, and one gate around both
   // was the last place this branch still confused them.
@@ -58,7 +60,7 @@ export function HostDangerZone(props: {
   // that installed it, in the one state anyone wants it.
   return (
     <SettingsGroup
-      title="Danger zone"
+      title={t("Danger zone")}
       tone="danger"
       dataTestId="host-danger-zone"
       fill={false}
@@ -140,6 +142,7 @@ function RemoveFromAccountRow(props: {
   readonly hostName: string;
 }): ReactNode {
   const { hostId, hostName } = props;
+  const { t } = useTranslation("panels");
   const [confirmOpen, setConfirmOpen] = useState(false);
   // Closing over `hostId` is NOT by itself what stops a scope change from
   // retargeting an open confirmation - a re-render with a new prop rebuilds
@@ -150,8 +153,11 @@ function RemoveFromAccountRow(props: {
   return (
     <>
       <SettingsRow
-        label="Remove from account"
-        description={`Removes ${hostName} from this account's host list and drops its presence. Nothing is uninstalled and no data is deleted.`}
+        label={t("Remove from account")}
+        description={t(
+          "Removes {{name}} from this account's host list and drops its presence. Nothing is uninstalled and no data is deleted.",
+          { name: hostName },
+        )}
         control={
           <Button
             type="button"
@@ -168,23 +174,28 @@ function RemoveFromAccountRow(props: {
                 variant={undefined}
               />
             ) : null}
-            Remove from account
+            {t("Remove from account")}
           </Button>
         }
       />
       <ConfirmDestructiveDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title={`Remove ${hostName} from this account?`}
-        description={`${hostName} stops appearing in your host list and stops reporting presence. Nothing on that machine changes - Traycer stays installed and no agents, history or credentials are deleted. It won't rejoin on its own, and signing in on that machine again won't bring it back: it has to be set up again there. Its host ID is kept, so setting it up again restores the same name and settings.`}
+        title={t("Remove {{name}} from this account?", { name: hostName })}
+        description={t(
+          "{{name}} stops appearing in your host list and stops reporting presence. Nothing on that machine changes - Traycer stays installed and no agents, history or credentials are deleted. It won't rejoin on its own, and signing in on that machine again won't bring it back: it has to be set up again there. Its host ID is kept, so setting it up again restores the same name and settings.",
+          { name: hostName },
+        )}
         cascadeSummary={null}
-        actionLabel="Remove from account"
+        actionLabel={t("Remove from account")}
         isPending={removeFromAccount.isPending}
         onConfirm={() => {
           removeFromAccount.mutate(undefined, {
             onSuccess: () => {
               setConfirmOpen(false);
-              toast.success(`Removed ${hostName} from this account`);
+              toast.success(
+                t("Removed {{name}} from this account", { name: hostName }),
+              );
             },
           });
         }}
@@ -197,6 +208,7 @@ function ClearFileEditSnapshotsRow(props: {
   readonly scope: HostScope;
 }): ReactNode {
   const { scope } = props;
+  const { t } = useTranslation("panels");
   // The scope moving to another host underneath this open dialog is handled
   // at the boundary, not here: `HostScopeGate` keys this subtree by host, so
   // a host switch unmounts the dialog with everything else. A confirmation
@@ -253,20 +265,28 @@ function ClearFileEditSnapshotsRow(props: {
             .markCleared(context.userId, context.hostId, Date.now());
         }
         setConfirmOpen(false);
-        toast.success("Cleared file edit snapshots", {
-          description: `${formatSnapshotBytes(result.clearedBytes)} removed.`,
+        toast.success(t("Cleared file edit snapshots"), {
+          description: t("{{size}} removed.", {
+            size: formatSnapshotBytes(result.clearedBytes),
+          }),
         });
       },
       onError: (error) =>
-        toastFromHostError(error, "Couldn't clear file edit snapshots."),
+        toastFromHostError(
+          error,
+          t("Couldn't clear file edit snapshots."),
+        ),
     },
   });
 
   return (
     <>
       <SettingsRow
-        label="File edit snapshots"
-        description={`Pre-edit file snapshots for Undo, and cached long plan content, stored on ${hostLabel}. This data stays on that host and is never synced.`}
+        label={t("File edit snapshots")}
+        description={t(
+          "Pre-edit file snapshots for Undo, and cached long plan content, stored on {{name}}. This data stays on that host and is never synced.",
+          { name: hostLabel },
+        )}
         control={
           <div className="flex flex-col items-end gap-2">
             <div
@@ -292,7 +312,7 @@ function ClearFileEditSnapshotsRow(props: {
                   variant={undefined}
                 />
               ) : null}
-              Clear snapshots
+              {t("Clear snapshots")}
             </Button>
           </div>
         }
@@ -300,10 +320,15 @@ function ClearFileEditSnapshotsRow(props: {
       <ConfirmDestructiveDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title={`Clear file edit snapshots on ${hostLabel}?`}
-        description={`Cleared snapshots on ${hostLabel} cannot be restored. Conversation history and checkpoint records stay visible, but Undo is disabled for past turns on that host.`}
+        title={t("Clear file edit snapshots on {{name}}?", {
+          name: hostLabel,
+        })}
+        description={t(
+          "Cleared snapshots on {{name}} cannot be restored. Conversation history and checkpoint records stay visible, but Undo is disabled for past turns on that host.",
+          { name: hostLabel },
+        )}
         cascadeSummary={null}
-        actionLabel="Clear snapshots"
+        actionLabel={t("Clear snapshots")}
         isPending={clearSnapshotsMutation.isPending}
         onConfirm={() => {
           if (client === null) return;
@@ -328,10 +353,11 @@ function ClearFileEditSnapshotsRow(props: {
  */
 export function LocalRecoveryDangerZone(): ReactNode {
   const { hostManagement } = useRunnerHost();
+  const { t } = useTranslation("panels");
   if (hostManagement === null) return null;
   return (
     <SettingsGroup
-      title="Danger zone"
+      title={t("Danger zone")}
       tone="danger"
       dataTestId="host-danger-zone"
       fill={false}
@@ -348,6 +374,7 @@ export function LocalRecoveryDangerZone(): ReactNode {
  */
 function RemoveTraycerRow(): ReactNode {
   const { hostManagement } = useRunnerHost();
+  const { t } = useTranslation("panels");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const uninstall = useRunnerUninstallTraycer();
   if (hostManagement === null) return null;
@@ -355,8 +382,10 @@ function RemoveTraycerRow(): ReactNode {
   if (uninstall.isSuccess) {
     return (
       <SettingsRow
-        label="Traycer removed"
-        description="Background components were removed. Your agents, history and credentials are preserved on this computer. To finish, quit Traycer and drag it from Applications to the Trash."
+        label={t("Traycer removed")}
+        description={t(
+          "Background components were removed. Your agents, history and credentials are preserved on this computer. To finish, quit Traycer and drag it from Applications to the Trash.",
+        )}
         control={
           <Button
             type="button"
@@ -365,7 +394,7 @@ function RemoveTraycerRow(): ReactNode {
             data-testid="settings-quit-after-uninstall"
             onClick={() => requestAppQuit()}
           >
-            Quit Traycer
+            {t("Quit Traycer")}
           </Button>
         }
       />
@@ -375,8 +404,10 @@ function RemoveTraycerRow(): ReactNode {
   return (
     <>
       <SettingsRow
-        label="Remove Traycer from this computer"
-        description="Stops the background host and services and removes the installed components. Your agents and history are preserved, and the host won't reinstall itself."
+        label={t("Remove Traycer from this computer")}
+        description={t(
+          "Stops the background host and services and removes the installed components. Your agents and history are preserved, and the host won't reinstall itself.",
+        )}
         control={
           <Button
             type="button"
@@ -393,17 +424,19 @@ function RemoveTraycerRow(): ReactNode {
                 variant={undefined}
               />
             ) : null}
-            Remove Traycer
+            {t("Remove Traycer")}
           </Button>
         }
       />
       <ConfirmDestructiveDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="Remove Traycer from this computer?"
-        description="This stops and removes Traycer's background host and services and won't reinstall them automatically. Your agents, history and credentials stay on this computer - you can reinstall anytime from Settings."
+        title={t("Remove Traycer from this computer?")}
+        description={t(
+          "This stops and removes Traycer's background host and services and won't reinstall them automatically. Your agents, history and credentials stay on this computer - you can reinstall anytime from Settings.",
+        )}
         cascadeSummary={null}
-        actionLabel="Remove Traycer"
+        actionLabel={t("Remove Traycer")}
         isPending={uninstall.isPending}
         onConfirm={() => {
           uninstall.mutate(undefined, {
@@ -423,6 +456,7 @@ function SnapshotsSize(props: {
   };
 }): ReactNode {
   const { query } = props;
+  const { t } = useTranslation("panels");
   if (query.isPending) {
     return (
       <span className="inline-flex items-center gap-1.5">
@@ -431,11 +465,11 @@ function SnapshotsSize(props: {
           testId="settings-local-snapshots-size-spinner"
           variant={undefined}
         />
-        Calculating
+        {t("Calculating")}
       </span>
     );
   }
-  if (query.isError) return "Unavailable";
+  if (query.isError) return t("Unavailable");
   return formatSnapshotBytes(query.data?.bytes ?? 0);
 }
 

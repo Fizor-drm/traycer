@@ -14,6 +14,7 @@
  * the tree they drive.
  */
 import { useCallback, useEffect, useRef, type KeyboardEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
 import { Search, X } from "lucide-react";
 import {
@@ -39,6 +40,7 @@ interface ChatSearchHeaderInputProps {
 
 export function ChatSearchHeaderInput(props: ChatSearchHeaderInputProps) {
   const { tabId } = props;
+  const { t } = useTranslation("canvas");
   const searchQuery = usePanelHeaderSearchQuery(tabId, CHATS_PANEL_ID);
   const headerSlot = usePanelHeaderSearchSlot(tabId, CHATS_PANEL_ID);
   const setSearchQuery = usePanelHeaderSearchStore((s) => s.setSearchQuery);
@@ -85,8 +87,8 @@ export function ChatSearchHeaderInput(props: ChatSearchHeaderInputProps) {
         value={searchQuery}
         onChange={(event) => onSearchQueryChange(event.target.value)}
         onKeyDown={handleInputKeyDown}
-        placeholder="Search agents…"
-        aria-label="Search agents"
+        placeholder={t("Search agents…")}
+        aria-label={t("Search agents")}
         autoComplete="off"
         spellCheck={false}
         className="text-ui-sm"
@@ -97,7 +99,7 @@ export function ChatSearchHeaderInput(props: ChatSearchHeaderInputProps) {
           <InputGroupButton
             type="button"
             size="icon-xs"
-            aria-label="Clear agent search"
+            aria-label={t("Clear agent search")}
             onClick={clearSearch}
             data-testid="epic-chat-search-clear"
           >
@@ -107,7 +109,7 @@ export function ChatSearchHeaderInput(props: ChatSearchHeaderInputProps) {
         <InputGroupButton
           type="button"
           size="icon-xs"
-          aria-label="Close agent search"
+          aria-label={t("Close agent search")}
           onClick={exitSearch}
           data-testid="epic-chat-search-close"
         >
@@ -125,15 +127,29 @@ export function ChatSearchHeaderInput(props: ChatSearchHeaderInputProps) {
           commit, so it is null only on this component's very first render;
           the resulting store write re-renders us with the target in hand. */}
       {headerSlot === null ? null : createPortal(inputRow, headerSlot)}
-      <p className="sr-only" role="status" aria-live="polite">
-        {chatSearchStatusMessage(searchQuery, props.resultCount)}
-      </p>
+      <ChatSearchStatusMessage query={searchQuery} resultCount={props.resultCount} />
     </>
   );
 }
 
-function chatSearchStatusMessage(query: string, resultCount: number): string {
-  if (query.trim().length === 0) return "";
-  if (resultCount === 0) return "No agents match your search.";
-  return `${resultCount} agent ${resultCount === 1 ? "result" : "results"}.`;
+function ChatSearchStatusMessage(props: {
+  readonly query: string;
+  readonly resultCount: number;
+}) {
+  const { t } = useTranslation("canvas");
+  const { query, resultCount } = props;
+  if (query.trim().length === 0) return null;
+  let message: string;
+  if (resultCount === 0) {
+    message = t("No agents match your search.");
+  } else if (resultCount === 1) {
+    message = t("{{count}} agent result.", { count: resultCount });
+  } else {
+    message = t("{{count}} agent results.", { count: resultCount });
+  }
+  return (
+    <p className="sr-only" role="status" aria-live="polite">
+      {message}
+    </p>
+  );
 }

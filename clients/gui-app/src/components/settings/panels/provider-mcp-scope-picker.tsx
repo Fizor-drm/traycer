@@ -6,6 +6,7 @@ import {
   FolderPlus,
   Globe,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { ProviderNativeScope } from "@traycer/protocol/host/provider-native-schemas";
 import { MutedAgentSpinner } from "@/components/ui/agent-spinning-dots";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui/popover";
 import { StartTruncatedText } from "@/components/ui/start-truncated-text";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
+import { i18n } from "@/lib/i18n/init-i18n";
 // The SAME basename rule `provider-mcp-tab.tsx` uses to build every
 // `McpScopeTarget.name` this picker renders. A second local implementation
 // would let the trigger's fallback title and the row title disagree about the
@@ -97,6 +99,7 @@ export function McpScopePicker(props: {
   readonly locationLabel: string;
 }): ReactNode {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation("panels");
   const {
     multiScope,
     effectiveScope,
@@ -136,7 +139,10 @@ export function McpScopePicker(props: {
           // withholding the one thing it displays - which of Global or a
           // specific project it currently points at. That is the whole content
           // of the trigger for a sighted user.
-          aria-label={`${locationLabel}: ${triggerTitle}`}
+          aria-label={t("{{label}}: {{target}}", {
+            label: locationLabel,
+            target: triggerTitle,
+          })}
           className={cn(
             "flex h-7 w-[min(100%,22rem)] min-w-0 items-center gap-2 rounded-sm border border-border bg-background px-2.5 text-left text-ui-sm transition-colors",
             "hover:bg-foreground/8 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -159,13 +165,15 @@ export function McpScopePicker(props: {
       </TooltipWrapper>
       <PopoverContent align="start" className="w-[min(90vw,26rem)] p-0">
         <Command>
-          <CommandInput placeholder="Search workspaces…" />
+          <CommandInput placeholder={t("Search workspaces…")} />
           <CommandList>
             <CommandEmpty>
-              {loading ? "Resolving workspaces…" : "No workspaces found."}
+              {loading
+                ? t("Resolving workspaces…")
+                : t("No workspaces found.")}
             </CommandEmpty>
             {multiScope ? (
-              <CommandGroup heading="Everywhere">
+              <CommandGroup heading={t("Everywhere")}>
                 <CommandItem
                   value={GLOBAL_VALUE}
                   keywords={["global", "everywhere", "all workspaces"]}
@@ -176,9 +184,9 @@ export function McpScopePicker(props: {
                 >
                   <Globe className="size-4 shrink-0 text-muted-foreground" />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-ui-sm">Global</span>
+                    <span className="block text-ui-sm">{t("Global")}</span>
                     <span className="block text-ui-xs text-muted-foreground">
-                      Every workspace on this host
+                      {t("Every workspace on this host")}
                     </span>
                   </span>
                   {effectiveScope === "global" ? <SelectedCheck /> : null}
@@ -186,7 +194,7 @@ export function McpScopePicker(props: {
               </CommandGroup>
             ) : null}
             {targets.length > 0 ? (
-              <CommandGroup heading="This host's workspaces">
+              <CommandGroup heading={t("This host's workspaces")}>
                 {targets.map((target) => (
                   <CommandItem
                     key={target.path}
@@ -208,7 +216,7 @@ export function McpScopePicker(props: {
                         </span>
                         {target.isWorktree ? (
                           <Badge variant="outline" className="shrink-0">
-                            worktree
+                            {t("worktree")}
                           </Badge>
                         ) : null}
                         {target.branch === null ? null : (
@@ -252,7 +260,7 @@ export function McpScopePicker(props: {
                     <FolderPlus className="size-4 shrink-0 text-muted-foreground" />
                   )}
                   <span className="min-w-0 flex-1 truncate text-ui-sm">
-                    Add a workspace folder…
+                    {t("Add a workspace folder…")}
                   </span>
                 </CommandItem>
               </CommandGroup>
@@ -270,11 +278,12 @@ export function McpScopePicker(props: {
  * and it only renders when there is nothing to filter anyway.
  */
 function NoWorkspacesNote(props: { readonly loading: boolean }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <p className="px-3 py-2 text-ui-xs text-muted-foreground">
       {props.loading
-        ? "Resolving this host's workspaces…"
-        : "No workspaces added on this host yet."}
+        ? t("Resolving this host's workspaces…")
+        : t("No workspaces added on this host yet.")}
     </p>
   );
 }
@@ -291,7 +300,10 @@ function triggerContent(args: {
   readonly loading: boolean;
 }): { readonly title: string; readonly detail: string } {
   if (args.effectiveScope === "global") {
-    return { title: "Global", detail: "Every workspace on this host" };
+    return {
+      title: i18n.t("Global", { ns: "panels" }),
+      detail: i18n.t("Every workspace on this host", { ns: "panels" }),
+    };
   }
   if (args.active !== null) {
     // Branch first: among a repo's worktrees it is the ONLY differing part
@@ -305,8 +317,10 @@ function triggerContent(args: {
     return { title: workspaceFolderName(args.workspaceRoot), detail: "" };
   }
   return {
-    title: "Choose a workspace",
-    detail: args.loading ? "Resolving workspaces…" : "",
+    title: i18n.t("Choose a workspace", { ns: "panels" }),
+    detail: args.loading
+      ? i18n.t("Resolving workspaces…", { ns: "panels" })
+      : "",
   };
 }
 

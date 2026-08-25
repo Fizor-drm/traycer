@@ -14,6 +14,7 @@
  */
 import { useCallback, useState } from "react";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -43,6 +44,7 @@ interface NewTerminalPickerProps {
 
 export function NewTerminalPicker(props: NewTerminalPickerProps) {
   const { epicId, onBeforeOpen, tabId } = props;
+  const { t } = useTranslation("canvas");
   const surfaceKey = useTabSurfaceKey("new-terminal", tabId);
   const isOpen = usePanelHeaderMenuOpen(tabId, "terminals", "create");
   const setMenuOpen = usePanelHeaderMenuStore((state) => state.setMenuOpen);
@@ -97,7 +99,7 @@ export function NewTerminalPicker(props: NewTerminalPickerProps) {
           type="button"
           variant="ghost"
           size="icon-sm"
-          aria-label="New terminal"
+          aria-label={t("New terminal")}
           data-testid="epic-terminals-panel-add"
           className="text-muted-foreground hover:text-foreground"
         >

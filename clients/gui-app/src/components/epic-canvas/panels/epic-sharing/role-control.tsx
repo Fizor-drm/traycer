@@ -1,4 +1,5 @@
 import { ChevronDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,7 @@ export interface RoleDropdownProps {
 }
 
 export function RoleDropdown(props: RoleDropdownProps) {
+  const { t } = useTranslation("canvas");
   const {
     value,
     onChange,
@@ -58,7 +60,7 @@ export function RoleDropdown(props: RoleDropdownProps) {
           data-testid={testId}
         >
           <span className="truncate">
-            {EPIC_COLLABORATOR_ROLE_LABELS[value]}
+            {t(EPIC_COLLABORATOR_ROLE_LABELS[value])}
           </span>
           {isPending ? (
             <AgentSpinningDots
@@ -83,7 +85,7 @@ export function RoleDropdown(props: RoleDropdownProps) {
         >
           {ASSIGNABLE_COLLABORATOR_ROLES.map((role) => (
             <DropdownMenuRadioItem key={role} value={role}>
-              {EPIC_COLLABORATOR_ROLE_LABELS[role]}
+              {t(EPIC_COLLABORATOR_ROLE_LABELS[role])}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
@@ -132,6 +134,7 @@ export function RoleBadge(props: {
    *  mistaken for the native attribute. */
   readonly tooltip: string | undefined;
 }) {
+  const { t } = useTranslation("canvas");
   return (
     <TooltipWrapper
       label={props.tooltip}
@@ -144,7 +147,7 @@ export function RoleBadge(props: {
         aria-label={props.ariaLabel}
         data-testid={props.testId}
       >
-        {EPIC_COLLABORATOR_ROLE_LABELS[props.value]}
+        {t(EPIC_COLLABORATOR_ROLE_LABELS[props.value])}
       </span>
     </TooltipWrapper>
   );

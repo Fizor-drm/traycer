@@ -13,6 +13,7 @@ import { type LeftPanelDefinition } from "@/components/epic-canvas/sidebar/epic-
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { useCallback, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import {
   useEpicLeftPanelStore,
@@ -83,6 +84,7 @@ function PanelHeaderSearchRow(props: {
 }
 
 export function PanelGroupSectionHeader(props: PanelGroupSectionHeaderProps) {
+  const { t } = useTranslation("canvas");
   const Icon = props.panel.icon;
   const Actions = props.panel.Actions;
   const Subtitle = props.panel.Subtitle;
@@ -159,7 +161,7 @@ export function PanelGroupSectionHeader(props: PanelGroupSectionHeaderProps) {
         variant="ghost"
         size="icon-xs"
         aria-expanded={!collapsed}
-        aria-label={`${collapsed ? "Expand" : "Collapse"} ${props.panel.title}`}
+        aria-label={`${collapsed ? t("Expand") : t("Collapse")} ${t(props.panel.title)}`}
         // muted-fill-ok: canvas-scoped sidebar chrome, and hover also swings
         // the icon to text-foreground
         className="-ml-1 size-5 text-muted-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -179,7 +181,7 @@ export function PanelGroupSectionHeader(props: PanelGroupSectionHeaderProps) {
         type="button"
         {...listeners}
         aria-expanded={!collapsed}
-        aria-label={`${collapsed ? "Expand" : "Collapse"} ${props.panel.title}`}
+        aria-label={`${collapsed ? t("Expand") : t("Collapse")} ${t(props.panel.title)}`}
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
         onClick={(event) => {
           event.stopPropagation();
@@ -189,7 +191,7 @@ export function PanelGroupSectionHeader(props: PanelGroupSectionHeaderProps) {
         <Icon className="size-4 shrink-0 text-muted-foreground/80 @max-[14rem]:hidden" />
         <div className="min-w-0">
           <p className="truncate text-ui-xs font-normal uppercase tracking-wide text-muted-foreground">
-            {props.panel.title}
+            {t(props.panel.title)}
           </p>
           {Subtitle === null ? null : (
             <Subtitle epicId={props.epicId} tabId={props.tabId} />

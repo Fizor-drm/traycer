@@ -1,3 +1,4 @@
+import { i18n } from "@/lib/i18n/init-i18n";
 import type {
   CliInstallManifestSnapshot,
   HostAvailableSnapshot,
@@ -111,11 +112,11 @@ export function deriveStatus(
 export function statusLabel(state: ServiceStatusSnapshot["state"]): string {
   switch (state) {
     case "running":
-      return "● Running";
+      return i18n.t("● Running", { ns: "panels" });
     case "stopped":
-      return "○ Stopped";
+      return i18n.t("○ Stopped", { ns: "panels" });
     case "not-installed":
-      return "Not installed";
+      return i18n.t("Not installed", { ns: "panels" });
   }
 }
 
@@ -137,13 +138,17 @@ export function statusDescription(
 ): string {
   switch (state) {
     case "running":
-      return "Host is running locally and reachable.";
+      return i18n.t("Host is running locally and reachable.", { ns: "panels" });
     case "stopped":
-      return "Installed, but the host process isn't running.";
+      return i18n.t("Installed, but the host process isn't running.", {
+        ns: "panels",
+      });
     case "not-installed":
-      return "No host is installed on this machine yet.";
+      return i18n.t("No host is installed on this machine yet.", {
+        ns: "panels",
+      });
     case undefined:
-      return "Checking the local host…";
+      return i18n.t("Checking the local host…", { ns: "panels" });
   }
 }
 
@@ -151,12 +156,18 @@ export function serviceDescription(
   state: ServiceStatusSnapshot["state"] | undefined,
 ): string {
   if (state === undefined) {
-    return "Checking service registration…";
+    return i18n.t("Checking service registration…", { ns: "panels" });
   }
   if (state === "not-installed") {
-    return "Not registered. The OS service manifest is required for the host to survive logout.";
+    return i18n.t(
+      "Not registered. The OS service manifest is required for the host to survive logout.",
+      { ns: "panels" },
+    );
   }
-  return "Registered. The OS service manifest starts the host at user login.";
+  return i18n.t(
+    "Registered. The OS service manifest starts the host at user login.",
+    { ns: "panels" },
+  );
 }
 
 export function updatesDescription(args: {
@@ -168,24 +179,30 @@ export function updatesDescription(args: {
   const { registryState, registryFetching, latestReleasedAt, nowMs } = args;
   if (registryState !== undefined && registryState.updateAvailable) {
     if (latestReleasedAt !== null) {
-      return `Released ${formatReleaseAge(latestReleasedAt, nowMs)}.`;
+      return i18n.t("Released {{age}}.", {
+        ns: "panels",
+        age: formatReleaseAge(latestReleasedAt, nowMs),
+      });
     }
-    return "A newer host is available.";
+    return i18n.t("A newer host is available.", { ns: "panels" });
   }
   if (registryState !== undefined && !registryState.reachable) {
     const errorMessage = registryState.errorMessage;
     if (errorMessage !== null && errorMessage.length > 0) {
       return truncateLine(errorMessage, 140);
     }
-    return "Update check unavailable.";
+    return i18n.t("Update check unavailable.", { ns: "panels" });
   }
   if (registryFetching && registryState === undefined) {
-    return "Checking for updates…";
+    return i18n.t("Checking for updates…", { ns: "panels" });
   }
   if (registryState?.checkedAt) {
-    return `Last checked ${formatReleaseAge(registryState.checkedAt, nowMs)}.`;
+    return i18n.t("Last checked {{age}}.", {
+      ns: "panels",
+      age: formatReleaseAge(registryState.checkedAt, nowMs),
+    });
   }
-  return "Check for host updates.";
+  return i18n.t("Check for host updates.", { ns: "panels" });
 }
 
 function truncateLine(value: string, maxLength: number): string {
@@ -204,42 +221,69 @@ export function extractErrorMessage(
     if (message !== null && message.length > 0) {
       return truncateLine(message, 200);
     }
-    return "Registry unreachable.";
+    return i18n.t("Registry unreachable.", { ns: "panels" });
   }
   return null;
 }
 
 export function formatCheckedAtTooltip(checkedAt: string | null): string {
-  if (checkedAt === null) return "Never checked";
-  return `Last checked ${new Date(checkedAt).toLocaleString()}`;
+  if (checkedAt === null) return i18n.t("Never checked", { ns: "panels" });
+  return i18n.t("Last checked {{datetime}}", {
+    ns: "panels",
+    datetime: new Date(checkedAt).toLocaleString(),
+  });
 }
 
 export function formatInstallDate(iso: string): string {
-  if (iso.length === 0) return "unknown";
+  if (iso.length === 0) return i18n.t("unknown", { ns: "panels" });
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime())) return iso;
   return parsed.toLocaleString();
 }
 
 function formatReleaseAge(releasedAt: string, nowMs: number): string {
-  if (releasedAt.length === 0) return "recently";
+  if (releasedAt.length === 0) return i18n.t("recently", { ns: "panels" });
   const releasedMs = new Date(releasedAt).getTime();
-  if (Number.isNaN(releasedMs)) return "recently";
+  if (Number.isNaN(releasedMs)) return i18n.t("recently", { ns: "panels" });
   const diffSeconds = Math.max(0, (nowMs - releasedMs) / 1000);
   const minute = 60;
   const hour = 3600;
   const day = 86400;
-  if (diffSeconds < minute) return "just now";
-  if (diffSeconds < hour) return `${Math.floor(diffSeconds / minute)}m ago`;
-  if (diffSeconds < day) return `${Math.floor(diffSeconds / hour)}h ago`;
-  if (diffSeconds < 7 * day) return `${Math.floor(diffSeconds / day)}d ago`;
+  if (diffSeconds < minute) return i18n.t("just now", { ns: "panels" });
+  if (diffSeconds < hour) {
+    return i18n.t("{{count}}m ago", {
+      ns: "panels",
+      count: Math.floor(diffSeconds / minute),
+    });
+  }
+  if (diffSeconds < day) {
+    return i18n.t("{{count}}h ago", {
+      ns: "panels",
+      count: Math.floor(diffSeconds / hour),
+    });
+  }
+  if (diffSeconds < 7 * day) {
+    return i18n.t("{{count}}d ago", {
+      ns: "panels",
+      count: Math.floor(diffSeconds / day),
+    });
+  }
   if (diffSeconds < 30 * day) {
-    return `${Math.floor(diffSeconds / (7 * day))}w ago`;
+    return i18n.t("{{count}}w ago", {
+      ns: "panels",
+      count: Math.floor(diffSeconds / (7 * day)),
+    });
   }
   if (diffSeconds < 365 * day) {
-    return `${Math.floor(diffSeconds / (30 * day))}mo ago`;
+    return i18n.t("{{count}}mo ago", {
+      ns: "panels",
+      count: Math.floor(diffSeconds / (30 * day)),
+    });
   }
-  return `${Math.floor(diffSeconds / (365 * day))}y ago`;
+  return i18n.t("{{count}}y ago", {
+    ns: "panels",
+    count: Math.floor(diffSeconds / (365 * day)),
+  });
 }
 
 export function findReleasedAt(
@@ -256,11 +300,13 @@ export function findReleasedAt(
 
 export function formatSource(source: HostInstalledRecord["source"]): string {
   if (source.kind === "registry") {
-    return source.value.length > 0 ? `Registry · ${source.value}` : "Registry";
+    return source.value.length > 0
+      ? i18n.t("Registry · {{value}}", { ns: "panels", value: source.value })
+      : i18n.t("Registry", { ns: "panels" });
   }
   return source.value.length > 0
-    ? `Local file · ${source.value}`
-    : "Local file";
+    ? i18n.t("Local file · {{value}}", { ns: "panels", value: source.value })
+    : i18n.t("Local file", { ns: "panels" });
 }
 
 // `formatProgressKind` / `formatTransfer` / `formatBytes` lived here and are

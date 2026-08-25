@@ -3,6 +3,7 @@ import type {
   ProviderCliState,
   ProviderId,
 } from "@traycer/protocol/host/provider-schemas";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 /**
  * A tab the detail pane can render. Every wire tab, plus `account` — which is
@@ -153,5 +154,5 @@ export function providerTabLabel(
   if (tab !== "usage" || providerSupportsManagedProfiles(providerId)) {
     return labels[tab];
   }
-  return "Usage limits";
+  return i18n.t("Usage limits", { ns: "panels" });
 }

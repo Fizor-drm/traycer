@@ -5,19 +5,24 @@ import type {
   IHostManagement,
 } from "@traycer-clients/shared/platform/runner-host";
 import { reportableErrorToast } from "@/lib/reportable-error-toast";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 export function copyTerminalCommand(command: string): void {
   void navigator.clipboard.writeText(command).then(
     () => {
-      toast.success("Command copied to clipboard");
+      toast.success(i18n.t("Command copied to clipboard", { ns: "panels" }));
     },
     () => {
-      reportableErrorToast("Could not copy command", undefined, {
-        title: "Could not copy command",
-        message: null,
-        code: null,
-        source: "Host Doctor",
-      });
+      reportableErrorToast(
+        i18n.t("Could not copy command", { ns: "panels" }),
+        undefined,
+        {
+          title: i18n.t("Could not copy command", { ns: "panels" }),
+          message: null,
+          code: null,
+          source: i18n.t("Host Doctor", { ns: "panels" }),
+        },
+      );
     },
   );
 }
@@ -26,11 +31,20 @@ export function describeFreePortPrompt(
   prompt: FreePortAndRestartInput | null,
 ): string {
   if (prompt === null) {
-    return "The conflicting process will be asked to exit before the host is restarted.";
+    return i18n.t(
+      "The conflicting process will be asked to exit before the host is restarted.",
+      { ns: "panels" },
+    );
   }
-  const processName = prompt.processName ?? "(unknown)";
-  const pidLabel = prompt.pid !== null ? ` (pid ${prompt.pid})` : "";
-  return `Port ${prompt.port} is held by ${processName}${pidLabel}. The process will be asked to exit before the host is restarted, which will end any running terminal sessions and cancel in-flight requests.`;
+  const processName = prompt.processName ?? i18n.t("(unknown)", { ns: "panels" });
+  const pidLabel =
+    prompt.pid !== null
+      ? i18n.t(" (pid {{pid}})", { ns: "panels", pid: prompt.pid })
+      : "";
+  return i18n.t(
+    "Port {{port}} is held by {{process}}{{suffix}}. The process will be asked to exit before the host is restarted, which will end any running terminal sessions and cancel in-flight requests.",
+    { ns: "panels", port: prompt.port, process: processName, suffix: pidLabel },
+  );
 }
 
 export function fixActionLabel(fixAction: string): string {
@@ -42,19 +56,19 @@ export function fixActionLabel(fixAction: string): string {
     // converge that fixes one fixes the other.
     case "host-install":
     case "host-install-latest":
-      return "Install host";
+      return i18n.t("Install host", { ns: "panels" });
     case "service-install":
-      return "Register service";
+      return i18n.t("Register service", { ns: "panels" });
     case "host-start":
-      return "Start host";
+      return i18n.t("Start host", { ns: "panels" });
     case "host-restart":
-      return "Restart host";
+      return i18n.t("Restart host", { ns: "panels" });
     case "host-logs":
-      return "Show logs";
+      return i18n.t("Show logs", { ns: "panels" });
     case "host-free-port-and-restart":
-      return "Free port + restart";
+      return i18n.t("Free port + restart", { ns: "panels" });
     default:
-      return "Fix";
+      return i18n.t("Fix", { ns: "panels" });
   }
 }
 
@@ -123,13 +137,22 @@ export async function runFixAction(
     case "host-free-port-and-restart": {
       const input = parseFreePortInput(issue);
       if (input === null) {
-        throw new Error("Doctor issue is missing a valid conflicting port.");
+        throw new Error(
+          i18n.t("Doctor issue is missing a valid conflicting port.", {
+            ns: "panels",
+          }),
+        );
       }
       await management.freePortAndRestart({ ...input, expectedHostId });
       return { kind: "applied" };
     }
     default:
-      throw new Error(`Unknown fix action: ${issue.fixAction}`);
+      throw new Error(
+        i18n.t("Unknown fix action: {{action}}", {
+          ns: "panels",
+          action: issue.fixAction,
+        }),
+      );
   }
 }
 

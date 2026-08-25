@@ -17,6 +17,8 @@ import {
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -234,6 +236,7 @@ function useObservedHeight(): {
  * and the toolbar keeps only the refresh control and its own filters.
  */
 export function WorktreesSettingsPanel(): ReactNode {
+  const { t } = useTranslation("panels");
   const scope = useHostScope();
   // One-shot `worktree.deleteByPath` stream transport: it survives the panel
   // unmounting (a backgrounded delete keeps its socket) but wires no proactive
@@ -245,8 +248,8 @@ export function WorktreesSettingsPanel(): ReactNode {
 
   return (
     <SettingsPanelShell
-      title="Worktrees"
-      description="Traycer-created worktrees on this host."
+      title={t("Worktrees")}
+      description={t("Traycer-created worktrees on this host.")}
       fillHeight
       bodyClassName="relative rounded-none border-none bg-transparent"
     >
@@ -285,6 +288,7 @@ function WorktreesToolbar(props: {
     refreshing,
     selectionControls,
   } = props;
+  const { t } = useTranslation("panels");
   const refreshWorktrees = useCallback(async () => {
     await onRefresh();
   }, [onRefresh]);
@@ -314,12 +318,12 @@ function WorktreesToolbar(props: {
             size="sm"
             disabled={!canRefresh || refresh.refreshing}
             onClick={refresh.trigger}
-            aria-label="Refresh worktrees"
+            aria-label={t("Refresh worktrees")}
           >
             <RefreshCw
               className={cn("size-4", refresh.refreshing && "animate-spin")}
             />
-            <span>Refresh</span>
+            <span>{t("Refresh")}</span>
           </Button>
         </div>
       </div>
@@ -346,13 +350,14 @@ function WorktreesUpdatedAgoLabel(props: {
 function WorktreesUpdatedAgoText(props: {
   readonly updatedAt: number;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const ago = useRelativeTimestamp(props.updatedAt);
   return (
     <span
       className="text-ui-xs whitespace-nowrap text-muted-foreground"
       data-testid="worktrees-updated-ago"
     >
-      Updated {ago}
+      {t("Updated {{ago}}", { ago })}
     </span>
   );
 }
@@ -367,6 +372,7 @@ function WorktreesFilterControls(props: {
   readonly sortMode: WorktreeSortMode;
   readonly onSortModeChange: (mode: WorktreeSortMode) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div className="flex items-center gap-2">
       <div className="relative min-w-0 flex-1">
@@ -378,8 +384,8 @@ function WorktreesFilterControls(props: {
           type="search"
           value={props.searchText}
           onChange={(event) => props.onSearchChange(event.target.value)}
-          placeholder="Search repo, branch, path, PR, or Task"
-          aria-label="Search worktrees"
+          placeholder={t("Search repo, branch, path, PR, or Task")}
+          aria-label={t("Search worktrees")}
           className="pl-8"
         />
       </div>
@@ -400,13 +406,14 @@ function WorktreesFilterControls(props: {
 function worktreeTierFilterLabel(
   tierFilters: WorktreeTierFilterSet,
   availableTiers: readonly WorktreeTier[],
+  t: TFunction<"panels">,
 ): string {
   // `availableTiers` includes every selected tier even when it currently has no
   // matches, so a strict persisted filter never masquerades as "All".
   const active = availableTiers.filter((tier) => tierFilters.has(tier));
-  if (active.length === 0) return "All";
-  if (active.length === 1) return WORKTREE_TIER_LABEL[active[0]];
-  return `${active.length} tiers`;
+  if (active.length === 0) return t("All");
+  if (active.length === 1) return t(WORKTREE_TIER_LABEL[active[0]]);
+  return t("{{count}} tiers", { count: active.length });
 }
 
 /**
@@ -423,9 +430,11 @@ function WorktreeFilterMenu(props: {
   readonly onToggleTier: (tier: WorktreeTier) => void;
   readonly onClearTierFilters: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const label = worktreeTierFilterLabel(
     props.tierFilters,
     props.availableTiers,
+    t,
   );
   const noneSelected = props.availableTiers.every(
     (tier) => !props.tierFilters.has(tier),
@@ -439,7 +448,7 @@ function WorktreeFilterMenu(props: {
           size="sm"
           className="shrink-0"
           data-testid="worktrees-filter-trigger"
-          aria-label={`Filter: ${label}`}
+          aria-label={t("Filter: {{filter}}", { filter: label })}
         >
           <ListFilter className="size-4" />
           <span>{label}</span>
@@ -455,7 +464,7 @@ function WorktreeFilterMenu(props: {
           }}
           data-testid="worktrees-filter-all"
         >
-          All
+          {t("All")}
         </DropdownMenuCheckboxItem>
         {props.availableTiers.map((tier) => (
           <DropdownMenuCheckboxItem
@@ -467,7 +476,7 @@ function WorktreeFilterMenu(props: {
             }}
             data-testid={`worktrees-filter-${tier}`}
           >
-            {WORKTREE_TIER_LABEL[tier]}
+            {t(WORKTREE_TIER_LABEL[tier])}
           </DropdownMenuCheckboxItem>
         ))}
       </DropdownMenuContent>
@@ -488,6 +497,8 @@ function WorktreeSortMenu(props: {
   readonly sortMode: WorktreeSortMode;
   readonly onSortModeChange: (mode: WorktreeSortMode) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
+  const sortLabel = t(WORKTREE_SORT_LABEL[props.sortMode]);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -497,10 +508,10 @@ function WorktreeSortMenu(props: {
           size="sm"
           className="shrink-0"
           data-testid="worktrees-sort-trigger"
-          aria-label={`Sort: ${WORKTREE_SORT_LABEL[props.sortMode]}`}
+          aria-label={t("Sort: {{sort}}", { sort: sortLabel })}
         >
           <ArrowDownWideNarrow className="size-4" />
-          <span>{WORKTREE_SORT_LABEL[props.sortMode]}</span>
+          <span>{sortLabel}</span>
           <ChevronDown className="size-4 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
@@ -510,14 +521,14 @@ function WorktreeSortMenu(props: {
           onSelect={() => props.onSortModeChange("newest")}
           data-testid="worktrees-sort-newest"
         >
-          Newest
+          {t("Newest")}
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={props.sortMode === "oldest"}
           onSelect={() => props.onSortModeChange("oldest")}
           data-testid="worktrees-sort-oldest"
         >
-          Oldest
+          {t("Oldest")}
         </DropdownMenuCheckboxItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -531,6 +542,7 @@ function WorktreesBody(props: {
   readonly scope: HostScope;
 }): ReactNode {
   const { client, openStreamTransport, hostId, scope } = props;
+  const { t } = useTranslation("panels");
   const reachability = useHostReachability(hostId ?? "");
   // Two reachability opinions used to disagree here. `useHostReachability` is
   // the TAB-binding check and can call a host reachable that this settings
@@ -581,13 +593,13 @@ function WorktreesBody(props: {
   if (reachability.status === "checking") {
     content = (
       <WorktreesStateMessage tone="muted" spinner>
-        Checking {reachability.hostLabel}…
+        {t("Checking {{host}}…", { host: reachability.hostLabel })}
       </WorktreesStateMessage>
     );
   } else if (reachability.status === "host-starting") {
     content = (
       <WorktreesStateMessage tone="muted" spinner>
-        Waiting for the host to start…
+        {t("Waiting for the host to start…")}
       </WorktreesStateMessage>
     );
   } else if (!reachable) {
@@ -598,20 +610,26 @@ function WorktreesBody(props: {
     content = (
       <WorktreesStateMessage tone="muted" spinner={false}>
         {reachability.unavailability === "plan-restricted"
-          ? `${reachability.hostLabel} is local only on your current plan. Upgrade to manage its worktrees from here.`
-          : `${reachability.hostLabel} is offline. Worktrees can only be managed on a reachable host.`}
+          ? t(
+              "{{host}} is local only on your current plan. Upgrade to manage its worktrees from here.",
+              { host: reachability.hostLabel },
+            )
+          : t(
+              "{{host}} is offline. Worktrees can only be managed on a reachable host.",
+              { host: reachability.hostLabel },
+            )}
       </WorktreesStateMessage>
     );
   } else if (client === null) {
     content = (
       <WorktreesStateMessage tone="muted" spinner={false}>
-        Sign in to manage worktrees on this host.
+        {t("Sign in to manage worktrees on this host.")}
       </WorktreesStateMessage>
     );
   } else if (listing.isPending) {
     content = (
       <WorktreesStateMessage tone="muted" spinner>
-        Loading worktrees…
+        {t("Loading worktrees…")}
       </WorktreesStateMessage>
     );
   } else if (listing.isError) {
@@ -623,7 +641,7 @@ function WorktreesBody(props: {
   } else if (listing.isEmpty) {
     content = (
       <WorktreesStateMessage tone="muted" spinner={false}>
-        No worktrees created on this host.
+        {t("No worktrees created on this host.")}
       </WorktreesStateMessage>
     );
   } else {
@@ -681,7 +699,7 @@ function WorktreesBody(props: {
         scope={scope}
         skeleton={
           <WorktreesStateMessage tone="muted" spinner>
-            Connecting to {scope.hostLabel}…
+            {t("Connecting to {{host}}…", { host: scope.hostLabel })}
           </WorktreesStateMessage>
         }
       >
@@ -707,6 +725,7 @@ function WorktreesPartialListingBanner(props: {
   readonly message: string | null;
   readonly onRetry: () => Promise<unknown>;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div
       role="status"
@@ -715,9 +734,14 @@ function WorktreesPartialListingBanner(props: {
     >
       <AlertTriangle className="size-4 shrink-0" aria-hidden />
       <span className="min-w-0 flex-1 wrap-anywhere">
-        Some worktrees could not be loaded
-        {props.message !== null ? `: ${props.message}` : ""}. The list below is
-        incomplete.
+        {props.message === null
+          ? t(
+              "Some worktrees could not be loaded. The list below is incomplete.",
+            )
+          : t(
+              "Some worktrees could not be loaded: {{error}}. The list below is incomplete.",
+              { error: props.message },
+            )}
       </span>
       <Button
         variant="ghost"
@@ -725,14 +749,14 @@ function WorktreesPartialListingBanner(props: {
         className="h-7 shrink-0 px-2 text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
         onClick={() => void props.onRetry()}
       >
-        Retry
+        {t("Retry")}
       </Button>
       <ReportIssueAction
         context={createReportIssueContext({
-          title: "Some worktrees could not be loaded",
+          title: t("Some worktrees could not be loaded"),
           message: null,
           code: null,
-          source: "Worktrees",
+          source: t("Worktrees"),
         })}
         presentation="link"
         className="h-auto shrink-0 p-0 text-current"
@@ -813,8 +837,7 @@ function useStableRowCallback<Args extends readonly unknown[]>(
   }, []);
 }
 
-export function WorktreesList(props: {
-  readonly openStreamTransport: (hostId: string) => DurableStreamTransport;
+export function WorktreesList(props: {  readonly openStreamTransport: (hostId: string) => DurableStreamTransport;
   readonly hostId: string;
   // The BASE listing (cheap fields for every row). Per-row activity enrichment
   // arrives lazily through `enrichedByPath`.
@@ -859,6 +882,7 @@ export function WorktreesList(props: {
     taskTitlesByEpicId,
     openStreamTransport,
   } = props;
+  const { t } = useTranslation("panels");
   const queryClient = useQueryClient();
   // TanStack retains invalidated enrichment rows, so presence alone cannot make
   // one authoritative. A newly-unresolved base row must fail closed even when a
@@ -1261,12 +1285,13 @@ export function WorktreesList(props: {
     worktreesByPath,
     deleteEnrichmentStateFor,
   ]);
-  const { singleDialog, bulkDeleteSummary } = deriveWorktreeDeleteDialogs(
-    pendingResolution,
+  const { singleDialog, bulkDeleteSummary } = deriveWorktreeDeleteDialogs({
+    resolution: pendingResolution,
     deleteEnrichmentStateFor,
     visibleWorktrees,
     erroredPaths,
-  );
+    t,
+  });
   // A non-null resolution that drops EVERY pending target (most commonly
   // because they all regressed to `Checking`) never renders a dialog -
   // `singleDialogCopy` and `bulkDeleteSummary` are both null for zero kept
@@ -1283,10 +1308,11 @@ export function WorktreesList(props: {
       worktreeDropMessage(
         dropped,
         (worktreePath) => deleteEnrichmentStateFor(worktreePath) === "pending",
+        t,
       ),
     );
     setPendingDeleteTargets(null);
-  }, [pendingResolution, deleteEnrichmentStateFor]);
+  }, [pendingResolution, deleteEnrichmentStateFor, t]);
   const progressSummary = useMemo(
     () => summarizeWorktreeDeleteRuns(runs),
     [runs],
@@ -1406,6 +1432,7 @@ export function WorktreesList(props: {
           dropped,
           (worktreePath) =>
             deleteEnrichmentStateFor(worktreePath) === "pending",
+          t,
         ),
       );
     }
@@ -1562,7 +1589,7 @@ export function WorktreesList(props: {
           selectionControls={
             <>
               <SelectAllToggle
-                accessibleLabel="Select all visible worktrees"
+                accessibleLabel={t("Select all visible worktrees")}
                 selectableCount={selectableWorktreePaths.length}
                 selectedCount={selectedCount}
                 disabled={false}
@@ -1605,6 +1632,7 @@ export function WorktreesList(props: {
             {worktreeFilterResolutionStatusText(
               stillCheckingCount,
               unavailableStatusCount,
+              t,
             )}
           </div>
         ) : null}
@@ -1640,10 +1668,14 @@ export function WorktreesList(props: {
                 spinner={searchStillCheckingCount > 0}
               >
                 {searchStillCheckingCount > 0
-                  ? worktreeSearchCheckingNoticeText(searchStillCheckingCount)
+                  ? worktreeSearchCheckingNoticeText(
+                      searchStillCheckingCount,
+                      t,
+                    )
                   : worktreeEmptyStateText(
                       deferredSearchText,
                       tierFilters.size > 0,
+                      t,
                     )}
               </WorktreesStateMessage>
             ) : (
@@ -1784,6 +1816,7 @@ function WorktreeDeleteProgressStrip(props: {
   readonly summary: WorktreeDeleteProgressSummary;
   readonly onDismiss: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (props.summary.total === 0) return null;
   // Once nothing is in flight, a batch that ended with failures stays put so the
   // user notices; offer an explicit Dismiss to clear it (and the app-wide toast)
@@ -1792,7 +1825,7 @@ function WorktreeDeleteProgressStrip(props: {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 bg-foreground/3 px-5 py-2">
       <span className="text-ui-sm font-medium text-foreground">
-        {worktreeDeleteProgressTitle(props.summary)}
+        {worktreeDeleteProgressTitle(props.summary, t)}
       </span>
       <div className="flex items-center gap-3">
         <span className="text-ui-xs text-muted-foreground">
@@ -1806,7 +1839,7 @@ function WorktreeDeleteProgressStrip(props: {
             onClick={props.onDismiss}
             data-testid="worktree-delete-progress-dismiss"
           >
-            Dismiss
+            {t("Dismiss")}
           </Button>
         ) : null}
       </div>
@@ -1833,9 +1866,24 @@ function WorktreeSelectionActionBar(props: {
   readonly onDelete: () => void;
   readonly onClear: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const blockedByChecking = props.checkingCount > 0;
-  const selectedWorktreeNoun =
-    props.selectedCount === 1 ? "worktree" : "worktrees";
+  const deleteAriaLabel =
+    props.selectedCount === 1
+      ? t("Delete {{count}} selected worktree", {
+          count: props.selectedCount,
+        })
+      : t("Delete {{count}} selected worktrees", {
+          count: props.selectedCount,
+        });
+  const deleteButtonLabel =
+    props.selectedCount === 1
+      ? t("Delete {{count}} worktree", {
+          count: props.selectedCount,
+        })
+      : t("Delete {{count}} worktrees", {
+          count: props.selectedCount,
+        });
   const deleteButton = (
     <Button
       type="button"
@@ -1843,25 +1891,25 @@ function WorktreeSelectionActionBar(props: {
       size="sm"
       disabled={blockedByChecking}
       onClick={props.onDelete}
-      aria-label={`Delete ${props.selectedCount} selected ${selectedWorktreeNoun}`}
+      aria-label={deleteAriaLabel}
       data-testid="worktrees-list-delete-selected"
       className="shrink-0 whitespace-nowrap"
     >
       <Trash2 className="size-4" />
-      Delete {props.selectedCount} {selectedWorktreeNoun}
+      {deleteButtonLabel}
     </Button>
   );
   return (
     <>
       <span className="text-ui-sm font-medium text-foreground">
-        {props.selectedCount} selected
+        {t("{{count}} selected", { count: props.selectedCount })}
       </span>
       {blockedByChecking ? (
         <span
           className="text-ui-xs text-muted-foreground"
           data-testid="worktrees-selection-checking-notice"
         >
-          {worktreeCheckingNoticeText(props.checkingCount)}
+          {worktreeCheckingNoticeText(props.checkingCount, t)}
         </span>
       ) : null}
       <div className="ml-auto flex items-center gap-1">
@@ -1873,11 +1921,11 @@ function WorktreeSelectionActionBar(props: {
           data-testid="worktrees-clear-selection-inline"
         >
           <X className="size-4" />
-          Clear
+          {t("Clear")}
         </Button>
         {blockedByChecking ? (
           <TooltipWrapper
-            label={worktreeCheckingNoticeText(props.checkingCount)}
+            label={worktreeCheckingNoticeText(props.checkingCount, t)}
             side="top"
             sideOffset={undefined}
             align="end"
@@ -1892,23 +1940,42 @@ function WorktreeSelectionActionBar(props: {
   );
 }
 
-function worktreeCheckingNoticeText(checkingCount: number): string {
-  const plural = checkingCount === 1 ? "worktree is" : "worktrees are";
-  return `${checkingCount} selected ${plural} still checking status`;
+function worktreeCheckingNoticeText(
+  checkingCount: number,
+  t: TFunction<"panels">,
+): string {
+  return checkingCount === 1
+    ? t("{{count}} selected worktree is still checking status", {
+        count: checkingCount,
+      })
+    : t("{{count}} selected worktrees are still checking status", {
+        count: checkingCount,
+      });
 }
 
-function worktreeSearchCheckingNoticeText(checkingCount: number): string {
-  const plural = checkingCount === 1 ? "worktree" : "worktrees";
-  return `No matches yet - still checking ${checkingCount} ${plural}.`;
+function worktreeSearchCheckingNoticeText(
+  checkingCount: number,
+  t: TFunction<"panels">,
+): string {
+  return checkingCount === 1
+    ? t("No matches yet - still checking {{count}} worktree.", {
+        count: checkingCount,
+      })
+    : t("No matches yet - still checking {{count}} worktrees.", {
+        count: checkingCount,
+      });
 }
 
 function worktreeEmptyStateText(
   searchText: string,
   hasTierFilters: boolean,
+  t: TFunction<"panels">,
 ): string {
-  if (searchText.trim().length > 0) return "No worktrees match your search.";
-  if (hasTierFilters) return "No worktrees match the selected tier filters.";
-  return "No worktrees found.";
+  if (searchText.trim().length > 0) {
+    return t("No worktrees match your search.");
+  }
+  if (hasTierFilters) return t("No worktrees match the selected tier filters.");
+  return t("No worktrees found.");
 }
 
 function mergeStaleActivityOntoBase(
@@ -1986,15 +2053,26 @@ function hasMatchingActivityIdentity(
 function worktreeFilterResolutionStatusText(
   checkingCount: number,
   unavailableCount: number,
+  t: TFunction<"panels">,
 ): string {
   const parts: string[] = [];
   if (checkingCount > 0) {
-    const plural = checkingCount === 1 ? "worktree" : "worktrees";
-    parts.push(`Checking ${checkingCount} ${plural}…`);
+    parts.push(
+      checkingCount === 1
+        ? t("Checking {{count}} worktree…", { count: checkingCount })
+        : t("Checking {{count}} worktrees…", { count: checkingCount }),
+    );
   }
   if (unavailableCount > 0) {
-    const plural = unavailableCount === 1 ? "worktree" : "worktrees";
-    parts.push(`Status unavailable for ${unavailableCount} ${plural}.`);
+    parts.push(
+      unavailableCount === 1
+        ? t("Status unavailable for {{count}} worktree.", {
+            count: unavailableCount,
+          })
+        : t("Status unavailable for {{count}} worktrees.", {
+            count: unavailableCount,
+          }),
+    );
   }
   return parts.join(" ");
 }
@@ -2019,6 +2097,7 @@ function WorktreeBulkDeleteDialog(props: {
   readonly onConfirm: () => void;
 }): ReactNode {
   const summary = props.summary;
+  const { t } = useTranslation("panels");
   return (
     <Dialog open={summary !== null} onOpenChange={props.onOpenChange}>
       <DialogContent
@@ -2037,8 +2116,10 @@ function WorktreeBulkDeleteDialog(props: {
                   {summary.title}
                 </DialogTitle>
                 <DialogDescription className="text-ui-sm leading-relaxed text-muted-foreground wrap-anywhere">
-                  Deleting {summary.classSummary}. Traycer runs each repo's
-                  teardown script, then removes the worktree.
+                  {t(
+                    "Deleting {{classes}}. Traycer runs each repo's teardown script, then removes the worktree.",
+                    { classes: summary.classSummary },
+                  )}
                 </DialogDescription>
                 {summary.dirtyLoss !== null ? (
                   <p
@@ -2094,7 +2175,7 @@ function WorktreeBulkDeleteDialog(props: {
                 onClick={() => props.onOpenChange(false)}
                 data-testid="confirm-cancel"
               >
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="button"
@@ -2115,11 +2196,12 @@ function WorktreeBulkDeleteDialog(props: {
 
 function worktreeDeleteProgressTitle(
   summary: WorktreeDeleteProgressSummary,
+  t: TFunction<"panels">,
 ): string {
-  if (summary.active > 0) return "Deleting worktrees";
-  if (summary.failed === 0) return "Worktrees deleted";
-  if (summary.deleted === 0) return "Couldn't delete worktrees";
-  return "Some worktrees couldn't be deleted";
+  if (summary.active > 0) return t("Deleting worktrees");
+  if (summary.failed === 0) return t("Worktrees deleted");
+  if (summary.deleted === 0) return t("Couldn't delete worktrees");
+  return t("Some worktrees couldn't be deleted");
 }
 
 type WorktreeScriptReviewDraft = {
@@ -2140,15 +2222,19 @@ const WorktreeRepoHeader = memo(function WorktreeRepoHeader(props: {
   readonly onToggle: (group: WorktreeRepoGroup, collapsed: boolean) => void;
 }): ReactNode {
   const { collapsed, group, onToggle } = props;
+  const { t } = useTranslation("panels");
   const handleToggle = useCallback(() => {
     onToggle(group, collapsed);
   }, [onToggle, group, collapsed]);
-  const action = collapsed ? "Expand" : "Collapse";
   return (
     <button
       type="button"
       aria-expanded={!collapsed}
-      aria-label={`${action} ${group.label}`}
+      aria-label={
+        collapsed
+          ? t("Expand {{repo}}", { repo: group.label })
+          : t("Collapse {{repo}}", { repo: group.label })
+      }
       data-testid="worktree-repo-header"
       className="flex w-full min-w-0 items-center gap-2 border-b border-border/40 bg-background px-5 py-1.5 text-left transition-colors hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
       onClick={handleToggle}
@@ -2268,6 +2354,7 @@ const WorktreeRow = memo(function WorktreeRow(
     onManageScripts,
     onDelete,
   } = props;
+  const { t } = useTranslation("panels");
   const deleting = deleteStatus !== null;
   const selectedForDelete = selected && canSelect;
   const deleteDisabledReason = worktreeDeleteDisabledReason(
@@ -2304,14 +2391,18 @@ const WorktreeRow = memo(function WorktreeRow(
   }, [onDelete, entry]);
   const { copy: copyToClipboard } = useClipboardCopy({
     resetMs: 2000,
-    onSuccess: () => toast.success("Copied worktree path"),
+    onSuccess: () => toast.success(t("Copied worktree path")),
     onError: () =>
-      reportableErrorToast("Couldn't copy path to clipboard.", undefined, {
-        title: "Could not copy worktree path",
-        message: null,
-        code: null,
-        source: "Worktrees",
-      }),
+      reportableErrorToast(
+        t("Couldn't copy path to clipboard."),
+        undefined,
+        {
+          title: t("Could not copy worktree path"),
+          message: null,
+          code: null,
+          source: t("Worktrees"),
+        },
+      ),
   });
   const copyPath = useCallback(() => {
     copyToClipboard(entry.worktreePath);
@@ -2347,12 +2438,12 @@ const WorktreeRow = memo(function WorktreeRow(
             <WorktreePrChips entry={displayEntry} />
           )}
           <span className="truncate text-ui-sm font-medium text-foreground">
-            {branchLabel(entry)}
+            {branchLabel(entry, t)}
           </span>
         </div>
         {classification === null ? (
           <span className="text-ui-xs text-muted-foreground">
-            {unresolvedWorktreeSecondaryCopy(enrichment)}
+            {unresolvedWorktreeSecondaryCopy(enrichment, t)}
           </span>
         ) : (
           <WorktreeSecondaryFacts
@@ -2376,7 +2467,7 @@ const WorktreeRow = memo(function WorktreeRow(
             testId="worktree-row-deleting-spinner"
             variant={undefined}
           />
-          Deleting…
+          {t("Deleting…")}
         </span>
       ) : null}
       {!deleting ? (
@@ -2385,9 +2476,13 @@ const WorktreeRow = memo(function WorktreeRow(
           onCopyPath={copyPath}
           onManageScripts={manageScripts}
           onDelete={deleteWorktree}
-          triggerLabel={`Worktree actions for ${branchLabel(entry)}`}
-          label={`Delete worktree ${branchLabel(entry)}`}
-          scriptsLabel="Manage script"
+          triggerLabel={t("Worktree actions for {{branch}}", {
+            branch: branchLabel(entry, t),
+          })}
+          label={t("Delete worktree {{branch}}", {
+            branch: branchLabel(entry, t),
+          })}
+          scriptsLabel={t("Manage script")}
         />
       ) : null}
     </div>
@@ -2405,6 +2500,7 @@ function WorktreeTierPill(props: {
   readonly tier: WorktreeTier;
   readonly state: WorktreeEnrichmentState;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   // While the activity probe is still in flight the tier isn't known yet. A
   // dashed border + full-contrast text (never the muted/faded treatment a
   // resolved-safe pill would use) reads as "still resolving", not "quiet and
@@ -2412,7 +2508,7 @@ function WorktreeTierPill(props: {
   if (props.state === "pending") {
     return (
       <TooltipWrapper
-        label="Still checking this worktree's branch and PR state."
+        label={t("Still checking this worktree's branch and PR state.")}
         side="top"
         sideOffset={undefined}
         align="center"
@@ -2428,7 +2524,7 @@ function WorktreeTierPill(props: {
             testId="worktree-tier-pill-pending-spinner"
             variant={undefined}
           />
-          Checking…
+          {t("Checking…")}
         </Badge>
       </TooltipWrapper>
     );
@@ -2443,7 +2539,9 @@ function WorktreeTierPill(props: {
   if (props.state === "unknown") {
     return (
       <TooltipWrapper
-        label="Activity status couldn't be loaded. Refresh or scroll to retry."
+        label={t(
+          "Activity status couldn't be loaded. Refresh or scroll to retry.",
+        )}
         side="top"
         sideOffset={undefined}
         align="center"
@@ -2455,7 +2553,7 @@ function WorktreeTierPill(props: {
           data-tier="unknown"
         >
           <HelpCircle className="size-3" aria-hidden />
-          Unknown
+          {t("Unknown")}
         </Badge>
       </TooltipWrapper>
     );
@@ -2465,7 +2563,7 @@ function WorktreeTierPill(props: {
   const reviewReasons = reviewTooltipReasons(props.entry, props.tier);
   const tierTooltip =
     reviewReasons.length === 0 ? (
-      WORKTREE_TIER_TOOLTIP[props.tier]
+      t(WORKTREE_TIER_TOOLTIP[props.tier])
     ) : (
       <div className="max-w-[min(90vw,24rem)] space-y-1">
         {reviewReasons.map((reason) => (
@@ -2475,7 +2573,7 @@ function WorktreeTierPill(props: {
     );
   const tooltip = unavailable ? (
     <div className="max-w-[min(90vw,24rem)] space-y-1">
-      <p>Status couldn't be refreshed; showing the last known tier.</p>
+      <p>{t("Status couldn't be refreshed; showing the last known tier.")}</p>
       {typeof tierTooltip === "string" ? <p>{tierTooltip}</p> : tierTooltip}
     </div>
   ) : (
@@ -2497,7 +2595,7 @@ function WorktreeTierPill(props: {
       >
         <WorktreeTierPillIcon tier={props.tier} />
         {unavailable ? <HelpCircle className="size-3" aria-hidden /> : null}
-        {WORKTREE_TIER_LABEL[props.tier]}
+        {t(WORKTREE_TIER_LABEL[props.tier])}
       </Badge>
     </TooltipWrapper>
   );
@@ -2584,7 +2682,8 @@ interface WorktreeMutedPrChipModel {
 function WorktreePrChips(props: {
   readonly entry: WorktreeHostEntryV14;
 }): ReactNode {
-  const chips = worktreePrChips(props.entry);
+  const { t } = useTranslation("panels");
+  const chips = worktreePrChips(props.entry, t);
   if (chips.length === 0) return null;
   return chips.map((chip) =>
     "prUrl" in chip ? (
@@ -2597,18 +2696,20 @@ function WorktreePrChips(props: {
 
 function worktreePrChips(
   entry: WorktreeHostEntryV14,
+  t: TFunction<"panels">,
 ): readonly (WorktreePrChipModel | WorktreeMutedPrChipModel)[] {
   return [
-    ...superprojectPrChip(entry),
+    ...superprojectPrChip(entry, t),
     ...entry.submodules.flatMap((submodule) => [
-      ...submodulePrChip(submodule),
-      ...submoduleUnmergedChip(submodule),
+      ...submodulePrChip(submodule, t),
+      ...submoduleUnmergedChip(submodule, t),
     ]),
   ];
 }
 
 function superprojectPrChip(
   entry: WorktreeHostEntryV14,
+  t: TFunction<"panels">,
 ): readonly WorktreePrChipModel[] {
   const prState = displayedPrState(entry.prState);
   if (prState === null || entry.prNumber === null || entry.prUrl === null) {
@@ -2617,8 +2718,11 @@ function superprojectPrChip(
   return [
     {
       key: `superproject:${entry.prNumber}:${entry.prUrl}`,
-      label: `#${entry.prNumber} ${WORKTREE_PR_STATE_LABEL[prState]}`,
-      ariaLabel: `Open PR #${entry.prNumber} ${WORKTREE_PR_STATE_LABEL[prState]}`,
+      label: `#${entry.prNumber} ${t(WORKTREE_PR_STATE_LABEL[prState])}`,
+      ariaLabel: t("Open PR #{{number}} {{state}}", {
+        number: entry.prNumber,
+        state: t(WORKTREE_PR_STATE_LABEL[prState]),
+      }),
       prState,
       prUrl: entry.prUrl,
     },
@@ -2627,6 +2731,7 @@ function superprojectPrChip(
 
 function submodulePrChip(
   submodule: WorktreeSubmoduleMergeFactV12,
+  t: TFunction<"panels">,
 ): readonly WorktreePrChipModel[] {
   const prState = displayedPrState(submodule.prState);
   if (
@@ -2640,8 +2745,12 @@ function submodulePrChip(
   return [
     {
       key: `submodule:${submodule.repoIdentifier.owner}/${repoName}:${submodule.branch}:${submodule.prNumber}:${submodule.prUrl}`,
-      label: `${repoName} #${submodule.prNumber} ${WORKTREE_PR_STATE_LABEL[prState]}`,
-      ariaLabel: `Open ${repoName} PR #${submodule.prNumber} ${WORKTREE_PR_STATE_LABEL[prState]}`,
+      label: `${repoName} #${submodule.prNumber} ${t(WORKTREE_PR_STATE_LABEL[prState])}`,
+      ariaLabel: t("Open {{repo}} PR #{{number}} {{state}}", {
+        repo: repoName,
+        number: submodule.prNumber,
+        state: t(WORKTREE_PR_STATE_LABEL[prState]),
+      }),
       prState,
       prUrl: submodule.prUrl,
     },
@@ -2650,6 +2759,7 @@ function submodulePrChip(
 
 function submoduleUnmergedChip(
   submodule: WorktreeSubmoduleMergeFactV12,
+  t: TFunction<"panels">,
 ): readonly WorktreeMutedPrChipModel[] {
   if (
     submodule.prState !== "none" ||
@@ -2669,19 +2779,32 @@ function submoduleUnmergedChip(
     occurrences.set(subject, ordinal);
     return { key: `${subject}#${ordinal}`, subject };
   });
+  const unmergedRepo = submodule.repoIdentifier.repo;
+  let unmergedLabel: string;
+  if (count === null || count < 1) {
+    unmergedLabel = t("{{repo}} · unmerged commits", { repo: unmergedRepo });
+  } else if (count === 1) {
+    unmergedLabel = t("{{repo}} · {{count}} unmerged commit", {
+      repo: unmergedRepo,
+      count,
+    });
+  } else {
+    unmergedLabel = t("{{repo}} · {{count}} unmerged commits", {
+      repo: unmergedRepo,
+      count,
+    });
+  }
   return [
     {
       key: `submodule-unmerged:${submodule.repoIdentifier.owner}/${submodule.repoIdentifier.repo}:${submodule.branch}`,
-      label:
-        count !== null && count >= 1
-          ? `${submodule.repoIdentifier.repo} · ${count} unmerged commit${count === 1 ? "" : "s"}`
-          : `${submodule.repoIdentifier.repo} · unmerged commits`,
+      label: unmergedLabel,
       tooltip: (
         <div className="max-w-[min(90vw,24rem)] space-y-1.5">
           <p>
-            This submodule branch has commits that never landed on{" "}
-            {submodule.repoIdentifier.repo}'s main branch. Deleting the worktree
-            deletes the branch and these commits with it
+            {t(
+              "This submodule branch has commits that never landed on {{repo}}'s main branch. Deleting the worktree deletes the branch and these commits with it",
+              { repo: submodule.repoIdentifier.repo },
+            )}
             {subjects === null ? "." : ":"}
           </p>
           {subjects === null ? null : (
@@ -2692,7 +2815,7 @@ function submoduleUnmergedChip(
                 ))}
               </ul>
               {count !== null && count > subjects.length ? (
-                <p>…and {count - subjects.length} more</p>
+                <p>{t("…and {{count}} more", { count: count - subjects.length })}</p>
               ) : null}
             </>
           )}
@@ -2837,11 +2960,12 @@ function WorktreeTaskAssociation(props: {
   readonly taskRollupByEpicId: ReadonlyMap<string, TaskMergeRollup>;
   readonly onOpenTask: (epicId: string) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const epicIds = [...new Set(props.owners.map((owner) => owner.epicId))];
   if (epicIds.length === 0) {
     return (
       <span className="text-ui-xs text-muted-foreground">
-        Not used by any Task
+        {t("Not used by any Task")}
       </span>
     );
   }
@@ -2870,7 +2994,7 @@ function WorktreeTaskAssociation(props: {
             >
               <button
                 type="button"
-                aria-label={`Open Task ${item.title}`}
+                aria-label={t("Open Task {{title}}", { title: item.title })}
                 onClick={(event) => {
                   event.stopPropagation();
                   props.onOpenTask(item.epicId);
@@ -2887,7 +3011,7 @@ function WorktreeTaskAssociation(props: {
       ))}
       {unresolvedCount > 0 ? (
         <span className="text-ui-xs text-muted-foreground/70">
-          Owner unresolved
+          {t("Owner unresolved")}
         </span>
       ) : null}
     </span>
@@ -2912,6 +3036,7 @@ function WorktreeTaskAssociation(props: {
 function TaskMergeRollupBadge(props: {
   readonly rollup: TaskMergeRollup | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const rollup = props.rollup;
   if (rollup === null || rollup.status === "none") return null;
   const fullyMerged = rollup.status === "merged";
@@ -2919,8 +3044,11 @@ function TaskMergeRollupBadge(props: {
     <TooltipWrapper
       label={
         fullyMerged
-          ? "Every branch this Task owns has a merged PR"
-          : `${rollup.merged} of ${rollup.total} owned branches merged`
+          ? t("Every branch this Task owns has a merged PR")
+          : t("{{merged}} of {{total}} owned branches merged", {
+              merged: rollup.merged,
+              total: rollup.total,
+            })
       }
       side="top"
       sideOffset={undefined}
@@ -2931,7 +3059,7 @@ function TaskMergeRollupBadge(props: {
         data-testid="task-merge-rollup"
         data-rollup-status={rollup.status}
       >
-        Task {taskMergeRollupLabel(rollup)}
+        {`${t("Task")} ${taskMergeRollupLabel(rollup)}`}
       </span>
     </TooltipWrapper>
   );
@@ -2944,10 +3072,11 @@ function TaskMergeRollupBadge(props: {
 function WorktreeLastActiveLabel(props: {
   readonly lastActivityAt: number;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const relative = useRelativeTimestamp(props.lastActivityAt);
   return (
     <span className="text-ui-xs text-muted-foreground">
-      Last active {relative}
+      {t("Last active {{relative}}", { relative })}
     </span>
   );
 }
@@ -2956,7 +3085,8 @@ function WorktreesRepoExpansionControl(props: {
   readonly allCollapsed: boolean;
   readonly onToggle: () => void;
 }): ReactNode {
-  const label = props.allCollapsed ? "Expand all" : "Collapse all";
+  const { t } = useTranslation("panels");
+  const label = props.allCollapsed ? t("Expand all") : t("Collapse all");
   return (
     <TooltipWrapper
       label={label}
@@ -2988,6 +3118,7 @@ const WORKTREE_DELETE_DISABLED_COPY: Record<
   { readonly ariaLabel: string; readonly selectTooltip: string }
 > = {
   "in-use": {
+    // Raw English i18n keys; translated where they render.
     ariaLabel: "Delete worktree (in use by an active agent)",
     selectTooltip: "In use by an active agent",
   },
@@ -3005,6 +3136,7 @@ function WorktreeSelectionControl(props: {
   readonly selectDisabledReason: "in-use" | "checking" | null;
   readonly onToggleSelection: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   // NO default reason. A row can also be unselectable because a backgrounded
   // delete is already running it, and that carries no `selectDisabledReason` -
   // it is neither in-use nor checking. Defaulting would announce "In use by an
@@ -3017,11 +3149,16 @@ function WorktreeSelectionControl(props: {
       role="checkbox"
       aria-checked={props.selected && props.canSelect ? "true" : "false"}
       aria-disabled={!props.canSelect}
-      aria-label={`Select worktree ${branchLabel(props.entry)}`}
+      aria-label={t("Select worktree {{branch}}", {
+        branch: branchLabel(props.entry, t),
+      })}
       aria-description={
         props.canSelect || selectDisabledReason === null
           ? undefined
-          : WORKTREE_DELETE_DISABLED_COPY[selectDisabledReason].selectTooltip
+          : t(
+              WORKTREE_DELETE_DISABLED_COPY[selectDisabledReason]
+                .selectTooltip,
+            )
       }
       data-testid="worktree-row-select"
       className={cn(
@@ -3048,7 +3185,9 @@ function WorktreeSelectionControl(props: {
   }
   return (
     <TooltipWrapper
-      label={WORKTREE_DELETE_DISABLED_COPY[selectDisabledReason].selectTooltip}
+      label={t(
+        WORKTREE_DELETE_DISABLED_COPY[selectDisabledReason].selectTooltip,
+      )}
       side="top"
       sideOffset={undefined}
       align="start"
@@ -3072,11 +3211,14 @@ function WorktreeRowActions(props: {
   readonly label: string;
   readonly scriptsLabel: string;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const deleteDisabled = props.deleteDisabledReason !== null;
   const deleteLabel =
     props.deleteDisabledReason === null
       ? props.label
-      : WORKTREE_DELETE_DISABLED_COPY[props.deleteDisabledReason].ariaLabel;
+      : t(
+          WORKTREE_DELETE_DISABLED_COPY[props.deleteDisabledReason].ariaLabel,
+        );
   return (
     <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-1">
       <DropdownMenu>
@@ -3103,7 +3245,7 @@ function WorktreeRowActions(props: {
             className="gap-2 px-2 py-2"
           >
             <Copy className="size-3.5" aria-hidden />
-            Copy path
+            {t("Copy path")}
           </DropdownMenuItem>
           <DropdownMenuItem
             data-testid="worktree-row-manage-scripts"
@@ -3133,7 +3275,7 @@ function WorktreeRowActions(props: {
                 className="gap-2 px-2 py-2"
               >
                 <Trash2 className="size-3.5" aria-hidden />
-                Delete worktree
+                {t("Delete worktree")}
               </DropdownMenuItem>
             </span>
           </TooltipWrapper>
@@ -3153,6 +3295,7 @@ function WorktreeScriptReviewDialog(props: {
   ) => void;
 }): ReactNode {
   const target = props.target;
+  const { t } = useTranslation("panels");
   if (target === null) {
     return <Dialog open={false} onOpenChange={props.onOpenChange} />;
   }
@@ -3161,9 +3304,11 @@ function WorktreeScriptReviewDialog(props: {
     <ScriptsReviewDialog
       key={target.worktreePath}
       testId="worktree-script-review-dialog"
-      title="Manage setup and teardown scripts"
-      description={`Edit the setup and teardown scripts for ${branchLabel(target)}.`}
-      pathLabel="Worktree path"
+      title={t("Manage setup and teardown scripts")}
+      description={t("Edit the setup and teardown scripts for {{branch}}.", {
+        branch: branchLabel(target, t),
+      })}
+      pathLabel={t("Worktree path")}
       pathValue={target.worktreePath}
       scriptSeed={props.scriptSeed}
       seedPending={false}
@@ -3171,9 +3316,9 @@ function WorktreeScriptReviewDialog(props: {
       scriptsNote={null}
       repositoryDefaultsSlot={null}
       inUseNote={
-        target.inUse ? "This worktree is in use by an active agent." : null
+        target.inUse ? t("This worktree is in use by an active agent.") : null
       }
-      saveLabel="Save"
+      saveLabel={t("Save")}
       // Settings stashes the reviewed scripts synchronously for its delete flow;
       // wrap in a resolved promise so the shared dialog's success path runs.
       onSave={(scripts) => Promise.resolve(onSave(target, scripts))}
@@ -3190,6 +3335,7 @@ function WorktreesStateMessage(props: {
   readonly spinner: boolean;
   readonly children: ReactNode;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div
       className={cn(
@@ -3208,10 +3354,10 @@ function WorktreesStateMessage(props: {
       {props.tone === "error" ? (
         <ReportIssueAction
           context={createReportIssueContext({
-            title: "Could not load worktrees",
+            title: t("Could not load worktrees"),
             message: null,
             code: null,
-            source: "Worktrees",
+            source: t("Worktrees"),
           })}
           presentation="icon"
           className="text-current"
@@ -3394,19 +3540,33 @@ function worktreePrHaystack(entry: WorktreeHostEntryV14): string {
     .join("\n");
 }
 
-function deleteDialogCopy(entry: WorktreeHostEntryV14): {
+function deleteDialogCopy(
+  entry: WorktreeHostEntryV14,
+  t: TFunction<"panels">,
+): {
   readonly title: string;
   readonly description: string;
   readonly actionLabel: string;
 } {
-  const branch = branchLabel(entry);
+  const branch = branchLabel(entry, t);
   if (entry.uncommittedCount > 0) {
     const count = entry.uncommittedCount;
-    const plural = count === 1 ? "" : "s";
     return {
-      title: `Discard ${count} uncommitted change${plural}?`,
-      description: `${branch} has ${count} uncommitted change${plural} that will be permanently lost. Traycer runs the repo's teardown script, then force-removes ${entry.worktreePath}.`,
-      actionLabel: "Delete and discard",
+      title:
+        count === 1
+          ? t("Discard {{count}} uncommitted change?", { count })
+          : t("Discard {{count}} uncommitted changes?", { count }),
+      description:
+        count === 1
+          ? t(
+              "{{branch}} has {{count}} uncommitted change that will be permanently lost. Traycer runs the repo's teardown script, then force-removes {{path}}.",
+              { branch, count, path: entry.worktreePath },
+            )
+          : t(
+              "{{branch}} has {{count}} uncommitted changes that will be permanently lost. Traycer runs the repo's teardown script, then force-removes {{path}}.",
+              { branch, count, path: entry.worktreePath },
+            ),
+      actionLabel: t("Delete and discard"),
     };
   }
   const status = entry.branchStatus;
@@ -3418,11 +3578,22 @@ function deleteDialogCopy(entry: WorktreeHostEntryV14): {
     !provenRemovable(entry)
   ) {
     const count = status.ahead;
-    const plural = count === 1 ? "" : "s";
     return {
-      title: `Delete worktree with ${count} unpushed commit${plural}?`,
-      description: `${branch} has ${count} commit${plural} not on the default branch. Removing the worktree keeps the branch ref, but that work exists only here. Traycer runs the repo's teardown script, then removes ${entry.worktreePath}.`,
-      actionLabel: "Delete worktree",
+      title:
+        count === 1
+          ? t("Delete worktree with {{count}} unpushed commit?", { count })
+          : t("Delete worktree with {{count}} unpushed commits?", { count }),
+      description:
+        count === 1
+          ? t(
+              "{{branch}} has {{count}} commit not on the default branch. Removing the worktree keeps the branch ref, but that work exists only here. Traycer runs the repo's teardown script, then removes {{path}}.",
+              { branch, count, path: entry.worktreePath },
+            )
+          : t(
+              "{{branch}} has {{count}} commits not on the default branch. Removing the worktree keeps the branch ref, but that work exists only here. Traycer runs the repo's teardown script, then removes {{path}}.",
+              { branch, count, path: entry.worktreePath },
+            ),
+      actionLabel: t("Delete worktree"),
     };
   }
   // Never-pushed and not contained in the default branch (no upstream, so the
@@ -3436,15 +3607,21 @@ function deleteDialogCopy(entry: WorktreeHostEntryV14): {
     !provenRemovable(entry)
   ) {
     return {
-      title: "Delete worktree with unpushed local commits?",
-      description: `${branch} has local-only commits not on the default branch and was never pushed. Removing the worktree keeps the branch ref, so the commits survive on the branch — but this machine is their only copy. Traycer runs the repo's teardown script, then removes ${entry.worktreePath}.`,
-      actionLabel: "Delete worktree",
+      title: t("Delete worktree with unpushed local commits?"),
+      description: t(
+        "{{branch}} has local-only commits not on the default branch and was never pushed. Removing the worktree keeps the branch ref, so the commits survive on the branch — but this machine is their only copy. Traycer runs the repo's teardown script, then removes {{path}}.",
+        { branch, path: entry.worktreePath },
+      ),
+      actionLabel: t("Delete worktree"),
     };
   }
   return {
-    title: "Delete worktree?",
-    description: `Traycer runs the repo's teardown script, then removes ${branch} (${entry.worktreePath}).`,
-    actionLabel: "Delete worktree",
+    title: t("Delete worktree?"),
+    description: t(
+      "Traycer runs the repo's teardown script, then removes {{branch}} ({{path}}).",
+      { branch, path: entry.worktreePath },
+    ),
+    actionLabel: t("Delete worktree"),
   };
 }
 
@@ -3457,25 +3634,42 @@ function deleteDialogCopy(entry: WorktreeHostEntryV14): {
  * so a dirty Unknown row still leads with the known, stronger dirty-loss
  * warning - the unknown-risk caveat is ADDED, never substituted for it.
  */
-function unknownRiskDeleteDialogCopy(entry: WorktreeHostEntryV14): {
+function unknownRiskDeleteDialogCopy(
+  entry: WorktreeHostEntryV14,
+  t: TFunction<"panels">,
+): {
   readonly title: string;
   readonly description: string;
   readonly actionLabel: string;
 } {
-  const branch = branchLabel(entry);
+  const branch = branchLabel(entry, t);
   if (entry.uncommittedCount > 0) {
     const count = entry.uncommittedCount;
-    const plural = count === 1 ? "" : "s";
     return {
-      title: `Discard ${count} uncommitted change${plural}?`,
-      description: `${branch} has ${count} uncommitted change${plural} that will be permanently lost. Its branch and activity status also could not be verified, so Traycer cannot confirm the rest of this worktree is safe to remove either. Traycer runs the repo's teardown script, then force-removes ${entry.worktreePath}.`,
-      actionLabel: "Delete and discard",
+      title:
+        count === 1
+          ? t("Discard {{count}} uncommitted change?", { count })
+          : t("Discard {{count}} uncommitted changes?", { count }),
+      description:
+        count === 1
+          ? t(
+              "{{branch}} has {{count}} uncommitted change that will be permanently lost. Its branch and activity status also could not be verified, so Traycer cannot confirm the rest of this worktree is safe to remove either. Traycer runs the repo's teardown script, then force-removes {{path}}.",
+              { branch, count, path: entry.worktreePath },
+            )
+          : t(
+              "{{branch}} has {{count}} uncommitted changes that will be permanently lost. Its branch and activity status also could not be verified, so Traycer cannot confirm the rest of this worktree is safe to remove either. Traycer runs the repo's teardown script, then force-removes {{path}}.",
+              { branch, count, path: entry.worktreePath },
+            ),
+      actionLabel: t("Delete and discard"),
     };
   }
   return {
-    title: "Delete worktree with unknown status?",
-    description: `${branch}'s branch and activity status could not be verified, so Traycer cannot confirm this worktree is safe to remove or free of unpushed work. Traycer runs the repo's teardown script, then removes ${entry.worktreePath}.`,
-    actionLabel: "Delete anyway",
+    title: t("Delete worktree with unknown status?"),
+    description: t(
+      "{{branch}}'s branch and activity status could not be verified, so Traycer cannot confirm this worktree is safe to remove or free of unpushed work. Traycer runs the repo's teardown script, then removes {{path}}.",
+      { branch, path: entry.worktreePath },
+    ),
+    actionLabel: t("Delete anyway"),
   };
 }
 
@@ -3487,15 +3681,18 @@ function unknownRiskDeleteDialogCopy(entry: WorktreeHostEntryV14): {
  * single dialog's fields are pre-defaulted so the render site reads them
  * unconditionally.
  */
-function deriveWorktreeDeleteDialogs(
-  resolution: {
+function deriveWorktreeDeleteDialogs(args: {
+  readonly resolution: {
     readonly kept: readonly WorktreeHostEntryV14[];
     readonly dropped: readonly WorktreeHostEntryV14[];
-  } | null,
-  deleteEnrichmentStateFor: (worktreePath: string) => WorktreeEnrichmentState,
-  visibleWorktrees: readonly WorktreeHostEntryV14[],
-  erroredPaths: ReadonlySet<string>,
-): {
+  } | null;
+  readonly deleteEnrichmentStateFor: (
+    worktreePath: string,
+  ) => WorktreeEnrichmentState;
+  readonly visibleWorktrees: readonly WorktreeHostEntryV14[];
+  readonly erroredPaths: ReadonlySet<string>;
+  readonly t: TFunction<"panels">;
+}): {
   readonly singleDialog: {
     readonly open: boolean;
     readonly title: string;
@@ -3504,6 +3701,13 @@ function deriveWorktreeDeleteDialogs(
   };
   readonly bulkDeleteSummary: WorktreeBulkDeleteSummary | null;
 } {
+  const {
+    resolution,
+    deleteEnrichmentStateFor,
+    visibleWorktrees,
+    erroredPaths,
+    t,
+  } = args;
   const kept = resolution === null ? null : resolution.kept;
   const singleTarget = kept !== null && kept.length === 1 ? kept[0] : null;
   const singleCopy =
@@ -3512,6 +3716,7 @@ function deriveWorktreeDeleteDialogs(
       : singleWorktreeDeleteDialogCopy(
           singleTarget,
           deleteEnrichmentStateFor(singleTarget.worktreePath),
+          t,
         );
   return {
     singleDialog:
@@ -3520,7 +3725,7 @@ function deriveWorktreeDeleteDialogs(
         : { open: true, ...singleCopy },
     bulkDeleteSummary:
       kept !== null && kept.length > 1
-        ? summarizeBulkWorktreeDelete(kept, visibleWorktrees, erroredPaths)
+        ? summarizeBulkWorktreeDelete(kept, visibleWorktrees, erroredPaths, t)
         : null,
   };
 }
@@ -3534,15 +3739,16 @@ function deriveWorktreeDeleteDialogs(
 function singleWorktreeDeleteDialogCopy(
   entry: WorktreeHostEntryV14,
   enrichment: WorktreeEnrichmentState,
+  t: TFunction<"panels">,
 ): {
   readonly title: string;
   readonly description: string;
   readonly actionLabel: string;
 } {
   if (enrichment === "unknown" || gitUnreadableOf(entry)) {
-    return unknownRiskDeleteDialogCopy(entry);
+    return unknownRiskDeleteDialogCopy(entry, t);
   }
-  return deleteDialogCopy(entry);
+  return deleteDialogCopy(entry, t);
 }
 
 /**
@@ -3557,6 +3763,7 @@ function singleWorktreeDeleteDialogCopy(
 function worktreeDropMessage(
   dropped: readonly WorktreeHostEntryV14[],
   isChecking: (worktreePath: string) => boolean,
+  t: TFunction<"panels">,
 ): string {
   const checkingDropped = dropped.filter((entry) =>
     isChecking(entry.worktreePath),
@@ -3567,14 +3774,24 @@ function worktreeDropMessage(
   const parts = [
     ...(checkingDropped.length === 0
       ? []
-      : [`${checkingDropped.length} still checking status`]),
+      : [
+          t("{{count}} still checking status", {
+            count: checkingDropped.length,
+          }),
+        ]),
     ...(otherDropped.length === 0
       ? []
-      : [countWorktreeClasses(otherDropped, WORKTREE_EXCLUSION_ORDER)]),
+      : [countWorktreeClasses(otherDropped, WORKTREE_EXCLUSION_ORDER, t)]),
   ];
-  const plural = dropped.length === 1 ? "" : "s";
-  const verb = dropped.length === 1 ? "was" : "were";
-  return `${dropped.length} worktree${plural} became ineligible and ${verb} skipped: ${parts.join(", ")}.`;
+  return dropped.length === 1
+    ? t(
+        "{{count}} worktree became ineligible and was skipped: {{parts}}.",
+        { count: dropped.length, parts: parts.join(", ") },
+      )
+    : t(
+        "{{count}} worktrees became ineligible and were skipped: {{parts}}.",
+        { count: dropped.length, parts: parts.join(", ") },
+      );
 }
 
 interface WorktreeBulkDeleteSummary {
@@ -3690,6 +3907,7 @@ const WORKTREE_EXCLUSION_ORDER: readonly WorktreeDeleteClass[] = [
 function countWorktreeClasses(
   entries: readonly WorktreeHostEntryV14[],
   order: readonly WorktreeDeleteClass[],
+  t: TFunction<"panels">,
 ): string {
   const counts = new Map<WorktreeDeleteClass, number>();
   for (const entry of entries) {
@@ -3701,7 +3919,7 @@ function countWorktreeClasses(
       const count = counts.get(key);
       return count === undefined || count === 0
         ? []
-        : [`${count} ${WORKTREE_DELETE_CLASS_LABEL[key]}`];
+        : [`${count} ${t(WORKTREE_DELETE_CLASS_LABEL[key])}`];
     })
     .join(", ");
 }
@@ -3721,6 +3939,7 @@ function summarizeBulkWorktreeDelete(
   targets: ReadonlyArray<WorktreeHostEntryV14>,
   visible: readonly WorktreeHostEntryV14[],
   unknownPaths: ReadonlySet<string>,
+  t: TFunction<"panels">,
 ): WorktreeBulkDeleteSummary {
   const targetPaths = new Set(targets.map((entry) => entry.worktreePath));
   const dirtyTargets = targets.filter((entry) => entry.uncommittedCount > 0);
@@ -3734,43 +3953,68 @@ function summarizeBulkWorktreeDelete(
   const dirtyLoss =
     dirtyTargets.length === 0
       ? null
-      : `Uncommitted changes in ${dirtyTargets.length} worktree${
-          dirtyTargets.length === 1 ? "" : "s"
-        } (${uncommittedTotal} change${
-          uncommittedTotal === 1 ? "" : "s"
-        }) will be permanently lost.`;
+      : t(
+          "Uncommitted changes in {{worktrees}} ({{changes}}) will be permanently lost.",
+          {
+            worktrees:
+              dirtyTargets.length === 1
+                ? t("{{count}} worktree", { count: dirtyTargets.length })
+                : t("{{count}} worktrees", { count: dirtyTargets.length }),
+            changes:
+              uncommittedTotal === 1
+                ? t("{{count}} change", { count: uncommittedTotal })
+                : t("{{count}} changes", { count: uncommittedTotal }),
+          },
+        );
   const unverifiedCaveat = hasUnverified
-    ? "For the worktrees with unverified branch status: branch status was unavailable, the branch refs are expected to remain, and unpushed work is not proven. Commit, stash, or push anything you want to keep first."
+    ? t(
+        "For the worktrees with unverified branch status: branch status was unavailable, the branch refs are expected to remain, and unpushed work is not proven. Commit, stash, or push anything you want to keep first.",
+      )
     : null;
   const unknownTargets = targets.filter(
     (entry) => unknownPaths.has(entry.worktreePath) || gitUnreadableOf(entry),
   );
-  const unknownRiskCaveat =
-    unknownTargets.length === 0
-      ? null
-      : `Activity status for ${unknownTargets.length} worktree${
-          unknownTargets.length === 1 ? "" : "s"
-        } could not be checked. Traycer cannot confirm those are safe to remove or free of unpushed work. Commit, stash, or push anything you want to keep first.`;
+  let unknownRiskCaveat: string | null = null;
+  if (unknownTargets.length === 1) {
+    unknownRiskCaveat = t(
+      "Activity status for {{count}} worktree could not be checked. Traycer cannot confirm those are safe to remove or free of unpushed work. Commit, stash, or push anything you want to keep first.",
+      { count: unknownTargets.length },
+    );
+  } else if (unknownTargets.length > 1) {
+    unknownRiskCaveat = t(
+      "Activity status for {{count}} worktrees could not be checked. Traycer cannot confirm those are safe to remove or free of unpushed work. Commit, stash, or push anything you want to keep first.",
+      { count: unknownTargets.length },
+    );
+  }
   const excluded = visible.filter(
     (entry) => !targetPaths.has(entry.worktreePath),
   );
   const exclusionSummary =
     excluded.length === 0
       ? null
-      : countWorktreeClasses(excluded, WORKTREE_EXCLUSION_ORDER);
+      : countWorktreeClasses(excluded, WORKTREE_EXCLUSION_ORDER, t);
   return {
     count: targets.length,
-    title: `Delete ${targets.length} worktrees?`,
+    title: t("Delete {{count}} worktrees?", { count: targets.length }),
     actionLabel:
-      dirtyTargets.length > 0 ? "Delete and discard" : "Delete worktrees",
-    classSummary: countWorktreeClasses(targets, WORKTREE_DELETE_SUMMARY_ORDER),
+      dirtyTargets.length > 0
+        ? t("Delete and discard")
+        : t("Delete worktrees"),
+    classSummary: countWorktreeClasses(
+      targets,
+      WORKTREE_DELETE_SUMMARY_ORDER,
+      t,
+    ),
     dirtyLoss,
     unverifiedCaveat,
     unknownRiskCaveat,
     exclusions:
       exclusionSummary === null
         ? null
-        : `${excluded.length} not selected: ${exclusionSummary}`,
+        : t("{{count}} not selected: {{classes}}", {
+            count: excluded.length,
+            classes: exclusionSummary,
+          }),
     paths: targets.map((entry) => entry.worktreePath),
   };
 }
@@ -3826,9 +4070,12 @@ function worktreeSelectionCheckboxVisibility(args: {
   return "opacity-40 group-hover/worktree-row:opacity-70 focus-visible:opacity-70";
 }
 
-function branchLabel(entry: WorktreeHostEntry): string {
-  if (gitUnreadableOf(entry)) return "unreadable";
-  return entry.branch ?? "detached HEAD";
+function branchLabel(
+  entry: WorktreeHostEntry,
+  t: TFunction<"panels">,
+): string {
+  if (gitUnreadableOf(entry)) return t("unreadable");
+  return entry.branch ?? t("detached HEAD");
 }
 
 function gitUnreadableOf(entry: WorktreeHostEntry): boolean {
@@ -3850,11 +4097,14 @@ function reviewTooltipReasons(
 
 function unresolvedWorktreeSecondaryCopy(
   enrichment: WorktreeEnrichmentState,
+  t: TFunction<"panels">,
 ): string {
   if (enrichment === "unknown") {
-    return "Couldn't verify this worktree with git. Refresh to retry, or delete it.";
+    return t(
+      "Couldn't verify this worktree with git. Refresh to retry, or delete it.",
+    );
   }
-  return "Waiting for host verification…";
+  return t("Waiting for host verification…");
 }
 
 function invalidateWorktreeDeleteCaches(

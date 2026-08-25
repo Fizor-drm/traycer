@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ListFilter } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -57,12 +58,15 @@ function ModelProviderFilterMenu(props: {
   readonly onFilterChange: (filter: ModelProviderMethodFilter) => void;
 }): ReactNode {
   const active = props.filter !== MODEL_PROVIDER_METHOD_FILTER.All;
+  const { t } = useTranslation("panels");
   // The accessible name carries the CURRENT value, not just "Filter": the dot
   // below says only that something is filtered, and a screen reader gets no
   // other reading of the trigger while the menu is closed.
   const label = active
-    ? `Filter model providers, showing ${modelProviderMethodFilterLabel(props.filter).toLowerCase()}`
-    : "Filter model providers";
+    ? t("Filter model providers, showing {{filter}}", {
+        filter: t(modelProviderMethodFilterLabel(props.filter)).toLowerCase(),
+      })
+    : t("Filter model providers");
   return (
     <DropdownMenu>
       <TooltipWrapper
@@ -95,7 +99,7 @@ function ModelProviderFilterMenu(props: {
       </TooltipWrapper>
       <DropdownMenuContent align="end" className="min-w-44">
         <DropdownMenuLabel className="text-overline tracking-wide uppercase">
-          Sign-in method
+          {t("Sign-in method")}
         </DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={props.filter}
@@ -108,7 +112,7 @@ function ModelProviderFilterMenu(props: {
         >
           {MODEL_PROVIDER_METHOD_FILTER_OPTIONS.map((option) => (
             <DropdownMenuRadioItem key={option.value} value={option.value}>
-              {option.label}
+              {t(option.label)}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>

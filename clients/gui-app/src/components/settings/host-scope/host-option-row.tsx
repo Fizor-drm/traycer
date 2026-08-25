@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { HostGlyph } from "@/components/settings/host-scope/host-glyph";
 import {
   hostOptionKindLabel,
@@ -39,6 +40,7 @@ export function HostOptionRow(props: {
   readonly surfaceState: HostRowSurfaceState;
 }): ReactNode {
   const { host } = props;
+  const { t } = useTranslation("panels");
   // Includes "setting up" (M5): host-scope narration for a local host being
   // installed. When another host can serve the window that setup is NOT a
   // window-wide event — the global modal deliberately stays away, and this row
@@ -57,7 +59,7 @@ export function HostOptionRow(props: {
       <span className="sr-only">{hostOptionKindLabel(host)}</span>
       <span className="min-w-0 flex-1 truncate text-start">{host.name}</span>
       {props.picked && props.intent === "view" ? (
-        <span className="sr-only">Currently viewing</span>
+        <span className="sr-only">{t("Currently viewing")}</span>
       ) : null}
       {showActiveTag ? <ActiveTag /> : null}
       {statusWord === null ? null : (
@@ -75,6 +77,7 @@ export function HostOptionRow(props: {
  * glance even when they happen to be the same host.
  */
 function ActiveTag(): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <span
       className={cn(
@@ -82,7 +85,7 @@ function ActiveTag(): ReactNode {
         "text-[0.625rem] font-medium uppercase tracking-wide text-primary",
       )}
     >
-      Active
+      {t("Active")}
     </span>
   );
 }

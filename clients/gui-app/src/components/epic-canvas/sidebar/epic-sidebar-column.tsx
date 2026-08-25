@@ -16,6 +16,7 @@
  * width never starves the canvas on a small window.
  */
 import { memo, useMemo, useRef, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import {
   EpicLeftPanelHost,
@@ -209,6 +210,7 @@ function isSidebarPanelElement(
  * recomputes from its committed fractions).
  */
 function SidebarWidthResizeHandle(props: { readonly hidden: boolean }) {
+  const { t } = useTranslation("canvas");
   const sidebarWidthPx = useSidebarWidthPx();
   const setSidebarWidthPx = useLeftPanelStore((s) => s.setSidebarWidthPx);
   const dragRef = useRef<SidebarDragState | null>(null);
@@ -276,7 +278,7 @@ function SidebarWidthResizeHandle(props: { readonly hidden: boolean }) {
       aria-valuenow={sidebarWidthPx}
       aria-valuemin={MIN_SIDEBAR_WIDTH_PX}
       aria-valuemax={MAX_SIDEBAR_WIDTH_PX}
-      aria-label="Resize sidebar"
+      aria-label={t("Resize sidebar")}
       data-testid="epic-sidebar-resize-handle"
       className={cn(
         "relative z-10 shrink-0 bg-background ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden",

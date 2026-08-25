@@ -17,6 +17,7 @@ import { hostQueryKeys, worktreeMutationKeys } from "@/lib/query-keys";
 import { isPerPathEnrichmentQueryKey } from "@/lib/query-keys/worktree-enrichment-keys";
 import { logPerfEvent } from "@/lib/perf/perf-telemetry";
 import { toastFromHostError } from "@/lib/host-error-toast";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { hostClientUnavailableError } from "@/hooks/host/use-host-query";
 import { useReactiveHostReadiness } from "@/hooks/host/use-reactive-host-readiness";
 import {
@@ -233,7 +234,10 @@ export function useWorktreeListing(
       // The Refresh button's only failure signal was the spinner stopping - the
       // rejected promise is swallowed by useRefreshSpinner.
       onError: (error) =>
-        toastFromHostError(error, "Couldn't refresh worktrees."),
+        toastFromHostError(
+          error,
+          i18n.t("Couldn't refresh worktrees.", { ns: "panels" }),
+        ),
       // Annotated to the version this panel reads, exactly as
       // `fetchWorktreeListPage` above is. The client always returns the
       // CANONICAL response, which is now a superset of this one; without the

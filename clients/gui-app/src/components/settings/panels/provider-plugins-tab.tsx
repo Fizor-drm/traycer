@@ -10,6 +10,7 @@ import type {
   ProvidersPluginsMutateAction,
 } from "@traycer/protocol/host/provider-native-schemas";
 import { Package, Plus, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import { ConfirmDestructiveDialog } from "@/components/ui/confirm-destructive-dialog";
@@ -19,6 +20,7 @@ import { useProvidersPluginIcon } from "@/hooks/providers/use-providers-plugin-i
 import { useProvidersPluginsList } from "@/hooks/providers/use-providers-plugins-list-query";
 import { useProvidersPluginsMutate } from "@/hooks/providers/use-providers-plugins-mutate-mutation";
 import { reportableErrorToast } from "@/lib/reportable-error-toast";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { cn } from "@/lib/utils";
 import { ProviderEntryIcon } from "./provider-entry-icon";
 import {
@@ -59,12 +61,15 @@ export function ProviderPluginsTab({
   readonly state: ProviderCliState;
 }): ReactNode {
   const caps = state.nativeCapabilities.plugins;
+  const { t } = useTranslation("panels");
   if (caps === null) {
     return (
       <div className="flex flex-col gap-1 rounded-lg border border-border/60 p-4">
-        <div className="text-ui-sm font-medium text-foreground">Plugins</div>
+        <div className="text-ui-sm font-medium text-foreground">
+          {t("Plugins")}
+        </div>
         <p className="text-ui-xs text-muted-foreground">
-          This provider does not support plugins.
+          {t("This provider does not support plugins.")}
         </p>
       </div>
     );
@@ -103,6 +108,7 @@ function PluginsNotices(props: {
   readonly reloadHint: boolean;
   readonly localError: string | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <>
       {props.sessionNotice !== null ? (
@@ -112,8 +118,9 @@ function PluginsNotices(props: {
       ) : null}
       {props.reloadHint ? (
         <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-ui-xs text-muted-foreground">
-          Plugin changes applied. Restart the provider agent for them to take
-          effect in active sessions.
+          {t(
+            "Plugin changes applied. Restart the provider agent for them to take effect in active sessions.",
+          )}
         </div>
       ) : null}
       {props.localError !== null ? (
@@ -143,11 +150,12 @@ function PluginsScopeToolbar(props: {
   // Same wording as the MCP tab: a global-only contract gets a plain statement
   // rather than a picker holding one dead option.
   const globalOnly = !props.multiScope && props.effectiveScope === "global";
+  const { t } = useTranslation("panels");
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
       {globalOnly ? (
         <p className="text-ui-xs text-muted-foreground">
-          Applies to every workspace on this host.
+          {t("Applies to every workspace on this host.")}
         </p>
       ) : (
         <McpScopePicker
@@ -157,7 +165,7 @@ function PluginsScopeToolbar(props: {
           workspaceRoot={props.workspaceRoot}
           loading={props.workspacesLoading}
           browsePending={props.browsePending}
-          locationLabel="Plugins location"
+          locationLabel={t("Plugins location")}
           onBrowse={props.onBrowse}
           onSelectGlobal={() => {
             props.onScopeChange("global");
@@ -178,7 +186,7 @@ function PluginsScopeToolbar(props: {
             onClick={props.onToggleAdd}
           >
             <Plus className="size-3.5" />
-            Add from source
+            {t("Add from source")}
           </Button>
         ) : null}
       </div>
@@ -240,6 +248,7 @@ function ProviderPluginsTabBody({
 
   const sessionNotice = sessionNoticeFor(caps);
   const showAdd = canAdd && !projectNeedsWorkspace;
+  const { t } = useTranslation("panels");
 
   const handleBrowse = useCallback(() => {
     void browseForWorkspace()
@@ -249,14 +258,18 @@ function ProviderPluginsTabBody({
         setScope("project");
       })
       .catch(() => {
-        reportableErrorToast("Couldn't open the folder picker.", undefined, {
-          title: "Could not add workspace folders",
-          message: "The folder picker failed to open.",
-          code: null,
-          source: "Workspace folders",
-        });
+        reportableErrorToast(
+          t("Couldn't open the folder picker."),
+          undefined,
+          {
+            title: t("Could not add workspace folders"),
+            message: t("The folder picker failed to open."),
+            code: null,
+            source: "Workspace folders",
+          },
+        );
       });
-  }, [browseForWorkspace, setScope, setWorkspaceRoot]);
+  }, [browseForWorkspace, setScope, setWorkspaceRoot, t]);
 
   const markPending = useCallback((trackId: string, pending: boolean): void => {
     setPendingIds((prev) => {
@@ -375,14 +388,16 @@ function ProviderPluginsTabBody({
         onOpenChange={(open) => {
           if (!open) setRemoveTarget(null);
         }}
-        title="Remove plugin"
+        title={t("Remove plugin")}
         description={
           removeTarget === null
             ? ""
-            : `Remove “${removeTarget.name}” from this provider?`
+            : t("Remove “{{name}}” from this provider?", {
+                name: removeTarget.name,
+              })
         }
         cascadeSummary={null}
-        actionLabel="Remove"
+        actionLabel={t("Remove")}
         isPending={removeDialogPending}
         onConfirm={() => {
           if (removeTarget === null) return;
@@ -397,7 +412,9 @@ function ProviderPluginsTabBody({
 }
 
 function sessionNoticeFor(caps: ProviderPluginsCapabilities): string | null {
-  return caps.traycerSessionToolsNotice ? SESSION_TOOLS_NOTICE : null;
+  return caps.traycerSessionToolsNotice
+    ? i18n.t(SESSION_TOOLS_NOTICE, { ns: "panels" })
+    : null;
 }
 
 function PluginAddFromSource({
@@ -416,20 +433,21 @@ function PluginAddFromSource({
 }): ReactNode {
   const trackId = sourceDraft.trim();
   const pending = trackId.length > 0 && pendingIds.has(trackId);
+  const { t } = useTranslation("panels");
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border/60 p-3">
       <label
         className="text-ui-xs text-muted-foreground"
         htmlFor="plugin-source"
       >
-        Source (npm package, path, git URL, or plugin@marketplace)
+        {t("Source (npm package, path, git URL, or plugin@marketplace)")}
       </label>
       <div className="flex flex-wrap gap-2">
         <Input
           id="plugin-source"
           value={sourceDraft}
           onChange={(e) => setSourceDraft(e.target.value)}
-          placeholder="plugin@marketplace or /path/to/plugin"
+          placeholder={t("plugin@marketplace or /path/to/plugin")}
           className="min-w-0 flex-1 text-ui-xs"
           disabled={pending}
         />
@@ -448,7 +466,7 @@ function PluginAddFromSource({
               variant={undefined}
             />
           ) : null}
-          Install
+          {t("Install")}
         </Button>
       </div>
     </div>
@@ -497,16 +515,21 @@ function PluginsListBody({
   ) => void;
   readonly onRequestRemove: (plugin: ProviderPlugin) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (projectNeedsWorkspace) {
     return (
       <div className="flex flex-col gap-1 rounded-lg border border-border/60 p-4">
         <div className="text-ui-sm font-medium text-foreground">
-          {workspacesLoading ? "Resolving workspaces…" : "Select a workspace"}
+          {workspacesLoading
+            ? t("Resolving workspaces…")
+            : t("Select a workspace")}
         </div>
         <p className="text-ui-xs text-muted-foreground">
           {workspacesLoading
-            ? "Resolving workspaces on this host."
-            : "Choose a project workspace above to manage project-scoped plugins on this host."}
+            ? t("Resolving workspaces on this host.")
+            : t(
+                "Choose a project workspace above to manage project-scoped plugins on this host.",
+              )}
         </p>
       </div>
     );
@@ -519,7 +542,7 @@ function PluginsListBody({
           testId={undefined}
           variant={undefined}
         />
-        Loading plugins…
+        {t("Loading plugins…")}
       </div>
     );
   }
@@ -536,8 +559,8 @@ function PluginsListBody({
         <Package className="size-5 text-muted-foreground" />
         <p className="text-ui-xs text-muted-foreground">
           {isReadOnly
-            ? "No plugins installed."
-            : "No plugins installed yet. Add one from a source or marketplace."}
+            ? t("No plugins installed.")
+            : t("No plugins installed yet. Add one from a source or marketplace.")}
         </p>
       </div>
     );
@@ -630,6 +653,7 @@ function PluginRow({
     hasDarkIcon: plugin.hasDarkIcon === true,
     enabled: plugin.hasIcon === true,
   });
+  const { t } = useTranslation("panels");
   // `displayName` is the provider's own label ("PDF"); `name` is the install
   // id ("pdf"). Older hosts send neither field, hence the fallback.
   const title = plugin.displayName ?? plugin.name;
@@ -690,8 +714,8 @@ function PluginRow({
             onCheckedChange={onToggle}
             aria-label={
               plugin.enabled
-                ? `Disable ${plugin.name}`
-                : `Enable ${plugin.name}`
+                ? t("Disable {{name}}", { name: plugin.name })
+                : t("Enable {{name}}", { name: plugin.name })
             }
           />
         ) : null}
@@ -703,7 +727,7 @@ function PluginRow({
             className="size-8"
             disabled={pending}
             onClick={onRemove}
-            aria-label={`Remove ${plugin.name}`}
+            aria-label={t("Remove {{name}}", { name: plugin.name })}
           >
             <Trash2 className="size-3.5" />
           </Button>

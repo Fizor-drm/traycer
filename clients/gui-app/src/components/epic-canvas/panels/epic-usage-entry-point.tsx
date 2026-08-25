@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { LineChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
@@ -59,6 +60,7 @@ export function EpicUsageEntryPoint(props: {
 function EpicUsageEntryPointBody(props: {
   readonly epicId: string;
 }): ReactNode {
+  const { t } = useTranslation("canvas");
   const hostId = useEpicSessionHostId();
   const client = useHostClientForHostId(hostId);
   const supported = useUsageSummarySupported(hostId);
@@ -69,7 +71,7 @@ function EpicUsageEntryPointBody(props: {
   return (
     <>
       <TooltipWrapper
-        label="Usage"
+        label={t("Usage")}
         side="bottom"
         sideOffset={undefined}
         align="end"
@@ -78,7 +80,7 @@ function EpicUsageEntryPointBody(props: {
           type="button"
           variant="ghost"
           size="icon-xs"
-          aria-label="Usage"
+          aria-label={t("Usage")}
           aria-haspopup="dialog"
           data-testid="epic-usage-entry-point"
           className={cn("text-muted-foreground hover:text-foreground")}

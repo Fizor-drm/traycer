@@ -21,6 +21,7 @@ import {
 } from "@/components/settings/panels/host-doctor-actions";
 import { SettingsPanelShell } from "@/components/settings/settings-panel-shell";
 import { HostRuntimeContext } from "@/lib/host";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { useHostCapabilityProbe } from "@/hooks/host/use-host-capability-probe";
 import { useHostMethodSupport } from "@/hooks/host/use-host-supports-method";
 import {
@@ -41,6 +42,7 @@ import type {
   DoctorRepairIntent,
 } from "@traycer-clients/shared/platform/runner-host";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { HostScope } from "@/components/settings/host-scope/use-host-scope";
 
 /**
@@ -78,6 +80,7 @@ function HostSettingsPanelInner() {
   const scope = useHostScope();
   const runnerHost = useRunnerHost();
   const compact = useSettingsDensity() === "compact";
+  const { t } = useTranslation("panels");
   const management = runnerHost.hostManagement;
 
   // Re-provided so every hook beneath this resolves to the SELECTED host rather
@@ -113,8 +116,10 @@ function HostSettingsPanelInner() {
 
   const description =
     scope.host === null
-      ? "Status, updates and maintenance for the selected host."
-      : `Status, updates and maintenance for ${scope.host.name}.`;
+      ? t("Status, updates and maintenance for the selected host.")
+      : t("Status, updates and maintenance for {{name}}.", {
+          name: scope.host.name,
+        });
 
   // Say NOTHING about a host the scope cannot resolve. This is the whole-panel
   // gate, and it is safe to use one: everything below describes the scoped
@@ -145,7 +150,7 @@ function HostSettingsPanelInner() {
 
   const shell = (
     <SettingsPanelShell
-      title="Overview"
+      title={t("Overview")}
       // The card below names the host, in bigger type, next to its status and
       // its Edit name control. Repeating it as the page title printed the same
       // string twice, two lines apart, and made the header look like a bug.
@@ -361,7 +366,11 @@ function useLocalDoctorFixMutation(
     mutationKey: runnerMutationKeys.hostRunDoctor(),
     mutationFn: async (issue) => {
       if (management === null) {
-        throw new Error("This shell has no local Traycer CLI to run that fix.");
+        throw new Error(
+          i18n.t("This shell has no local Traycer CLI to run that fix.", {
+            ns: "panels",
+          }),
+        );
       }
       // No conversion: the two `HostDoctorIssue` declarations are the same
       // seven fields with the same severity union, because they describe the
@@ -385,7 +394,11 @@ function useLocalDoctorFixMutation(
       if (issue.fixAction === "host-free-port-and-restart") {
         const input = parseFreePortInput(issueForBridge);
         if (input === null) {
-          throw new Error("Doctor issue is missing a valid conflicting port.");
+          throw new Error(
+            i18n.t("Doctor issue is missing a valid conflicting port.", {
+              ns: "panels",
+            }),
+          );
         }
         const dispatch = await management.freePortAndRestartIfIdle({
           ...input,
@@ -446,12 +459,16 @@ function useLocalDoctorFixMutation(
         );
         return;
       }
-      toast.success("Fix applied");
+      toast.success(i18n.t("Fix applied", { ns: "panels" }));
       if (management === null) return;
       void queryClient.invalidateQueries({
         queryKey: runnerQueryKeys.hostInstalledRecord(management),
       });
     },
-    onError: (error) => toastFromRunnerError(error, "Fix failed"),
+    onError: (error) =>
+      toastFromRunnerError(
+        error,
+        i18n.t("Fix failed", { ns: "panels" }),
+      ),
   });
 }

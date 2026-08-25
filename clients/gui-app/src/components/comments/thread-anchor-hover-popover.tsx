@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import {
   autoUpdate,
   computePosition,
@@ -72,6 +73,7 @@ interface HoverState {
  *    the sidebar swap which lazily fetches.
  */
 export function ThreadAnchorHoverPopover(props: ThreadAnchorHoverPopoverProps) {
+  const { t } = useTranslation("canvas");
   const {
     epicId,
     hostClient,
@@ -203,7 +205,7 @@ export function ThreadAnchorHoverPopover(props: ThreadAnchorHoverPopoverProps) {
     <button
       ref={floatingRef}
       type="button"
-      aria-label="Open thread"
+      aria-label={t("Open thread")}
       data-slot="thread-hover-popover"
       onPointerEnter={cancelTimers}
       onPointerLeave={scheduleHide}

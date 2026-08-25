@@ -12,6 +12,7 @@
 import { useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { displayTitle } from "@/lib/display-title";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { useNewConversationModalStore } from "@/stores/epics/new-conversation-modal-store";
 import { useNewConversationModalOpenStore } from "@/stores/epics/new-conversation-modal-open-store";
 import {
@@ -27,7 +28,7 @@ export function useTuiOpenerItems(ctx: CommandContext): OpenerInterfaceItems {
   return useMemo<OpenerInterfaceItems>(() => {
     const newTui = openerActionLeaf({
       id: "open:tui:new",
-      label: "New agent (Terminal)",
+      label: i18n.t("New agent (Terminal)", { ns: "palette" }),
       keywords: ["new", "tui", "terminal", "agent", "create"],
       run: () => {
         if (ctx.activeEpicId === null || ctx.activeTabId === null) return;

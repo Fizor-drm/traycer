@@ -8,6 +8,7 @@ import {
 } from "react";
 import { useForm } from "@tanstack/react-form";
 import { Plus, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type {
   ProviderMcpAuthRead,
   ProviderMcpAuthType,
@@ -38,6 +39,7 @@ import {
 } from "@/components/ui/tooltip";
 import { isProviderNativeRpcError } from "@/hooks/providers/native-response-map";
 import { useProvidersMcpMutate } from "@/hooks/providers/use-providers-mcp-mutate-mutation";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { nativeErrorMessage } from "@/lib/providers/native-error-copy";
 import { cn } from "@/lib/utils";
 
@@ -182,13 +184,19 @@ function dialogCopy(
 ): { readonly title: string; readonly submitLabel: string } {
   if (mode === "edit") {
     return {
-      title: `Edit MCP server — ${providerLabel}`,
-      submitLabel: "Save changes",
+      title: i18n.t("Edit MCP server — {{provider}}", {
+        ns: "panels",
+        provider: providerLabel,
+      }),
+      submitLabel: i18n.t("Save changes", { ns: "panels" }),
     };
   }
   return {
-    title: `Add MCP server — ${providerLabel}`,
-    submitLabel: "Add server",
+    title: i18n.t("Add MCP server — {{provider}}", {
+      ns: "panels",
+      provider: providerLabel,
+    }),
+    submitLabel: i18n.t("Add server", { ns: "panels" }),
   };
 }
 
@@ -254,6 +262,7 @@ export function ProviderMcpAddDialog(props: {
 
   const uid = useId();
   const rowIdRef = useRef(0);
+  const { t } = useTranslation("panels");
   const nextRowId = (): number => {
     rowIdRef.current += 1;
     return rowIdRef.current;
@@ -364,11 +373,13 @@ export function ProviderMcpAddDialog(props: {
       } {
     const trimmedName = values.name.trim();
     if (trimmedName.length === 0) {
-      return { error: "Name is required." };
+      return { error: t("Name is required.") };
     }
     if (mode === "add" && existingNames.includes(trimmedName)) {
       return {
-        error: `A server named “${trimmedName}” already exists in this scope.`,
+        error: t("A server named “{{name}}” already exists in this scope.", {
+          name: trimmedName,
+        }),
       };
     }
 
@@ -380,10 +391,10 @@ export function ProviderMcpAddDialog(props: {
     if (effectiveKind === "remote") {
       const trimmedUrl = values.url.trim();
       if (trimmedUrl.length === 0) {
-        return { error: "Server URL is required." };
+        return { error: t("Server URL is required.") };
       }
       if (!isHttpUrl(trimmedUrl)) {
-        return { error: "Enter a valid http(s) URL." };
+        return { error: t("Enter a valid http(s) URL.") };
       }
       const auth = buildRemoteAuth(values.authType, {
         headerRows: values.headerRows,
@@ -392,13 +403,13 @@ export function ProviderMcpAddDialog(props: {
         oauthResource: values.oauthResource,
       });
       if (auth === "invalid-header-empty") {
-        return { error: "Enter at least one header name and value." };
+        return { error: t("Enter at least one header name and value.") };
       }
       if (auth === "invalid-header-name") {
-        return { error: "Header name is required." };
+        return { error: t("Header name is required.") };
       }
       if (auth === "invalid-env-name") {
-        return { error: "Environment variable name is required." };
+        return { error: t("Environment variable name is required.") };
       }
       const remoteType: ProviderMcpTransport =
         computeEffectiveRemoteTransportType(
@@ -421,14 +432,14 @@ export function ProviderMcpAddDialog(props: {
 
     const trimmedCommand = values.command.trim();
     if (trimmedCommand.length === 0) {
-      return { error: "Command is required." };
+      return { error: t("Command is required.") };
     }
     const args = splitArgs(values.argsText);
     const touchedEnv = values.envRows.filter(
       (r) => r.name.trim().length > 0 || r.value.length > 0,
     );
     if (touchedEnv.some((r) => r.name.trim().length === 0)) {
-      return { error: "Environment variable name is required." };
+      return { error: t("Environment variable name is required.") };
     }
     const env =
       touchedEnv.length === 0
@@ -486,7 +497,7 @@ export function ProviderMcpAddDialog(props: {
           } else if (error instanceof Error) {
             setFormError(error.message);
           } else {
-            setFormError("Something went wrong.");
+            setFormError(t("Something went wrong."));
           }
         },
       },
@@ -520,8 +531,9 @@ export function ProviderMcpAddDialog(props: {
           <DialogHeader className="shrink-0 p-4 pb-2">
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>
-              Config is written to this provider&apos;s{" "}
-              {scopeTuple.scope === "global" ? "global" : "project"} scope.
+              {scopeTuple.scope === "global"
+                ? t("Config is written to this provider's global scope.")
+                : t("Config is written to this provider's project scope.")}
             </DialogDescription>
           </DialogHeader>
 
@@ -548,9 +560,9 @@ export function ProviderMcpAddDialog(props: {
                 <>
                   <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-2">
                     {multiTransport ? (
-                      <SegmentChipGroup label="Transport kind">
+                      <SegmentChipGroup label={t("Transport kind")}>
                         <SegmentChip
-                          label="Remote"
+                          label={t("Remote")}
                           active={effectiveKind === "remote"}
                           disabledReason={null}
                           onClick={() => {
@@ -558,7 +570,7 @@ export function ProviderMcpAddDialog(props: {
                           }}
                         />
                         <SegmentChip
-                          label="Local (stdio)"
+                          label={t("Local (stdio)")}
                           active={effectiveKind === "local"}
                           disabledReason={null}
                           onClick={() => {
@@ -570,7 +582,7 @@ export function ProviderMcpAddDialog(props: {
 
                     {isEdit ? (
                       <div className="flex flex-col gap-1.5">
-                        <Label id={`${uid}-name-label`}>Name</Label>
+                        <Label id={`${uid}-name-label`}>{t("Name")}</Label>
                         <p className="text-ui-sm font-medium text-foreground">
                           {values.name}
                         </p>
@@ -578,7 +590,7 @@ export function ProviderMcpAddDialog(props: {
                     ) : (
                       <Field
                         id={`${uid}-name`}
-                        label="Name"
+                        label={t("Name")}
                         value={values.name}
                         onChange={(value) => {
                           form.setFieldValue("name", value);
@@ -593,7 +605,7 @@ export function ProviderMcpAddDialog(props: {
                       <>
                         <Field
                           id={`${uid}-url`}
-                          label="Server URL"
+                          label={t("Server URL")}
                           value={values.url}
                           onChange={(value) => {
                             form.setFieldValue("url", value);
@@ -640,7 +652,7 @@ export function ProviderMcpAddDialog(props: {
                       <>
                         <Field
                           id={`${uid}-command`}
-                          label="Command"
+                          label={t("Command")}
                           value={values.command}
                           onChange={(value) => {
                             form.setFieldValue("command", value);
@@ -651,7 +663,7 @@ export function ProviderMcpAddDialog(props: {
                         />
                         <Field
                           id={`${uid}-args`}
-                          label="Args"
+                          label={t("Args")}
                           value={values.argsText}
                           onChange={(value) => {
                             form.setFieldValue("argsText", value);
@@ -662,11 +674,11 @@ export function ProviderMcpAddDialog(props: {
                         />
                         <SecretRowsEditor
                           idPrefix={`${uid}-env`}
-                          groupLabel="Env vars"
-                          rowLabel="Env var"
+                          groupLabel={t("Env vars")}
+                          rowLabel={t("Env var")}
                           namePlaceholder="GITHUB_TOKEN"
                           valuePlaceholder="value"
-                          addLabel="Add env var"
+                          addLabel={t("Add env var")}
                           rows={values.envRows}
                           allowMultiple
                           onAdd={addEnvRow}
@@ -690,7 +702,7 @@ export function ProviderMcpAddDialog(props: {
                       }}
                       disabled={mutate.isPending}
                     >
-                      Cancel
+                      {t("Cancel")}
                     </Button>
                     <Button
                       type="submit"
@@ -736,29 +748,30 @@ function RemoteAuthFields(props: {
   readonly oauthFields: readonly ProviderMcpOauthField[];
 }): ReactNode {
   const { uid } = props;
+  const { t } = useTranslation("panels");
   return (
     <>
       {props.remoteTransports.length > 0 ? (
-        <SegmentChipGroup label="Transport protocol">
+        <SegmentChipGroup label={t("Transport protocol")}>
           <SegmentChip
-            label="HTTP"
+            label={t("HTTP")}
             active={props.remoteTransportType === "http"}
             disabledReason={
               props.remoteTransports.includes("http")
                 ? null
-                : "Streamable HTTP isn’t supported by this provider."
+                : t("Streamable HTTP isn’t supported by this provider.")
             }
             onClick={() => {
               props.onRemoteTransportTypeChange("http");
             }}
           />
           <SegmentChip
-            label="SSE"
+            label={t("SSE")}
             active={props.remoteTransportType === "sse"}
             disabledReason={
               props.remoteTransports.includes("sse")
                 ? null
-                : "SSE isn’t supported by this provider."
+                : t("SSE isn’t supported by this provider.")
             }
             onClick={() => {
               props.onRemoteTransportTypeChange("sse");
@@ -769,7 +782,7 @@ function RemoteAuthFields(props: {
 
       {props.authOptions.length > 1 ? (
         <div className="flex flex-col gap-1.5">
-          <Label id={`${uid}-auth-label`}>Authentication</Label>
+          <Label id={`${uid}-auth-label`}>{t("Authentication")}</Label>
           <div
             role="group"
             className="flex flex-wrap gap-1"
@@ -793,11 +806,11 @@ function RemoteAuthFields(props: {
         <>
           <SecretRowsEditor
             idPrefix={`${uid}-header`}
-            groupLabel="Custom headers"
-            rowLabel="Header"
+            groupLabel={t("Custom headers")}
+            rowLabel={t("Header")}
             namePlaceholder="Authorization"
             valuePlaceholder="Bearer …"
-            addLabel="Add header"
+            addLabel={t("Add header")}
             rows={props.headerRows}
             allowMultiple={props.allowMultipleHeaders}
             onAdd={props.onAddHeaderRow}
@@ -806,7 +819,7 @@ function RemoteAuthFields(props: {
           />
           {props.isEdit ? (
             <p className="text-ui-xs text-muted-foreground">
-              {SECRET_REENTRY_HINT}
+              {t(SECRET_REENTRY_HINT)}
             </p>
           ) : null}
         </>
@@ -815,12 +828,14 @@ function RemoteAuthFields(props: {
       {props.authType === "env" ? (
         <Field
           id={`${uid}-env-auth`}
-          label="Environment variable name"
+          label={t("Environment variable name")}
           value={props.envAuthVarName}
           onChange={props.onEnvAuthVarNameChange}
           placeholder="GITHUB_TOKEN"
           type="text"
-          hint="Traycer passes this name to the provider; the value must already be set in your environment."
+          hint={t(
+            "Traycer passes this name to the provider; the value must already be set in your environment.",
+          )}
         />
       ) : null}
 
@@ -829,7 +844,7 @@ function RemoteAuthFields(props: {
           {props.oauthFields.includes("clientId") ? (
             <Field
               id={`${uid}-oauth-client-id`}
-              label="OAuth client ID (optional)"
+              label={t("OAuth client ID (optional)")}
               value={props.oauthClientId}
               onChange={props.onOauthClientIdChange}
               placeholder="client-id"
@@ -840,7 +855,7 @@ function RemoteAuthFields(props: {
           {props.oauthFields.includes("resource") ? (
             <Field
               id={`${uid}-oauth-resource`}
-              label="OAuth resource (optional)"
+              label={t("OAuth resource (optional)")}
               value={props.oauthResource}
               onChange={props.onOauthResourceChange}
               placeholder="https://mcp.example.com"
@@ -949,6 +964,7 @@ function SecretRowsEditor(props: {
   ) => void;
 }): ReactNode {
   const visibleRows = props.allowMultiple ? props.rows : props.rows.slice(0, 1);
+  const { t } = useTranslation("panels");
   return (
     <div className="flex flex-col gap-1.5">
       <Label id={`${props.idPrefix}-label`}>{props.groupLabel}</Label>
@@ -960,7 +976,10 @@ function SecretRowsEditor(props: {
         {visibleRows.map((row, idx) => (
           <div key={row.id} className="flex items-center gap-1.5">
             <Input
-              aria-label={`${props.rowLabel} ${idx + 1} name`}
+              aria-label={t("{{rowLabel}} {{index}} name", {
+                rowLabel: props.rowLabel,
+                index: idx + 1,
+              })}
               value={row.name}
               onChange={(e) => {
                 props.onChange(row.id, { name: e.target.value });
@@ -970,7 +989,10 @@ function SecretRowsEditor(props: {
             />
             <Input
               type="password"
-              aria-label={`${props.rowLabel} ${idx + 1} value`}
+              aria-label={t("{{rowLabel}} {{index}} value", {
+                rowLabel: props.rowLabel,
+                index: idx + 1,
+              })}
               value={row.value}
               onChange={(e) => {
                 props.onChange(row.id, { value: e.target.value });
@@ -983,7 +1005,10 @@ function SecretRowsEditor(props: {
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                aria-label={`Remove ${props.rowLabel.toLowerCase()} ${idx + 1}`}
+                aria-label={t("Remove {{rowLabel}} {{index}}", {
+                  rowLabel: props.rowLabel,
+                  index: idx + 1,
+                })}
                 onClick={() => {
                   props.onRemove(row.id);
                 }}
@@ -1041,13 +1066,13 @@ function Field(props: {
 function authTypeLabel(type: ProviderMcpAuthType): string {
   switch (type) {
     case "none":
-      return "None";
+      return i18n.t("None", { ns: "panels" });
     case "header":
-      return "Header";
+      return i18n.t("Header", { ns: "panels" });
     case "env":
-      return "Env var";
+      return i18n.t("Env var", { ns: "panels" });
     case "oauth":
-      return "OAuth";
+      return i18n.t("OAuth", { ns: "panels" });
   }
 }
 

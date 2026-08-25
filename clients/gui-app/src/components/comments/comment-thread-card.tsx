@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { MoreHorizontal, CheckCircle2, RotateCcw, Trash2 } from "lucide-react";
 import {
   type EpicArtifactKind,
@@ -69,6 +70,7 @@ export interface CommentThreadCardProps {
  * component only kicks them off and reacts to `isPending` for spinners.
  */
 export function CommentThreadCard(props: CommentThreadCardProps) {
+  const { t } = useTranslation("canvas");
   const {
     epicId,
     hostClient,
@@ -244,9 +246,9 @@ export function CommentThreadCard(props: CommentThreadCardProps) {
             epicId={epicId}
             hostClient={hostClient}
             initialContent={null}
-            placeholder="Reply…"
+            placeholder={t("Reply…")}
             focusOnMount={false}
-            submitLabel="Reply"
+            submitLabel={t("Reply")}
             onSubmit={handleReplySubmit}
             onCancel={null}
             className={undefined}
@@ -263,12 +265,12 @@ export function CommentThreadCard(props: CommentThreadCardProps) {
                 {thread.resolved ? (
                   <>
                     <RotateCcw className="size-4" />
-                    Reopen
+                    {t("Reopen")}
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="size-4" />
-                    Resolve
+                    {t("Resolve")}
                   </>
                 )}
               </Button>
@@ -277,9 +279,9 @@ export function CommentThreadCard(props: CommentThreadCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleDeleteThread}
-                disabled={deleteThreadMutation.isPending}
-                aria-label="Delete thread"
+              onClick={handleDeleteThread}
+              disabled={deleteThreadMutation.isPending}
+              aria-label={t("Delete thread")}
               >
                 <Trash2 className="size-4" />
               </Button>
@@ -306,6 +308,7 @@ interface CommentEntryProps {
 }
 
 function CommentEntry(props: CommentEntryProps) {
+  const { t } = useTranslation("canvas");
   const {
     comment,
     epicId,
@@ -336,7 +339,9 @@ function CommentEntry(props: CommentEntryProps) {
           {formatRelativeTime(comment.createdAt)}
         </time>
         {comment.updatedAt !== null ? (
-          <span className="text-ui-xs text-muted-foreground">(edited)</span>
+          <span className="text-ui-xs text-muted-foreground">
+            {t("(edited)")}
+          </span>
         ) : null}
         {isCommentAuthor ? (
           <DropdownMenu>
@@ -345,16 +350,18 @@ function CommentEntry(props: CommentEntryProps) {
                 variant="ghost"
                 size="icon"
                 className="ml-auto size-6"
-                aria-label="Comment actions"
+                aria-label={t("Comment actions")}
               >
                 <MoreHorizontal className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={onStartEdit}>Edit</DropdownMenuItem>
+              <DropdownMenuItem onSelect={onStartEdit}>
+                {t("Edit")}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onSelect={onDelete}>
-                Delete
+                {t("Delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -365,9 +372,9 @@ function CommentEntry(props: CommentEntryProps) {
           epicId={epicId}
           hostClient={hostClient}
           initialContent={comment.content}
-          placeholder="Edit comment…"
+          placeholder={t("Edit comment…")}
           focusOnMount
-          submitLabel="Save"
+          submitLabel={t("Save")}
           onSubmit={onSubmitEdit}
           onCancel={onCancelEdit}
           className={undefined}

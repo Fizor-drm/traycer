@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { LogLevel } from "@traycer/protocol/config/log-level";
 import type { HostClient } from "@traycer-clients/shared/host-client/host-client";
 import type { HostRpcRegistry } from "@/lib/host";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { useHostQuery } from "@/hooks/host/use-host-query";
 import { useHostScopedMutationForClient } from "@/hooks/host/use-host-scoped-mutation";
 import { useRunnerLogLevelsQuery } from "@/hooks/runner/use-runner-log-levels-query";
@@ -57,8 +58,8 @@ export function useDesktopLogLevelControl(): LogLevelControl {
   const snapshot = query.data;
   return {
     scope: "desktop",
-    label: "App log level",
-    description: DESKTOP_DESCRIPTION,
+    label: i18n.t("App log level", { ns: "panels" }),
+    description: i18n.t(DESKTOP_DESCRIPTION, { ns: "panels" }),
     level: snapshot === undefined ? undefined : snapshot.desktopLogLevel,
     busy: query.isPending || query.isError || setMutation.isPending,
     set: async (level: LogLevel): Promise<void> => {
@@ -91,7 +92,7 @@ export function useHostLogLevelControls(props: {
   const setMutation = useHostScopedMutationForClient(client, {
     method: "config.logLevels.set",
     mutationKey: configMutationKeys.logLevelsSet(),
-    errorMessage: "Couldn't update log level",
+    errorMessage: i18n.t("Couldn't update log level", { ns: "panels" }),
     invalidateMethods: ["config.logLevels.get"],
   });
 
@@ -103,8 +104,8 @@ export function useHostLogLevelControls(props: {
     return [
       {
         scope: "cli",
-        label: "CLI log level",
-        description: CLI_DESCRIPTION,
+        label: i18n.t("CLI log level", { ns: "panels" }),
+        description: i18n.t(CLI_DESCRIPTION, { ns: "panels" }),
         level: levels?.cliLogLevel,
         busy,
         set: async (level: LogLevel): Promise<void> => {
@@ -113,8 +114,8 @@ export function useHostLogLevelControls(props: {
       },
       {
         scope: "host",
-        label: "Host log level",
-        description: HOST_DESCRIPTION,
+        label: i18n.t("Host log level", { ns: "panels" }),
+        description: i18n.t(HOST_DESCRIPTION, { ns: "panels" }),
         level: levels?.hostLogLevel,
         busy,
         set: async (level: LogLevel): Promise<void> => {
@@ -143,8 +144,14 @@ export function useBridgeHostLogLevelControls(): readonly LogLevelControl[] {
     if (!available) return [];
     return (["cli", "host"] as const).map((scope) => ({
       scope,
-      label: scope === "cli" ? "CLI log level" : "Host log level",
-      description: scope === "cli" ? CLI_DESCRIPTION : HOST_DESCRIPTION,
+      label:
+        scope === "cli"
+          ? i18n.t("CLI log level", { ns: "panels" })
+          : i18n.t("Host log level", { ns: "panels" }),
+      description: i18n.t(
+        scope === "cli" ? CLI_DESCRIPTION : HOST_DESCRIPTION,
+        { ns: "panels" },
+      ),
       level:
         snapshot === undefined ? undefined : selectScopeLevel(snapshot, scope),
       busy,

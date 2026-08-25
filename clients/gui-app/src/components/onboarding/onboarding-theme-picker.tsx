@@ -5,6 +5,7 @@ import {
   type ThemeMode,
 } from "@/stores/settings/settings-store";
 import { Analytics, AnalyticsEvent } from "@/lib/analytics";
+import { useTranslation } from "react-i18next";
 
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 const MODES: ReadonlyArray<{ id: ThemeMode; label: string }> = [
@@ -20,6 +21,7 @@ const MODES: ReadonlyArray<{ id: ThemeMode; label: string }> = [
  * around it stays dark. Choices persist - this *is* the appearance setting.
  */
 export function OnboardingThemePicker() {
+  const { t } = useTranslation("common");
   const theme = useSettingsStore((state) => state.theme);
   const themePreset = useSettingsStore((state) => state.themePreset);
   const setTheme = useSettingsStore((state) => state.setTheme);
@@ -31,7 +33,7 @@ export function OnboardingThemePicker() {
     <div className="flex flex-col items-center gap-4 lg:items-start">
       <div
         role="group"
-        aria-label="Theme mode"
+        aria-label={t("Theme mode")}
         className="flex w-fit overflow-hidden rounded-md border border-white/20"
       >
         {MODES.map((mode) => (
@@ -54,14 +56,14 @@ export function OnboardingThemePicker() {
                 : "text-white/55 hover:text-white",
             )}
           >
-            {mode.label}
+            {t(mode.label)}
           </button>
         ))}
       </div>
 
       <div
         role="group"
-        aria-label="Theme preset"
+        aria-label={t("Theme preset")}
         className="flex w-full max-w-[min(90vw,24rem)] flex-wrap gap-2"
       >
         {THEME_PRESETS.map((preset) => (

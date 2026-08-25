@@ -16,6 +16,7 @@ import { useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useHostDirectoryList } from "@/hooks/host/use-host-directory-list-query";
 import { displayTitle } from "@/lib/display-title";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { UNKNOWN_HOST_PLACEHOLDER } from "@/lib/host/constants";
 import { useNewConversationModalStore } from "@/stores/epics/new-conversation-modal-store";
 import { useNewConversationModalOpenStore } from "@/stores/epics/new-conversation-modal-open-store";
@@ -47,7 +48,7 @@ export function useChatsOpenerItems(ctx: CommandContext): OpenerInterfaceItems {
   return useMemo<OpenerInterfaceItems>(() => {
     const newChat = openerActionLeaf({
       id: "open:chats:new",
-      label: "New agent (Chat)",
+      label: i18n.t("New agent (Chat)", { ns: "palette" }),
       keywords: ["new", "chat", "agent", "create"],
       run: () => {
         if (ctx.activeEpicId === null || ctx.activeTabId === null) return;

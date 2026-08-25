@@ -24,6 +24,7 @@
  * either break that gate or mount it for every plan.
  */
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { TraycerTeamSubscription } from "@traycer/protocol/auth";
 import type { AccountContext } from "@traycer/protocol/common/schemas";
 import {
@@ -69,14 +70,15 @@ export function TraycerAccountSelect({
   readonly value: string;
   readonly onValueChange: (value: string) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (teams.length === 0) return null;
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger size="sm" aria-label="Account" className="w-full">
+      <SelectTrigger size="sm" aria-label={t("Account")} className="w-full">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={PERSONAL_VALUE}>Personal</SelectItem>
+        <SelectItem value={PERSONAL_VALUE}>{t("Personal")}</SelectItem>
         {teams.map((team) => (
           <SelectItem
             key={team.team.id}
@@ -127,6 +129,7 @@ function RateLimitView({
   readonly subscription: TraycerSubscription;
   readonly accountContext: AccountContext;
 }) {
+  const { t } = useTranslation("panels");
   const usageQuery = useHostRateLimitUsageQuery(accountContext, null);
   // Keep the bar live: a Traycer turn finishing while this is on screen
   // re-fetches usage. Only mounted here, so it costs nothing elsewhere.
@@ -147,28 +150,30 @@ function RateLimitView({
   );
   return (
     <div className="flex flex-col gap-3">
-      <span className="text-ui-sm font-medium text-foreground">Rate limit</span>
+      <span className="text-ui-sm font-medium text-foreground">
+        {t("Rate limit")}
+      </span>
       {recharge !== null ? (
         <div className="flex items-center justify-between text-ui-sm">
-          <span className="text-muted-foreground">New artifact every</span>
+          <span className="text-muted-foreground">{t("New artifact every")}</span>
           <span className="font-medium text-foreground">{recharge}</span>
         </div>
       ) : null}
       {artifactTotal > 0 ? (
         <CreditMeterRow
-          label="Artifacts"
+          label={t("Artifacts")}
           consumed={artifactConsumed}
           total={artifactTotal}
           formatValue={formatArtifactTokens}
         />
       ) : (
         <p className="text-ui-xs text-muted-foreground">
-          Live artifact usage is unavailable.
+          {t("Live artifact usage is unavailable.")}
         </p>
       )}
       {bundleTotal > 0 ? (
         <CreditMeterRow
-          label="Bundle"
+          label={t("Bundle")}
           consumed={bundleConsumed}
           total={bundleTotal}
           formatValue={formatCredits}
@@ -183,10 +188,11 @@ function CreditBreakdownView({
 }: {
   readonly breakdown: CreditBreakdown;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (breakdown.totalAvailable <= 0) {
     return (
       <div className="text-ui-sm text-muted-foreground">
-        No credit usage to display for this plan.
+        {t("No credit usage to display for this plan.")}
       </div>
     );
   }
@@ -194,7 +200,7 @@ function CreditBreakdownView({
     <div className="flex flex-col gap-3">
       {breakdown.planTotal > 0 ? (
         <CreditMeterRow
-          label="Plan"
+          label={t("Plan")}
           consumed={breakdown.planConsumed}
           total={breakdown.planTotal}
           formatValue={formatCredits}
@@ -202,7 +208,7 @@ function CreditBreakdownView({
       ) : null}
       {breakdown.bonusTotal > 0 ? (
         <CreditMeterRow
-          label="Bonus"
+          label={t("Bonus")}
           consumed={breakdown.bonusConsumed}
           total={breakdown.bonusTotal}
           formatValue={formatCredits}
@@ -210,7 +216,7 @@ function CreditBreakdownView({
       ) : null}
       {breakdown.bundleTotal > 0 ? (
         <CreditMeterRow
-          label="Bundle"
+          label={t("Bundle")}
           consumed={breakdown.bundleConsumed}
           total={breakdown.bundleTotal}
           formatValue={formatCredits}

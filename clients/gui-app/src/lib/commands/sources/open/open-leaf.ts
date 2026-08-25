@@ -5,6 +5,7 @@
  * open through the canonical `openTileIntoTargetGroup` delegate so a fresh
  * instance lands in the bound target group (dedup intentionally bypassed).
  */
+import { i18n } from "@/lib/i18n/init-i18n";
 import { openTileIntoTargetGroup } from "@/lib/commands/actions";
 import type {
   CommandContext,
@@ -31,7 +32,10 @@ export function openerTruncatedHint(
 ): CommandItem {
   return {
     id: `open:${categoryId}:truncated`,
-    label: `Showing first ${shown} - type to filter`,
+    label: i18n.t("Showing first {{shown}} - type to filter", {
+      ns: "palette",
+      shown,
+    }),
     description: null,
     keywords: [],
     group: "open",

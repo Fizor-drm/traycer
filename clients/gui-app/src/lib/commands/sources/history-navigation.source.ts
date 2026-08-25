@@ -15,6 +15,7 @@
  * mouse, and header use - so manual UI and the palette stay in lockstep
  * (AGENTS "one function, lockstep" rule).
  */
+import { i18n } from "@/lib/i18n/init-i18n";
 import { useMemo } from "react";
 import type { CommandItem, ReactCommandSource } from "@/lib/commands/types";
 
@@ -32,7 +33,7 @@ export const historyNavigationSource: ReactCommandSource = {
       return [
         {
           id: "history:back",
-          label: "Go back",
+          label: i18n.t("Go back", { ns: "palette" }),
           description: null,
           keywords: ["back", "history", "navigate", "previous"],
           group: "navigation",
@@ -44,7 +45,7 @@ export const historyNavigationSource: ReactCommandSource = {
         },
         {
           id: "history:forward",
-          label: "Go forward",
+          label: i18n.t("Go forward", { ns: "palette" }),
           description: null,
           keywords: ["forward", "history", "navigate", "next"],
           group: "navigation",

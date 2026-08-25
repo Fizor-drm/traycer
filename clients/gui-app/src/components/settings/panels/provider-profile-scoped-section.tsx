@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import {
   AlertTriangle,
   ChevronRight,
@@ -33,6 +35,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { redactEmail } from "@/lib/providers/redact-email";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { useRemoveProviderProfile } from "@/hooks/providers/use-remove-provider-profile-mutation";
 import { useRenameProviderProfile } from "@/hooks/providers/use-rename-provider-profile-mutation";
 import { useRecolorProviderProfile } from "@/hooks/providers/use-recolor-provider-profile-mutation";
@@ -65,16 +68,33 @@ type ProviderId = ProviderCliState["providerId"];
 const TERMINAL_PROFILE_REMOVE_DISABLED_REASON =
   "This profile uses your default CLI login and cannot be removed.";
 
+// Raw English copy (i18n keys); translated where they render.
 const PROFILE_REMOVE_PRESENTATION = {
   ambient: {
-    ariaLabel: `Remove profile. ${TERMINAL_PROFILE_REMOVE_DISABLED_REASON}`,
     disabledReason: TERMINAL_PROFILE_REMOVE_DISABLED_REASON,
   },
   managed: {
-    ariaLabel: "Remove profile",
     disabledReason: null,
   },
 } as const;
+
+/** Translates one presentation entry, composing the aria label with its
+ *  reason. Split out of `ProfileEditDialog` to keep the component inside its
+ *  complexity budget. */
+function removePresentationCopy(
+  presentation: (typeof PROFILE_REMOVE_PRESENTATION)[keyof typeof PROFILE_REMOVE_PRESENTATION],
+  t: TFunction<"panels">,
+): { readonly disabledReason: string | null; readonly ariaLabel: string } {
+  const disabledReason =
+    presentation.disabledReason === null
+      ? null
+      : t(presentation.disabledReason);
+  const ariaLabel =
+    disabledReason === null
+      ? t("Remove profile")
+      : t("Remove profile. {{reason}}", { reason: disabledReason });
+  return { disabledReason, ariaLabel };
+}
 
 // Stable module-level reference (not a fresh closure per render) - Settings
 // has no picker leader scope, so every row opts out of the shortcut hint.
@@ -154,6 +174,7 @@ export function ProviderProfileScopedSection(
     selectedProfileId,
     onSelectedProfileIdChange,
   } = props;
+  const { t } = useTranslation("panels");
   const profiles = state.profiles;
   const [dismissedDriftKeys, setDismissedDriftKeys] = useState<
     readonly string[]
@@ -176,7 +197,7 @@ export function ProviderProfileScopedSection(
   // `TooltipWrapper` degrades to a passthrough Slot for both `null` and
   // `undefined` labels; `null` here is just the plainer of the two spellings.
   const addProfileDisabledReason = addProfileDisabled
-    ? "Add profiles from a local host with browser sign-in available."
+    ? t("Add profiles from a local host with browser sign-in available.")
     : null;
   const duplicateLabel = duplicateProfileLabel(selectedProfile, profiles);
   const driftKey = profileDriftKey(state.providerId, selectedProfile);
@@ -204,7 +225,9 @@ export function ProviderProfileScopedSection(
     <section className="flex flex-col gap-3">
       <div className="flex flex-col gap-3 rounded-lg border border-border/60 p-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-ui-sm font-medium text-foreground">Profiles</div>
+          <div className="text-ui-sm font-medium text-foreground">
+            {t("Profiles")}
+          </div>
           <div className="flex items-center gap-1">
             <TooltipWrapper
               label={addProfileDisabledReason}
@@ -224,7 +247,7 @@ export function ProviderProfileScopedSection(
                   onClick={onAddProfile}
                 >
                   <Plus className="size-3.5" />
-                  Add profile
+                  {t("Add profile")}
                 </Button>
               </span>
             </TooltipWrapper>
@@ -279,13 +302,15 @@ export function ProviderProfileScopedSection(
                   onClick={openProfileSignIn}
                 >
                   <LogIn data-icon="inline-start" />
-                  Sign in
+                  {t("Sign in")}
                 </Button>
               </span>
             </TooltipWrapper>
           ) : null}
           <TooltipWrapper
-            label="Change the profile name and accent color, sign in again, or remove this profile."
+            label={t(
+              "Change the profile name and accent color, sign in again, or remove this profile.",
+            )}
             side="bottom"
             sideOffset={6}
             align="end"
@@ -298,7 +323,7 @@ export function ProviderProfileScopedSection(
               onClick={openProfileEditor}
             >
               <Settings2 data-icon="inline-start" />
-              Manage profile
+              {t("Manage profile")}
             </Button>
           </TooltipWrapper>
         </div>
@@ -311,8 +336,9 @@ export function ProviderProfileScopedSection(
         {failedAttempt !== null ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-ui-xs text-destructive">
             <span className="min-w-0">
-              Sign-in did not finish for{" "}
-              {PROVIDER_DISPLAY_NAMES[failedAttempt.providerId]}.
+              {t("Sign-in did not finish for {{provider}}.", {
+                provider: PROVIDER_DISPLAY_NAMES[failedAttempt.providerId],
+              })}
             </span>
             <div className="flex shrink-0 items-center gap-1">
               <Button
@@ -321,7 +347,7 @@ export function ProviderProfileScopedSection(
                 variant="ghost"
                 onClick={onAddProfile}
               >
-                Retry
+                {t("Retry")}
               </Button>
               <Button
                 type="button"
@@ -329,14 +355,14 @@ export function ProviderProfileScopedSection(
                 variant="ghost"
                 onClick={onDismissFailedAttempt}
               >
-                Dismiss
+                {t("Dismiss")}
               </Button>
               <ReportIssueAction
                 context={createReportIssueContext({
-                  title: "Provider sign-in failed",
-                  message: "Sign-in did not finish for a provider profile.",
+                  title: t("Provider sign-in failed"),
+                  message: t("Sign-in did not finish for a provider profile."),
                   code: null,
-                  source: "Provider sign-in",
+                  source: t("Provider sign-in"),
                 })}
                 presentation="icon"
                 className={undefined}
@@ -355,7 +381,9 @@ export function ProviderProfileScopedSection(
         ) : null}
 
         {duplicateLabel !== null ? (
-          <ProfileWarning>Same account as {duplicateLabel}</ProfileWarning>
+          <ProfileWarning>
+            {t("Same account as {{profile}}", { profile: duplicateLabel })}
+          </ProfileWarning>
         ) : null}
 
         <EmbeddedProviderRateLimitForProvider
@@ -389,9 +417,10 @@ function ProfileSummary({
 }: {
   readonly profile: ProviderProfile;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const [emailRevealed, setEmailRevealed] = useState(false);
   const email = profile.identity?.email ?? null;
-  let emailText = profile.auth.label ?? "Email unavailable";
+  let emailText = profile.auth.label ?? t("Email unavailable");
   if (email !== null) {
     emailText = emailRevealed ? email : redactEmail(email);
   }
@@ -415,8 +444,12 @@ function ProfileSummary({
             type="button"
             aria-label={
               emailRevealed
-                ? `Hide email for ${profileDisplayLabel(profile)}`
-                : `Reveal email for ${profileDisplayLabel(profile)}`
+                ? t("Hide email for {{label}}", {
+                    label: profileDisplayLabel(profile),
+                  })
+                : t("Reveal email for {{label}}", {
+                    label: profileDisplayLabel(profile),
+                  })
             }
             aria-pressed={emailRevealed}
             className="shrink-0 rounded p-0.5 text-current opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
@@ -459,21 +492,30 @@ function AmbientDriftNotice({
   readonly profile: ProviderProfile;
   readonly onDismiss: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const currentEmail = profile.identity?.email ?? null;
   const current =
-    currentEmail !== null ? redactEmail(currentEmail) : "an unknown account";
+    currentEmail !== null
+      ? redactEmail(currentEmail)
+      : t("an unknown account");
   const previousEmail = profile.ambientDriftNotice?.previousEmail ?? null;
   const previous =
-    previousEmail !== null ? redactEmail(previousEmail) : "an unknown account";
+    previousEmail !== null
+      ? redactEmail(previousEmail)
+      : t("an unknown account");
   return (
     <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-ui-xs text-amber-900 dark:text-amber-200">
       <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
       <span className="min-w-0 flex-1">
-        {profileDisplayLabel(profile)} is now {current}; was {previous}.
+        {t("{{label}} is now {{current}}; was {{previous}}.", {
+          label: profileDisplayLabel(profile),
+          current,
+          previous,
+        })}
       </span>
       <button
         type="button"
-        aria-label="Dismiss ambient account change notice"
+        aria-label={t("Dismiss ambient account change notice")}
         className="rounded p-0.5 text-current opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
         onClick={onDismiss}
       >
@@ -525,13 +567,22 @@ function profileEditDialogCopy(
 ) {
   if (startInReauth) {
     return {
-      title: `Sign in to ${profileDisplayLabel(profile)}`,
-      description: "Reconnect this profile without changing its name or color.",
+      title: i18n.t("Sign in to {{label}}", {
+        ns: "panels",
+        label: profileDisplayLabel(profile),
+      }),
+      description: i18n.t(
+        "Reconnect this profile without changing its name or color.",
+        { ns: "panels" },
+      ),
     };
   }
   return {
-    title: "Edit profile",
-    description: `Update how ${profileDisplayLabel(profile)} appears and which account it uses.`,
+    title: i18n.t("Edit profile", { ns: "panels" }),
+    description: i18n.t(
+      "Update how {{label}} appears and which account it uses.",
+      { ns: "panels", label: profileDisplayLabel(profile) },
+    ),
   };
 }
 
@@ -541,8 +592,16 @@ function profileEditDialogCopy(
  *  form is the only honest one here. */
 function signedInMessage(profile: ProviderProfile): string {
   const email = profile.identity?.email ?? null;
-  if (email !== null) return `Signed in as ${redactEmail(email)}`;
-  return `Signed in to ${profileDisplayLabel(profile)}`;
+  if (email !== null) {
+    return i18n.t("Signed in as {{email}}", {
+      ns: "panels",
+      email: redactEmail(email),
+    });
+  }
+  return i18n.t("Signed in to {{label}}", {
+    ns: "panels",
+    label: profileDisplayLabel(profile),
+  });
 }
 
 function ProfileEditDialog({
@@ -570,6 +629,7 @@ function ProfileEditDialog({
   readonly remainingProfilesAfterRemoval: ReadonlyArray<ProviderProfile>;
   readonly onSelectedProfileIdChange: (profileId: string | null) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const providerId = state.providerId;
   const removeProfile = useRemoveProviderProfile();
   const renameProfile = useRenameProviderProfile();
@@ -587,9 +647,14 @@ function ProfileEditDialog({
   const changed =
     trimmedLabel !== committedLabel || accentColor !== committedAccentColor;
   const invalid = trimmedLabel.length === 0;
-  const removeProfilePresentation = PROFILE_REMOVE_PRESENTATION[profile.kind];
+  const removeProfilePresentation = removePresentationCopy(
+    PROFILE_REMOVE_PRESENTATION[profile.kind],
+    t,
+  );
   const removeProfileDisabledReason = removeProfilePresentation.disabledReason;
-  const isTerminalProfile = removeProfileDisabledReason !== null;
+  const removeProfileAriaLabel = removeProfilePresentation.ariaLabel;
+  const isTerminalProfile =
+    removeProfilePresentation.disabledReason !== null;
   const dialogCopy = profileEditDialogCopy(profile, startInReauth);
 
   const commitProfile = (onSuccess: () => void): void => {
@@ -724,7 +789,9 @@ function ProfileEditDialog({
                 label={
                   canOauth
                     ? null
-                    : "Switch account requires a local host with browser sign-in available."
+                    : t(
+                        "Switch account requires a local host with browser sign-in available.",
+                      )
                 }
                 side="top"
                 sideOffset={6}
@@ -736,7 +803,7 @@ function ProfileEditDialog({
                 <span className="flex w-full">
                   <button
                     type="button"
-                    aria-label="Switch account"
+                    aria-label={t("Switch account")}
                     className="group flex w-full items-center gap-3 rounded-lg border border-border/60 bg-foreground/3 p-3 text-left transition-colors hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 disabled:cursor-not-allowed disabled:opacity-50"
                     disabled={!canOauth || savePending || invalid}
                     onClick={switchAccount}
@@ -746,10 +813,12 @@ function ProfileEditDialog({
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-ui-sm font-medium text-foreground">
-                        Switch account
+                        {t("Switch account")}
                       </span>
                       <span className="block text-ui-xs text-muted-foreground">
-                        Sign in with a different account for this profile.
+                        {t(
+                          "Sign in with a different account for this profile.",
+                        )}
                       </span>
                     </span>
                     <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -784,7 +853,7 @@ function ProfileEditDialog({
                     type="button"
                     size="sm"
                     variant="ghost"
-                    aria-label={removeProfilePresentation.ariaLabel}
+                    aria-label={removeProfileAriaLabel}
                     disabled={
                       isTerminalProfile ||
                       removeProfile.isPending ||
@@ -794,31 +863,31 @@ function ProfileEditDialog({
                     className="text-ui-sm text-destructive"
                   >
                     <Trash2 className="size-3.5" />
-                    Remove profile
+                    {t("Remove profile")}
                   </Button>
                 </span>
               </TooltipWrapper>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={savePending}
-                  onClick={closeEditor}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  disabled={savePending || invalid || !changed}
-                  onClick={() => commitProfile(closeEditor)}
-                >
-                  {savePending ? <MutedAgentSpinner /> : null}
-                  Save changes
-                </Button>
-              </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={savePending}
+                    onClick={closeEditor}
+                  >
+                    {t("Cancel")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={savePending || invalid || !changed}
+                    onClick={() => commitProfile(closeEditor)}
+                  >
+                    {savePending ? <MutedAgentSpinner /> : null}
+                    {t("Save changes")}
+                  </Button>
+                </div>
             </div>
           </DialogFooter>
         </DialogContent>
@@ -826,10 +895,15 @@ function ProfileEditDialog({
       <ConfirmDestructiveDialog
         open={confirmRemoveOpen}
         onOpenChange={setConfirmRemoveOpen}
-        title={`Remove ${profileDisplayLabel(profile)}?`}
-        description={`Agents that ran on ${profileDisplayLabel(profile)} will show it as removed. Running sessions on this profile must be stopped first.`}
+        title={t("Remove {{label}}?", {
+          label: profileDisplayLabel(profile),
+        })}
+        description={t(
+          "Agents that ran on {{label}} will show it as removed. Running sessions on this profile must be stopped first.",
+          { label: profileDisplayLabel(profile) },
+        )}
         cascadeSummary={null}
-        actionLabel="Remove"
+        actionLabel={t("Remove")}
         isPending={removeProfile.isPending}
         onConfirm={() =>
           removeProfile.mutate(

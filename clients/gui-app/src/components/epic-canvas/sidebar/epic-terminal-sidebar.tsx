@@ -20,6 +20,8 @@ import {
 } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { useDraggable } from "@dnd-kit/core";
 import {
   MoreHorizontal,
@@ -157,6 +159,7 @@ function TerminalsPanelBodyLive(props: {
   readonly tabId: string;
 }) {
   const { epicId, tabId } = props;
+  const { t } = useTranslation("canvas");
   // The Epic SESSION's host, not the app-wide effective one. This panel is a
   // sibling of the canvas and therefore outside every tile `TabHostProvider`,
   // which is exactly the case `useEpicSessionHostId` was written for: "host
@@ -228,7 +231,7 @@ function TerminalsPanelBodyLive(props: {
     (row: TerminalSidebarSessionRow) => {
       if (row.durable && resolveOwnerClient(row.hostId) === null) {
         toast(
-          `Can't open this terminal right now - host ${row.hostId} is not reachable.`,
+          t("Can't open this terminal right now - host {{hostId}} is not reachable.", { hostId: row.hostId }),
         );
         return;
       }
@@ -259,6 +262,7 @@ function TerminalsPanelBodyLive(props: {
       prepareOpenTileInTabFocusTarget,
       prepareSetActiveTileTabFocusTarget,
       resolveOwnerClient,
+      t,
       tabId,
     ],
   );
@@ -465,6 +469,7 @@ function resolveTerminalSidebarRenameMode(args: {
 }
 
 function TerminalSidebarBody(props: TerminalSidebarBodyProps) {
+  const { t } = useTranslation("canvas");
   if (props.isLoading) {
     return (
       <div className="flex items-center gap-2 px-2 py-1.5 text-ui-sm text-muted-foreground">
@@ -473,7 +478,7 @@ function TerminalSidebarBody(props: TerminalSidebarBodyProps) {
           testId={undefined}
           variant={undefined}
         />
-        <span>Loading terminals…</span>
+        <span>{t("Loading terminals…")}</span>
       </div>
     );
   }
@@ -484,7 +489,7 @@ function TerminalSidebarBody(props: TerminalSidebarBodyProps) {
         data-testid="epic-terminal-sidebar-error"
       >
         <span className="min-w-0">
-          {props.errorMessage ?? "Failed to load terminals."}
+          {props.errorMessage ?? t("Failed to load terminals.")}
         </span>
         <div className="flex items-center gap-2">
           <Button
@@ -502,14 +507,14 @@ function TerminalSidebarBody(props: TerminalSidebarBodyProps) {
                 variant={undefined}
               />
             ) : null}
-            Retry
+            {t("Retry")}
           </Button>
           <ReportIssueAction
             context={createReportIssueContext({
-              title: "Failed to load terminals",
-              message: "The terminal list could not be loaded.",
+              title: t("Failed to load terminals"),
+              message: t("The terminal list could not be loaded."),
               code: null,
-              source: "Terminals",
+              source: t("Terminals"),
             })}
             presentation="icon"
             className="text-current"
@@ -522,7 +527,7 @@ function TerminalSidebarBody(props: TerminalSidebarBodyProps) {
     return (
       <SidebarPanelEmptyState
         icon={TerminalIcon}
-        title="No terminals yet."
+        title={t("No terminals yet.")}
         description={null}
         testId="epic-terminal-sidebar-empty"
       />
@@ -530,7 +535,7 @@ function TerminalSidebarBody(props: TerminalSidebarBodyProps) {
   }
   return (
     <ul
-      aria-label="Epic terminals"
+      aria-label={t("Epic terminals")}
       className="space-y-0.5"
       data-testid="epic-terminal-sidebar-list"
     >
@@ -584,11 +589,12 @@ function FailedHeadlessTerminalCreateRow(props: {
   readonly job: EpicTerminalDurableCreateJobView;
 }) {
   const { job } = props;
+  const { t } = useTranslation("canvas");
   const unmarkPendingCreate = useEpicCanvasStore(
     (state) => state.unmarkTerminalPendingCreate,
   );
   const title = DEFAULT_TERMINAL_TITLE;
-  const message = job.error?.message ?? "Could not create terminal.";
+  const message = job.error?.message ?? t("Could not create terminal.");
   const identityKey = epicTerminalUiIdentityKey(
     "failed",
     job.request.hostId,
@@ -617,7 +623,7 @@ function FailedHeadlessTerminalCreateRow(props: {
                 );
               }}
             >
-              Retry
+              {t("Retry")}
             </Button>
             <Button
               type="button"
@@ -632,7 +638,7 @@ function FailedHeadlessTerminalCreateRow(props: {
                 unmarkPendingCreate(job.request.hostId, job.request.terminalId);
               }}
             >
-              Discard
+              {t("Discard")}
             </Button>
           </div>
         </div>
@@ -664,6 +670,7 @@ interface TerminalRowProps {
 }
 
 function TerminalRow(props: TerminalRowProps) {
+  const { t } = useTranslation("canvas");
   const {
     closeCapability,
     closeCanMutate,
@@ -688,11 +695,7 @@ function TerminalRow(props: TerminalRowProps) {
   // the ambient host after the list moved: during a re-point they killed and
   // renamed host B's sessions from host A's rows.
   const rowHostClient = useEpicSessionHostClient();
-  const kill = useTerminalKillFor(
-    rowHostClient,
-    "Couldn't close the terminal.",
-    true,
-  );
+  const kill = useTerminalKillFor(rowHostClient, t("Couldn't close the terminal."), true);
   const legacyRename = useTerminalRenameFor(rowHostClient);
   const navigateNested = useEpicNestedFocusNavigation();
   const prepareCloseCanvasTabFocusTarget = useEpicCanvasStore(
@@ -847,6 +850,7 @@ function TerminalRow(props: TerminalRowProps) {
     onStartRename: startRename,
     renameDisabled: !canRename,
     onRequestClose: requestClose,
+    t,
   });
 
   return (
@@ -898,9 +902,9 @@ function TerminalRow(props: TerminalRowProps) {
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate">{label}</span>
                     {runtimeStatus === "unknown" ? (
-                      <span className="truncate text-ui-xs text-muted-foreground">
-                        Runtime status unavailable
-                      </span>
+                    <span className="truncate text-ui-xs text-muted-foreground">
+                      {t("Runtime status unavailable")}
+                    </span>
                     ) : null}
                   </div>
                   {showNavigatorResourceStats ? (
@@ -920,7 +924,7 @@ function TerminalRow(props: TerminalRowProps) {
                         type="button"
                         variant="ghost"
                         size="icon-xs"
-                        aria-label={`Terminal actions for ${label}`}
+                        aria-label={t("Terminal actions for {{name}}", { name: label })}
                         data-testid={`epic-terminal-sidebar-more-${session.sessionId}`}
                         onClick={(event) => event.stopPropagation()}
                       >
@@ -952,6 +956,7 @@ interface TerminalRowMenuEntriesProps {
   readonly onStartRename: () => void;
   readonly renameDisabled: boolean;
   readonly onRequestClose: () => void;
+  readonly t: TFunction<"canvas">;
 }
 
 function terminalRowMenuEntries(
@@ -961,7 +966,7 @@ function terminalRowMenuEntries(
     {
       kind: "item",
       id: "rename",
-      label: "Rename",
+      label: props.t("Rename"),
       icon: <Pencil className="size-3.5" />,
       disabled: props.renameDisabled,
       disabledTooltip: null,
@@ -976,7 +981,7 @@ function terminalRowMenuEntries(
     {
       kind: "item",
       id: "close",
-      label: "Close",
+      label: props.t("Close"),
       icon: <Trash2 className="size-3.5" />,
       disabled: props.closeDisabled,
       disabledTooltip: null,

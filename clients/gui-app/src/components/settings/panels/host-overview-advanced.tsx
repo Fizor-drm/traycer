@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { HostListItem } from "@traycer/protocol/host/host-status";
 import type { HostBusyBreakdown } from "@traycer/protocol/host/status/index";
 import { describeHostBusy } from "@/components/host/host-restart-copy";
@@ -14,6 +15,7 @@ import {
   HostVersionRows,
   type HostVersionRow,
 } from "@/components/settings/panels/host-version-rows";
+import { i18n } from "@/lib/i18n/init-i18n";
 import {
   describeOverviewDegrade,
   type OverviewDegradeReason,
@@ -60,6 +62,7 @@ export function HostOverviewAdvancedDisclosure(props: {
   /** The version picker's whole state, owned by the card so both halves agree. */
   readonly versions: VersionPickerProps | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     // No border wrapper. This sits in the Installation group as a sibling of
     // `InstallationDetailsDisclosure`, and `HostSettingsDisclosure` already
@@ -71,7 +74,7 @@ export function HostOverviewAdvancedDisclosure(props: {
     // the sibling's bottom border, and — because `last:` resolves against the
     // wrapper rather than the group — it silently suppressed the bottom border
     // on whichever disclosure preceded it.
-    <HostSettingsDisclosure label="Advanced" defaultOpen={false}>
+    <HostSettingsDisclosure label={t("Advanced")} defaultOpen={false}>
       <div className="flex flex-col gap-6">
         {props.registryItem === null || props.policyMutation === null ? null : (
           <HostAutoUpdateRow
@@ -114,6 +117,7 @@ export interface VersionPickerProps {
  * semver.
  */
 function VersionPicker(props: VersionPickerProps): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div
       className="flex flex-col gap-3"
@@ -121,7 +125,7 @@ function VersionPicker(props: VersionPickerProps): ReactNode {
     >
       <div className="flex flex-col gap-0.5">
         <div className="font-medium text-foreground">
-          Pick a different version
+          {t("Pick a different version")}
         </div>
         {/* No rolling-back claim: every row OLDER than the installed host is
             deliberately disabled (`supersededReason`), and the CLI would
@@ -129,14 +133,15 @@ function VersionPicker(props: VersionPickerProps): ReactNode {
             misleads exactly the person who opened this picker to escape a bad
             upgrade. */}
         <p className="text-ui-sm text-muted-foreground">
-          Install a specific newer host version — useful for stepping up to a
-          release candidate or a hotfix ahead of auto-update.
+          {t(
+            "Install a specific newer host version — useful for stepping up to a release candidate or a hotfix ahead of auto-update.",
+          )}
         </p>
       </div>
       <div className="flex items-start gap-2 text-ui-sm text-muted-foreground">
         <Checkbox
           id="host-overview-include-pre-releases"
-          aria-label="Include release candidates"
+          aria-label={t("Include release candidates")}
           checked={props.includePreReleases}
           // The page-wide gate too, not only the in-flight check: toggling
           // changes the query key and immediately spawns another
@@ -151,20 +156,20 @@ function VersionPicker(props: VersionPickerProps): ReactNode {
           htmlFor="host-overview-include-pre-releases"
           className="flex min-w-0 cursor-pointer flex-col gap-0.5 select-none"
         >
-          <span className="text-foreground">Include release candidates</span>
-          <span>Show RC host versions when choosing a version.</span>
+          <span className="text-foreground">{t("Include release candidates")}</span>
+          <span>{t("Show RC host versions when choosing a version.")}</span>
         </label>
       </div>
       {props.awaitingFirstCheck ? (
         <p className="text-ui-sm text-muted-foreground">
           {props.checking
-            ? "Asking this host which versions it can install…"
+            ? t("Asking this host which versions it can install…")
             : // Not "Check for updates to see…" any more. The list asks by
               // itself now, so reaching this line means the ask came back
               // without one — and pointing at a button that has already run is
               // how the empty state read as the user's fault. The summary row
               // above carries the actual reason.
-              "This host didn't return a list of installable versions."}
+              t("This host didn't return a list of installable versions.")}
         </p>
       ) : (
         <HostVersionRows
@@ -244,6 +249,7 @@ export interface OsServiceSectionProps {
 }
 
 function OsServiceSection(props: OsServiceSectionProps): ReactNode {
+  const { t } = useTranslation("panels");
   const [confirmDeregister, setConfirmDeregister] = useState(false);
   const [confirmRegister, setConfirmRegister] = useState(false);
 
@@ -311,7 +317,7 @@ function OsServiceSection(props: OsServiceSectionProps): ReactNode {
                 variant={undefined}
               />
             ) : null}
-            Re-register
+            {t("Re-register")}
           </Button>
         )}
         {!props.canDeregister ? null : (
@@ -330,7 +336,7 @@ function OsServiceSection(props: OsServiceSectionProps): ReactNode {
                 variant={undefined}
               />
             ) : null}
-            Deregister
+            {t("Deregister")}
           </Button>
         )}
       </div>
@@ -339,7 +345,7 @@ function OsServiceSection(props: OsServiceSectionProps): ReactNode {
         onOpenChange={(next) => {
           if (!next) setConfirmRegister(false);
         }}
-        title="Re-register this host's OS service?"
+        title={t("Re-register this host's OS service?")}
         description={describeRegisterConfirm({
           hostName: props.hostName,
           settledBusy: props.settledBusy,
@@ -347,7 +353,7 @@ function OsServiceSection(props: OsServiceSectionProps): ReactNode {
           settledBusyBreakdown: props.settledBusyBreakdown,
         })}
         cascadeSummary={null}
-        actionLabel="Re-register"
+        actionLabel={t("Re-register")}
         isPending={props.registerPending}
         onConfirm={() => {
           setConfirmRegister(false);
@@ -359,10 +365,13 @@ function OsServiceSection(props: OsServiceSectionProps): ReactNode {
         onOpenChange={(next) => {
           if (!next) setConfirmDeregister(false);
         }}
-        title="Deregister this host's OS service?"
-        description={`This stops ${props.hostName} and removes the registration that starts it again at login. Nothing is uninstalled and no data is deleted — but Traycer cannot start this host again from here, so bringing it back means running 'traycer host service install' on the machine itself.`}
+        title={t("Deregister this host's OS service?")}
+        description={t(
+          "This stops {{name}} and removes the registration that starts it again at login. Nothing is uninstalled and no data is deleted — but Traycer cannot start this host again from here, so bringing it back means running 'traycer host service install' on the machine itself.",
+          { name: props.hostName },
+        )}
         cascadeSummary={null}
-        actionLabel="Deregister"
+        actionLabel={t("Deregister")}
         isPending={props.deregisterPending}
         onConfirm={() => {
           setConfirmDeregister(false);
@@ -384,14 +393,20 @@ function describeRegisterConfirm(input: {
   readonly settledBusySessionCount: number | null;
   readonly settledBusyBreakdown: HostBusyBreakdown | null;
 }): string {
-  const restart = `Re-registering restarts ${input.hostName}: its OS service is booted out and registered again.`;
+  const restart = i18n.t(
+    "Re-registering restarts {{name}}: its OS service is booted out and registered again.",
+    { ns: "panels", name: input.hostName },
+  );
   const copy = describeHostBusy({
     breakdown: input.settledBusyBreakdown,
     busySessionCount: input.settledBusySessionCount,
     busy: input.settledBusy,
   });
   if (copy.sentence === null) {
-    return `${restart} Any work running on it right now will be interrupted.`;
+    return i18n.t(
+      "{{sentence}} Any work running on it right now will be interrupted.",
+      { ns: "panels", sentence: restart },
+    );
   }
   return `${restart} ${copy.sentence}`;
 }
@@ -399,9 +414,10 @@ function describeRegisterConfirm(input: {
 function OsServiceHeading(props: {
   readonly description: string | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div className="flex flex-col gap-0.5">
-      <div className="font-medium text-foreground">OS service</div>
+      <div className="font-medium text-foreground">{t("OS service")}</div>
       {props.description === null ? null : (
         <p
           className="text-ui-sm text-muted-foreground"

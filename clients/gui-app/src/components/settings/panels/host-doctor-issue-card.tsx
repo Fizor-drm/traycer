@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import {
   copyTerminalCommand,
@@ -22,6 +23,7 @@ interface HostDoctorIssueCardProps {
 export function HostDoctorIssueCard(props: HostDoctorIssueCardProps) {
   const { issue, expanded, recurrenceLocked, fixPendingCode, onFix, onToggle } =
     props;
+  const { t } = useTranslation("panels");
   const issueFixPending = fixPendingCode === issue.code;
   return (
     <div
@@ -68,7 +70,7 @@ export function HostDoctorIssueCard(props: HostDoctorIssueCardProps) {
                 size="sm"
                 onClick={() => copyTerminalCommand(issue.terminalCommand ?? "")}
               >
-                {modLabel()} Open in Terminal
+                {modLabel()} {t("Open in Terminal")}
               </Button>
             ) : null}
             <Button
@@ -76,7 +78,7 @@ export function HostDoctorIssueCard(props: HostDoctorIssueCardProps) {
               size="sm"
               onClick={() => onToggle(issue.code)}
             >
-              {expanded ? "Hide details" : "Show details"}
+              {expanded ? t("Hide details") : t("Show details")}
             </Button>
           </div>
           {expanded && issue.terminalCommand !== null ? (

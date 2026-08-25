@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { formatPackageManagerSource } from "@/components/settings/panels/host-settings-panel-model";
 import { runnerQueryKeys } from "@/lib/query-keys/runner-mutation-keys";
@@ -23,17 +24,21 @@ export function PackageManagerUpgradeHint(
   props: PackageManagerUpgradeHintProps,
 ) {
   const { hint } = props;
+  const { t } = useTranslation("panels");
   return (
     <output
       data-testid="settings-host-package-manager-upgrade-hint"
       className="flex flex-col gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-5 py-3 text-ui-sm text-amber-950 dark:text-amber-100"
     >
       <div>
-        Your {formatPackageManagerSource(hint.source)} install of{" "}
-        <span className="font-mono">traycer</span> is older than the bundled CLI
-        (installed <span className="font-mono">v{hint.installedVersion}</span>,
-        bundled <span className="font-mono">v{hint.bundledVersion}</span>). Run
-        the upgrade command below to update it.
+        {t(
+          "Your {{source}} install of traycer is older than the bundled CLI (installed v{{installed}}, bundled v{{bundled}}). Run the upgrade command below to update it.",
+          {
+            source: formatPackageManagerSource(hint.source),
+            installed: hint.installedVersion,
+            bundled: hint.bundledVersion,
+          },
+        )}
       </div>
       <pre
         data-testid="settings-host-package-manager-upgrade-command"

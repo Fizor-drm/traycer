@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import {
   describeOutcome,
@@ -28,6 +29,7 @@ export interface BootstrapAttemptDetailsProps {
 export function BootstrapAttemptDetails(
   props: BootstrapAttemptDetailsProps,
 ): ReactNode {
+  const { t } = useTranslation("common");
   const { attempt, outcome } = props.summary;
   const shell = attempt.fields.shell ?? null;
   const argsField = attempt.fields.args ?? null;
@@ -44,7 +46,7 @@ export function BootstrapAttemptDetails(
     >
       {shell !== null ? (
         <div className="flex flex-col">
-          <span className="text-foreground/70">Last attempt</span>
+          <span className="text-foreground/70">{t("Last attempt")}</span>
           <code className="break-all font-mono text-ui-xs">
             {shell}
             {argsField !== null ? ` ${argsField}` : ""}
@@ -69,11 +71,11 @@ export function BootstrapAttemptDetails(
           ) : null}
         </div>
       ) : (
-        <span>Host never reported a terminal status.</span>
+        <span>{t("Host never reported a terminal status.")}</span>
       )}
       {props.bootstrapLogPath !== null ? (
         <div className="flex flex-col">
-          <span className="text-foreground/70">Full log</span>
+          <span className="text-foreground/70">{t("Full log")}</span>
           <code
             data-testid="local-host-bootstrap-log-path"
             className="break-all font-mono text-ui-xs"

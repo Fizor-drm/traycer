@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, FolderOpen } from "lucide-react";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
@@ -16,6 +17,7 @@ import {
   supportBridgeQueryScopeId,
 } from "@/lib/query-keys/runner-mutation-keys";
 import { toastFromRunnerError } from "@/lib/runner-error-toast";
+import { i18n } from "@/lib/i18n/init-i18n";
 import type {
   DesktopSupportBridge,
   DesktopSupportLogDescriptor,
@@ -58,10 +60,11 @@ export function LogInfoLine(props: {
 export function RecentLogsFrame(props: {
   readonly children: ReactNode;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-1.5">
       <h2 className="shrink-0 px-1 font-semibold text-ui-xs text-muted-foreground">
-        Recent logs · Last {LOG_TAIL_LINES} lines
+        {t("Recent logs · Last {{count}} lines", { count: LOG_TAIL_LINES })}
       </h2>
       <div
         className="min-h-0 max-h-full overflow-y-auto rounded-lg border border-border/60 bg-card/40"
@@ -78,6 +81,7 @@ export function BridgeLogEntry(props: {
   readonly support: DesktopSupportBridge;
 }): ReactNode {
   const { entry, support } = props;
+  const { t } = useTranslation("panels");
   const [open, setOpen] = useState(false);
 
   const tailQuery = useQuery(
@@ -97,7 +101,10 @@ export function BridgeLogEntry(props: {
     mutationKey: runnerMutationKeys.revealLog(),
     mutationFn: () => support.revealLog(entry.target),
     onError: (error) =>
-      toastFromRunnerError(error, "Couldn't open the log file"),
+      toastFromRunnerError(
+        error,
+        i18n.t("Couldn't open the log file", { ns: "panels" }),
+      ),
   });
 
   let tail: LogTailView = { status: "loading" };
@@ -132,7 +139,7 @@ export function BridgeLogEntry(props: {
           ) : (
             <FolderOpen />
           )}
-          Reveal
+          {t("Reveal")}
         </Button>
       }
     />
@@ -149,17 +156,18 @@ export function DiagnosticsLogEntryFrame(props: {
   readonly action: ReactNode;
 }): ReactNode {
   const { target, label, open, tail } = props;
+  const { t } = useTranslation("panels");
   const Chevron = open ? ChevronUp : ChevronDown;
 
   const lines = tail.status === "ready" ? tail.lines : [];
   const copyValue = lines.join("\n");
-  let tailText = "Loading log output…";
+  let tailText = t("Loading log output…");
   if (tail.status === "error") {
-    tailText = "Couldn't load log output.";
+    tailText = t("Couldn't load log output.");
   } else if (tail.status === "missing") {
-    tailText = "This log file is no longer there.";
+    tailText = t("This log file is no longer there.");
   } else if (tail.status === "ready") {
-    tailText = lines.length === 0 ? "Log file is empty." : copyValue;
+    tailText = lines.length === 0 ? t("Log file is empty.") : copyValue;
   }
 
   return (
@@ -182,8 +190,8 @@ export function DiagnosticsLogEntryFrame(props: {
           {open ? (
             <CopyTextButton
               value={copyValue}
-              label="Copy"
-              ariaLabel={`Copy ${label} log`}
+              label={t("Copy")}
+              ariaLabel={t("Copy {{label}} log", { label })}
               disabled={copyValue.length === 0}
             />
           ) : null}
@@ -201,10 +209,10 @@ export function DiagnosticsLogEntryFrame(props: {
           {tail.status === "error" ? (
             <ReportIssueAction
               context={createReportIssueContext({
-                title: "Couldn't load log output",
+                title: t("Couldn't load log output"),
                 message: null,
                 code: null,
-                source: "Diagnostics",
+                source: t("Diagnostics"),
               })}
               presentation="icon"
               className={undefined}

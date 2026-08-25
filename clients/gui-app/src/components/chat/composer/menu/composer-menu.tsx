@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { RemoveScroll } from "react-remove-scroll";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
@@ -57,7 +58,6 @@ const SLASH_MENU_COPY = {
   empty: "No matching commands",
 };
 const LOAD_FAILED_LABEL = "Couldn't load commands";
-
 // Open-time preference only: how much room a side needs before it is worth
 // opening into. The rendered menu routinely exceeds this - a full roster of
 // files or terminals grows the list to its `max-h` viewport cap - and that is
@@ -178,6 +178,7 @@ function ComposerMenuPortal(props: ComposerMenuPortalProps) {
     stepChrome,
     menuId,
   } = props;
+  const { t } = useTranslation("canvas");
   const listRef = useRef<HTMLDivElement | null>(null);
   const floatingRef = useRef<HTMLDivElement | null>(null);
   const previewPanelRef = useRef<HTMLDivElement | null>(null);
@@ -274,7 +275,7 @@ function ComposerMenuPortal(props: ComposerMenuPortalProps) {
   const headerLabel = copy.header;
   // A step can say something truer than the provider's generic copy - an empty
   // GitHub scope is not "no matching pull requests".
-  const emptyLabel = chrome?.emptyLabel ?? copy.empty;
+  const emptyLabel = chrome?.emptyLabel ?? t(copy.empty);
   const dialogContentShard = useMemo(() => activeDialogContentShard(), []);
   const removeScrollShards = useMemo(
     () =>
@@ -331,7 +332,7 @@ function ComposerMenuPortal(props: ComposerMenuPortalProps) {
         >
           <div className="flex min-w-0 shrink items-center gap-1.5">
             <div className="min-w-0 truncate text-overline font-medium uppercase text-muted-foreground/70">
-              {headerLabel}
+              {t(headerLabel)}
             </div>
             {fetching && !loading ? (
               <AgentSpinningDots
@@ -482,6 +483,7 @@ interface ComposerMenuBodyProps {
 }
 
 function ComposerMenuBody(props: ComposerMenuBodyProps): ReactNode {
+  const { t } = useTranslation("canvas");
   const {
     renderedItems,
     loading,
@@ -499,7 +501,7 @@ function ComposerMenuBody(props: ComposerMenuBodyProps): ReactNode {
         variant="orbit"
         className="text-muted-foreground/80"
       />
-      Loading…
+      {t("Loading…")}
     </div>
   );
   if (loading && renderedItems.length === 0) return loadingRow;
@@ -509,7 +511,7 @@ function ComposerMenuBody(props: ComposerMenuBodyProps): ReactNode {
   if (loadFailed && renderedItems.length === 0) {
     return (
       <div className="flex items-center justify-between gap-2 px-3 py-2 text-ui-xs text-muted-foreground/80">
-        <span className="min-w-0 truncate">{LOAD_FAILED_LABEL}</span>
+        <span className="min-w-0 truncate">{t(LOAD_FAILED_LABEL)}</span>
         <Button
           type="button"
           variant="ghost"
@@ -522,7 +524,7 @@ function ComposerMenuBody(props: ComposerMenuBodyProps): ReactNode {
             pickerStore.getState().retryLoad?.();
           }}
         >
-          Retry
+          {t("Retry")}
         </Button>
       </div>
     );
@@ -579,7 +581,7 @@ function ComposerMenuBody(props: ComposerMenuBodyProps): ReactNode {
           // preview panel that carries the reason is `aria-hidden` and drops
           // out of view entirely when it cannot fit. Without this the reason
           // reaches no screen reader at all.
-          <span className="sr-only">{`Disabled. ${item.disabledReason}`}</span>
+          <span className="sr-only">{t("Disabled. {{reason}}", { reason: item.disabledReason })}</span>
         )}
       </div>
     );

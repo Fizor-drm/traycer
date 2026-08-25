@@ -1,4 +1,5 @@
 import { Activity, memo, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import type { HostScope } from "@/components/settings/host-scope/use-host-scope";
@@ -47,13 +48,18 @@ export function HostScopeGate(props: {
   readonly skeleton: ReactNode;
 }): ReactNode {
   const { scope } = props;
+  const { t } = useTranslation("panels");
 
   if (scope.status === "vanished") {
     return (
       <HostScopeNotice
         tone="warn"
-        title={`${scope.hostLabel} is no longer registered`}
-        detail="It was removed from your account, or signed out. Nothing here can act on it."
+        title={t("{{label}} is no longer registered", {
+          label: scope.hostLabel,
+        })}
+        detail={t(
+          "It was removed from your account, or signed out. Nothing here can act on it.",
+        )}
         action={
           <Button
             type="button"
@@ -62,7 +68,9 @@ export function HostScopeGate(props: {
             onClick={scope.returnToActive}
             data-testid="host-scope-return-to-active"
           >
-            Back to {scope.activeHost?.name ?? "your active host"}
+            {scope.activeHost
+              ? t("Back to {{name}}", { name: scope.activeHost.name })
+              : t("Back to your active host")}
           </Button>
         }
         testId="host-scope-vanished"
@@ -79,8 +87,10 @@ export function HostScopeGate(props: {
     return (
       <HostScopeNotice
         tone="warn"
-        title="Couldn't load your hosts"
-        detail="The list of machines on your account didn't come back. Nothing here is missing — it just hasn't loaded."
+        title={t("Couldn't load your hosts")}
+        detail={t(
+          "The list of machines on your account didn't come back. Nothing here is missing — it just hasn't loaded.",
+        )}
         action={
           <Button
             type="button"
@@ -89,7 +99,7 @@ export function HostScopeGate(props: {
             onClick={scope.retryLists}
             data-testid="host-scope-retry-lists"
           >
-            Try again
+            {t("Try again")}
           </Button>
         }
         testId="host-scope-lists-failed"
@@ -101,11 +111,15 @@ export function HostScopeGate(props: {
     return (
       <HostScopeNotice
         tone="idle"
-        title={scope.isLoading ? "Finding your hosts…" : "No hosts yet"}
+        title={
+          scope.isLoading ? t("Finding your hosts…") : t("No hosts yet")
+        }
         detail={
           scope.isLoading
             ? null
-            : "Install the Traycer host on a computer and sign in — it appears here on its own."
+            : t(
+                "Install the Traycer host on a computer and sign in — it appears here on its own.",
+              )
         }
         action={null}
         testId="host-scope-empty"
@@ -167,6 +181,7 @@ function UnreachableNotice(props: {
   readonly host: HostScopeOption;
 }): ReactNode {
   const { scope, host } = props;
+  const { t } = useTranslation("panels");
   // A plan-gated route is not a broken one. The server would refuse the
   // attach (`plan_restricted`) while the host keeps working on its own
   // machine — so the remedy is an upgrade, and presenting it as "can't
@@ -177,8 +192,12 @@ function UnreachableNotice(props: {
     return (
       <HostScopeNotice
         tone="warn"
-        title={`Connecting to ${host.name} needs a paid plan`}
-        detail="It keeps working on its own machine, and account-level settings here still apply. This app just can't attach to it remotely on the current plan."
+        title={t("Connecting to {{name}} needs a paid plan", {
+          name: host.name,
+        })}
+        detail={t(
+          "It keeps working on its own machine, and account-level settings here still apply. This app just can't attach to it remotely on the current plan.",
+        )}
         action={<PlanRestrictedUpgradeAction />}
         testId="host-scope-plan-restricted"
       />
@@ -187,14 +206,16 @@ function UnreachableNotice(props: {
   return (
     <HostScopeNotice
       tone="warn"
-      title={`Can't reach ${host.name} from here`}
+      title={t("Can't reach {{name}} from here", { name: host.name })}
       // The two causes read the same to a user but have different fixes, so
       // the copy names which one this is rather than offering a generic
       // "try again" against a route that does not exist.
       detail={
         host.registered && !host.connectable
-          ? "This host is in your account, but this app has no connection to it right now. Its status above is from your account, not a live link."
-          : "No connection is available to this host."
+          ? t(
+              "This host is in your account, but this app has no connection to it right now. Its status above is from your account, not a live link.",
+            )
+          : t("No connection is available to this host.")
       }
       // Gated on `!scope.isViewingActive` — and that arm is live now, though
       // it genuinely was dead when this was written. The reasoning then was
@@ -215,7 +236,9 @@ function UnreachableNotice(props: {
             onClick={scope.returnToActive}
             data-testid="host-scope-return-to-active"
           >
-            Back to {scope.activeHost?.name ?? "your active host"}
+            {scope.activeHost
+              ? t("Back to {{name}}", { name: scope.activeHost.name })
+              : t("Back to your active host")}
           </Button>
         )
       }
@@ -262,6 +285,7 @@ function HostScopeNotice(props: {
 export function HostScopeConnecting(props: {
   readonly hostName: string;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div
       className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/40 px-5 py-6 text-ui-sm text-muted-foreground"
@@ -272,7 +296,7 @@ export function HostScopeConnecting(props: {
         variant="orbit"
         className="text-muted-foreground"
       />
-      Connecting to {props.hostName}…
+      {t("Connecting to {{name}}…", { name: props.hostName })}
     </div>
   );
 }

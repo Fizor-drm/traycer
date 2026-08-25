@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { HostBusyBreakdown } from "@traycer/protocol/host/status/index";
 import { describeHostBusy } from "@/components/host/host-restart-copy";
 import {
@@ -117,6 +118,7 @@ export function HostIdentityCard(props: {
   readonly children: ReactNode;
 }): ReactNode {
   const { host } = props;
+  const { t } = useTranslation("panels");
   const platform = formatPlatform(host.platform);
   const arch = formatArchitecture(host.platform);
   const version = formatHostVersion(props.version);
@@ -131,7 +133,7 @@ export function HostIdentityCard(props: {
     <section
       className="overflow-hidden rounded-xl border border-border/60 bg-card/40"
       data-testid="host-identity-card"
-      aria-label={`${props.displayName} overview`}
+      aria-label={t("{{name}} overview", { name: props.displayName })}
     >
       <div className="flex min-w-0 items-start gap-3 px-5 py-4">
         <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground/6 text-muted-foreground">
@@ -157,7 +159,7 @@ export function HostIdentityCard(props: {
                   remote host now gets a tag too — the absence of one was never
                   a deliberate signal, just the local-only branch showing. */}
               <HostTag
-                label={host.isLocalMachine ? "Local" : "Remote"}
+                label={host.isLocalMachine ? t("Local") : t("Remote")}
                 tone={undefined}
               />
             </div>

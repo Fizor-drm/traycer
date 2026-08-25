@@ -4,6 +4,7 @@
  */
 import { useDraggable } from "@dnd-kit/core";
 import { v4 as uuidv4 } from "uuid";
+import { useTranslation } from "react-i18next";
 import {
   useEpicCreateArtifact,
   useEpicDeleteArtifact,
@@ -431,6 +432,7 @@ export function ArtifactReadLifecycleBridge(props: {
 // a stable order; child row complexity is isolated below.
 // eslint-disable-next-line complexity
 export function ArtifactTreePanelBody(props: ArtifactTreePanelBodyProps) {
+  const { t } = useTranslation("canvas");
   const { epicId, tabId } = props;
   const panelId: RootCreatePanelId = "artifacts";
   const sort = useArtifactSort(epicId);
@@ -547,7 +549,7 @@ export function ArtifactTreePanelBody(props: ArtifactTreePanelBodyProps) {
     panelContent = (
       <SidebarPanelEmptyState
         icon={FileText}
-        title="No artifacts yet."
+        title={t("No artifacts yet.")}
         description={null}
         testId="epic-artifact-sidebar-empty"
       />
@@ -556,14 +558,14 @@ export function ArtifactTreePanelBody(props: ArtifactTreePanelBodyProps) {
     panelContent = (
       <SidebarPanelEmptyState
         icon={FileText}
-        title="No matches for the current filters."
-        description="Status, Type, or Read state may be hiding artifacts."
+        title={t("No matches for the current filters.")}
+        description={t("Status, Type, or Read state may be hiding artifacts.")}
         testId="epic-artifact-sidebar-filter-empty"
       />
     );
   } else {
     panelContent = (
-      <ul role="tree" aria-label="Epic artifacts tree" className="space-y-0.5">
+      <ul role="tree" aria-label={t("Epic artifacts tree")} className="space-y-0.5">
         {localRootPending !== null && (
           <PendingCreateRow depth={0} name={localRootPending.name} />
         )}
@@ -1158,6 +1160,7 @@ interface ArtifactNodeShellProps {
 }
 
 function ArtifactNodeShell(props: ArtifactNodeShellProps) {
+  const { t } = useTranslation("canvas");
   const {
     epicId,
     tabId,
@@ -1320,10 +1323,13 @@ function ArtifactNodeShell(props: ArtifactNodeShellProps) {
       <ConfirmDestructiveDialog
         open={confirmDeleteOpen}
         onOpenChange={onConfirmDeleteOpenChange}
-        title={`Delete ${artifactType} "${nodeName}"?`}
-        description="This action cannot be undone."
+        title={t('Delete {{noun}} "{{name}}"?', {
+          noun: t(artifactType),
+          name: nodeName,
+        })}
+        description={t("This action cannot be undone.")}
         cascadeSummary={cascadeSummary}
-        actionLabel="Delete"
+        actionLabel={t("Delete")}
         isPending={deletePending}
         onConfirm={onConfirmDelete}
       />
@@ -1399,6 +1405,7 @@ function SidebarRowCheckbox(props: {
   readonly isSelected: boolean;
   readonly onToggleSelection: (id: string) => void;
 }) {
+  const { t } = useTranslation("canvas");
   const { inputId, nodeId, nodeName, isSelected, onToggleSelection } = props;
   return (
     <span className="relative flex size-4 shrink-0">
@@ -1406,7 +1413,7 @@ function SidebarRowCheckbox(props: {
         id={inputId}
         type="checkbox"
         checked={isSelected}
-        aria-label={`Select ${nodeName}`}
+        aria-label={t("Select {{name}}", { name: nodeName })}
         data-testid={`epic-sidebar-select-${nodeId}`}
         className="peer absolute inset-0 m-0 size-4 cursor-pointer opacity-0"
         onChange={() => {
@@ -1447,6 +1454,7 @@ interface ArtifactRenameRowProps {
 }
 
 function ArtifactRenameRow(props: ArtifactRenameRowProps) {
+  const { t } = useTranslation("canvas");
   const {
     epicId,
     depth,
@@ -1491,7 +1499,7 @@ function ArtifactRenameRow(props: ArtifactRenameRowProps) {
         onKeyDown={onKeyDown}
         disabled={renamePending}
         className="min-w-0 flex-1 border-0 bg-transparent text-ui-sm text-foreground outline-none focus:ring-1 focus:ring-ring rounded px-1"
-        aria-label={`Rename ${nodeName}`}
+        aria-label={t("Rename {{name}}", { name: nodeName })}
         data-testid={`epic-sidebar-rename-input-${nodeId}`}
       />
       {renamePending ? (
@@ -1734,13 +1742,16 @@ function ArtifactUnreadMarker(props: {
   readonly nodeId: string;
   readonly variant: ArtifactUnreadMarkerVariant | null;
 }) {
+  const { t } = useTranslation("canvas");
   if (props.variant === null) {
     // Reserve the bar's footprint so the icon column stays aligned and a row
     // never shifts horizontally as it toggles read/unread.
     return <span aria-hidden className="h-4 w-0.5 shrink-0" />;
   }
   const label =
-    props.variant === "self" ? "Unread artifact" : "Contains unread artifacts";
+    props.variant === "self"
+      ? t("Unread artifact")
+      : t("Contains unread artifacts");
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -1768,6 +1779,7 @@ interface ArtifactStatusDotProps {
 }
 
 function ArtifactStatusDot(props: ArtifactStatusDotProps) {
+  const { t } = useTranslation("canvas");
   const { nodeId, statusValue, showStatusDot } = props;
   if (statusValue === null || !showStatusDot) return null;
   return (
@@ -1782,7 +1794,11 @@ function ArtifactStatusDot(props: ArtifactStatusDotProps) {
           aria-hidden
         />
       </TooltipTrigger>
-      <TooltipContent>{STATUS_LABELS[statusValue] ?? "Unknown"}</TooltipContent>
+      <TooltipContent>
+        {Object.hasOwn(STATUS_LABELS, statusValue)
+          ? t(STATUS_LABELS[statusValue])
+          : t("Unknown")}
+      </TooltipContent>
     </Tooltip>
   );
 }
@@ -1797,6 +1813,7 @@ interface ArtifactAddChildButtonProps {
 }
 
 function ArtifactAddChildButton(props: ArtifactAddChildButtonProps) {
+  const { t } = useTranslation("canvas");
   const {
     epicId,
     nodeId,
@@ -1806,7 +1823,9 @@ function ArtifactAddChildButton(props: ArtifactAddChildButtonProps) {
     onAdd,
   } = props;
   const disabled = !canMutate || addChildIsPending;
-  const disabledTooltip = isDisconnected ? "Reconnect to make changes." : null;
+  const disabledTooltip = isDisconnected
+    ? t("Reconnect to make changes.")
+    : null;
   const { ariaDisabled, nativeDisabled } = resolveDisabledPresentation(
     disabled,
     disabledTooltip,
@@ -1836,7 +1855,7 @@ function ArtifactAddChildButton(props: ArtifactAddChildButtonProps) {
         type="button"
         variant="ghost"
         size="icon-xs"
-        aria-label="Add child artifact"
+        aria-label={t("Add child artifact")}
         aria-disabled={ariaDisabled ? true : undefined}
         data-testid={`epic-sidebar-add-${nodeId}`}
         className={cn(
@@ -1871,6 +1890,7 @@ interface ArtifactRowMenuEntriesProps {
 function useArtifactRowMenuEntries(
   props: ArtifactRowMenuEntriesProps,
 ): ReadonlyArray<SidebarRowMenuEntry> {
+  const { t } = useTranslation("canvas");
   const exportArtifacts = useEpicExportArtifacts();
   const exportOne = (format: "markdown" | "pdf"): void => {
     exportArtifacts.mutate({
@@ -1893,7 +1913,7 @@ function useArtifactRowMenuEntries(
     {
       kind: "item",
       id: "export-markdown",
-      label: "Export as Markdown",
+      label: t("Export as Markdown"),
       icon: exportIcon,
       disabled: exportArtifacts.isPending,
       disabledTooltip: null,
@@ -1907,7 +1927,7 @@ function useArtifactRowMenuEntries(
     {
       kind: "item",
       id: "export-pdf",
-      label: "Export as PDF",
+      label: t("Export as PDF"),
       icon: exportIcon,
       disabled: exportArtifacts.isPending,
       disabledTooltip: null,
@@ -1922,7 +1942,7 @@ function useArtifactRowMenuEntries(
     {
       kind: "item",
       id: "rename",
-      label: "Rename",
+      label: t("Rename"),
       icon: <Pencil className="size-3.5" />,
       disabled: !props.canMutate,
       disabledTooltip: null,
@@ -1937,7 +1957,7 @@ function useArtifactRowMenuEntries(
     {
       kind: "item",
       id: "delete",
-      label: "Delete",
+      label: t("Delete"),
       icon: <Trash2 className="size-3.5" />,
       disabled: !props.canMutate,
       disabledTooltip: null,
@@ -1956,6 +1976,7 @@ function ArtifactMoreMenu(props: {
   readonly nodeName: string;
   readonly entries: ReadonlyArray<SidebarRowMenuEntry>;
 }) {
+  const { t } = useTranslation("canvas");
   const { nodeId, nodeName, entries } = props;
   return (
     <DropdownMenu>
@@ -1964,7 +1985,7 @@ function ArtifactMoreMenu(props: {
           type="button"
           variant="ghost"
           size="icon-xs"
-          aria-label={`Artifact actions for ${nodeName}`}
+          aria-label={t("Artifact actions for {{name}}", { name: nodeName })}
           data-testid={`epic-sidebar-more-${nodeId}`}
           className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity focus-visible:opacity-100 group-hover/tree-item:opacity-100 aria-expanded:opacity-100"
           onClick={(event) => {

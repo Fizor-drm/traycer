@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
 import type { WorktreeDeletePhase } from "@traycer/protocol/host/worktree-delete-stream";
 import type { WorktreeHostEntry } from "@traycer/protocol/host/index";
@@ -37,16 +39,17 @@ export function WorktreeDeleteProgressModal(
   props: WorktreeDeleteProgressModalProps,
 ): ReactNode {
   const { target, run, onClose } = props;
+  const { t } = useTranslation("panels");
   const inProgress = run.status === "queued" || run.status === "running";
-  const branch = target.branch ?? "detached HEAD";
-  const errorMessage = errorMessageFor(run);
+  const branch = target.branch ?? t("detached HEAD");
+  const errorMessage = errorMessageFor(run, t);
 
   const steps: StepDefinition[] = run.hasTeardown
     ? [
-        { key: "teardown", label: "Run teardown script" },
-        { key: "remove", label: "Remove worktree" },
+        { key: "teardown", label: t("Run teardown script") },
+        { key: "remove", label: t("Remove worktree") },
       ]
-    : [{ key: "remove", label: "Remove worktree" }];
+    : [{ key: "remove", label: t("Remove worktree") }];
 
   return (
     <output
@@ -57,10 +60,10 @@ export function WorktreeDeleteProgressModal(
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <p className="font-heading text-ui-sm leading-none font-medium">
-            {titleFor(run)}
+            {titleFor(run, t)}
           </p>
           <p className="text-ui-xs wrap-anywhere text-muted-foreground">
-            {subtitleFor(run, branch)}
+            {subtitleFor(run, branch, t)}
           </p>
         </div>
         <Button
@@ -71,7 +74,7 @@ export function WorktreeDeleteProgressModal(
           data-testid="worktree-delete-close-button"
           className="shrink-0"
         >
-          {inProgress ? "Run in background" : "Close"}
+          {inProgress ? t("Run in background") : t("Close")}
         </Button>
       </div>
 
@@ -94,10 +97,10 @@ export function WorktreeDeleteProgressModal(
           <span className="min-w-0 flex-1">{errorMessage}</span>
           <ReportIssueAction
             context={createReportIssueContext({
-              title: "Could not delete worktree",
+              title: t("Could not delete worktree"),
               message: null,
               code: null,
-              source: "Worktrees",
+              source: t("Worktrees"),
             })}
             presentation="icon"
             className="-my-1 shrink-0 text-current"
@@ -188,6 +191,7 @@ function TeardownLog(props: {
   readonly log: readonly LogSegment[];
   readonly active: boolean;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const [open, setOpen] = useState<boolean>(false);
   const Icon = open ? ChevronUp : ChevronDown;
   return (
@@ -199,7 +203,7 @@ function TeardownLog(props: {
         data-testid="worktree-delete-log-toggle"
         className="inline-flex items-center gap-1 self-start text-ui-xs text-muted-foreground hover:text-foreground"
       >
-        <span>{open ? "Hide output" : "Show output"}</span>
+        <span>{open ? t("Hide output") : t("Show output")}</span>
         <Icon className="size-3" />
       </button>
       {open ? <TeardownLogBody log={props.log} active={props.active} /> : null}
@@ -211,6 +215,7 @@ function TeardownLogBody(props: {
   readonly log: readonly LogSegment[];
   readonly active: boolean;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const ref = useRef<HTMLPreElement | null>(null);
   useEffect(() => {
     const el = ref.current;
@@ -221,7 +226,9 @@ function TeardownLogBody(props: {
   if (props.log.length === 0) {
     return (
       <p className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-ui-xs text-muted-foreground">
-        {props.active ? "Waiting for teardown output…" : "No output."}
+        {props.active
+          ? t("Waiting for teardown output…")
+          : t("No output.")}
       </p>
     );
   }
@@ -274,38 +281,53 @@ function resolveStepState(
   return "pending";
 }
 
-function titleFor(run: WorktreeDeleteRunState): string {
+function titleFor(
+  run: WorktreeDeleteRunState,
+  t: TFunction<"panels">,
+): string {
   if (run.status === "complete") {
-    return run.deleted ? "Worktree deleted" : "Couldn't delete worktree";
+    return run.deleted ? t("Worktree deleted") : t("Couldn't delete worktree");
   }
   if (run.status === "failed") {
-    return "Couldn't delete worktree";
+    return t("Couldn't delete worktree");
   }
   if (run.status === "queued") {
-    return "Delete queued";
+    return t("Delete queued");
   }
-  return "Deleting worktree";
+  return t("Deleting worktree");
 }
 
-function subtitleFor(run: WorktreeDeleteRunState, branch: string): string {
+function subtitleFor(
+  run: WorktreeDeleteRunState,
+  branch: string,
+  t: TFunction<"panels">,
+): string {
   if (run.status === "complete" && run.deleted) {
-    return `${branch} was removed.`;
+    return t("{{branch}} was removed.", { branch });
   }
   if (run.status === "running") {
-    return `Removing ${branch}. Run it in the background to keep working.`;
+    return t(
+      "Removing {{branch}}. Run it in the background to keep working.",
+      { branch },
+    );
   }
   if (run.status === "queued") {
-    return `${branch} will start when earlier deletes finish.`;
+    return t("{{branch}} will start when earlier deletes finish.", { branch });
   }
   return branch;
 }
 
-function errorMessageFor(run: WorktreeDeleteRunState): string | null {
+function errorMessageFor(
+  run: WorktreeDeleteRunState,
+  t: TFunction<"panels">,
+): string | null {
   if (run.status === "failed") {
     return run.error;
   }
   if (run.status === "complete" && !run.deleted) {
-    return "Couldn't remove the worktree. It may still be in use - refresh and try again.";
+    return t(
+      "Couldn't remove the worktree. It may still be in use - refresh and try again.",
+    );
   }
   return null;
 }

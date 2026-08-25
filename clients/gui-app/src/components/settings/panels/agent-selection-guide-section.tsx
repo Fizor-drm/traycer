@@ -4,6 +4,7 @@
  */
 import type { ReactNode } from "react";
 import { useEffect, useReducer, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Check, TriangleAlert } from "lucide-react";
 import {
   AGENT_SELECTION_GUIDE_DESCRIPTION,
@@ -162,6 +163,7 @@ export function AgentSelectionGuideSection() {
 
 function AgentSelectionGuideSectionInner(props: { readonly scope: HostScope }) {
   const { scope } = props;
+  const { t } = useTranslation("panels");
   // Host-scoped file: remount the editor with fresh content whenever the
   // scoped host changes so one host's edits never carry to another. The query
   // mounts only inside the gate, so while the scope is not usable it is held
@@ -175,13 +177,13 @@ function AgentSelectionGuideSectionInner(props: { readonly scope: HostScope }) {
     body = (
       <AgentSelectionGuideMessage>
         <div className="text-ui-sm text-muted-foreground">
-          Couldn&apos;t load agent instructions for this host.
+          {t("Couldn't load agent instructions for this host.")}
           <ReportIssueAction
             context={createReportIssueContext({
-              title: "Couldn't load agent instructions",
+              title: t("Couldn't load agent instructions"),
               message: null,
               code: null,
-              source: "Agent instructions",
+              source: t("Agent instructions"),
             })}
             presentation="link"
             className="ml-1 h-auto p-0"
@@ -240,6 +242,7 @@ function AgentsGuideEditor(props: {
   readonly generatedDefaultContent: string;
 }) {
   const { hostLabel, initialContent, generatedDefaultContent } = props;
+  const { t } = useTranslation("panels");
   const setMutation = useAgentSelectionGuideSetGlobalMutation();
   const resetMutation = useAgentSelectionGuideResetGlobalMutation();
   const [state, dispatch] = useReducer(
@@ -383,7 +386,7 @@ function AgentsGuideEditor(props: {
         onBlur={onBlur}
         disabled={disabled}
         placeholder={undefined}
-        ariaLabel="Global agent selection instructions"
+        ariaLabel={t("Global agent selection instructions")}
         testId="agents-selection-guide-input"
         editorClassName="flex-1"
         className="h-full"
@@ -399,10 +402,13 @@ function AgentsGuideEditor(props: {
         onOpenChange={(open) =>
           dispatch({ type: "confirm-open-changed", open })
         }
-        title="Revert to default instructions?"
-        description={`This replaces your agent selection instructions with defaults based on the providers currently available on ${hostLabel}. Your custom instructions will be lost.`}
+        title={t("Revert to default instructions?")}
+        description={t(
+          "This replaces your agent selection instructions with defaults based on the providers currently available on {{host}}. Your custom instructions will be lost.",
+          { host: hostLabel },
+        )}
         cascadeSummary={null}
-        actionLabel="Revert to default"
+        actionLabel={t("Revert to default")}
         isPending={state.resetInFlight}
         onConfirm={onRevert}
       />
@@ -414,11 +420,12 @@ function SaveStatus(props: {
   readonly saving: boolean;
   readonly error: boolean;
 }) {
+  const { t } = useTranslation("panels");
   if (props.error) {
     return (
       <span className="inline-flex items-center gap-1.5 text-ui-xs text-destructive">
         <TriangleAlert className="size-3.5" />
-        Not saved
+        {t("Not saved")}
       </span>
     );
   }
@@ -430,14 +437,14 @@ function SaveStatus(props: {
           testId="agents-selection-guide-saving-spinner"
           variant={undefined}
         />
-        Saving…
+        {t("Saving…")}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5 text-ui-xs text-muted-foreground">
       <Check className="size-3.5 text-[var(--term-ansi-green)]" />
-      Saved
+      {t("Saved")}
     </span>
   );
 }

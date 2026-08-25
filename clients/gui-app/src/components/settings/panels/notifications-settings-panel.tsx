@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import type {
   HostNotificationChannelId,
@@ -131,6 +133,7 @@ function NotificationsSettingsPanelContent(props: {
   readonly saveHooks: NotificationHooksSaveMutation;
 }) {
   const compact = useSettingsDensity() === "compact";
+  const { t } = useTranslation("panels");
   const { scope } = props;
   const body = (
     <div
@@ -143,12 +146,12 @@ function NotificationsSettingsPanelContent(props: {
         // Was "In-app notifications · Current host" — a title whose only
         // qualifier was the one fact the screen refused to resolve. The sidebar
         // names the host now, so the title is free to name the setting.
-        title="In-app notifications"
+        title={t("In-app notifications")}
         tone="default"
         dataTestId="notifications-severity-policy"
         fill={false}
       >
-        {renderNotificationsSettingsContent(props.configQuery, props.setConfig)}
+        {renderNotificationsSettingsContent(props.configQuery, props.setConfig, t)}
       </SettingsGroup>
       <div className="min-h-0 flex-1">
         {/* Keyed by host. The editor below holds an open hook draft and an
@@ -175,8 +178,10 @@ function NotificationsSettingsPanelContent(props: {
 
   return (
     <SettingsPanelShell
-      title="Notifications"
-      description="What this host surfaces, and what its automation receives."
+      title={t("Notifications")}
+      description={t(
+        "What this host surfaces, and what its automation receives.",
+      )}
       fillHeight
       bodyClassName="overflow-visible rounded-none border-none bg-transparent"
       // The header named the scoped host until the sidebar started doing it a
@@ -201,6 +206,7 @@ function NotificationsSettingsPanelContent(props: {
 function renderNotificationsSettingsContent(
   configQuery: UseQueryResult<NotificationConfig, HostRpcError>,
   setConfig: NotificationSetConfigMutation,
+  t: TFunction<"panels">,
 ): ReactNode {
   const { data, error, isFetching, isLoading } = configQuery;
   if (isLoading) {
@@ -211,7 +217,7 @@ function renderNotificationsSettingsContent(
           testId={undefined}
           variant={undefined}
         />
-        Loading notification settings
+        {t("Loading notification settings")}
       </div>
     );
   }
@@ -219,7 +225,7 @@ function renderNotificationsSettingsContent(
     return (
       <InlineState
         tone="error"
-        title="Couldn't load notification settings"
+        title={t("Couldn't load notification settings")}
         detail={error.message}
       />
     );
@@ -228,8 +234,8 @@ function renderNotificationsSettingsContent(
     return (
       <InlineState
         tone="neutral"
-        title="Notification settings unavailable"
-        detail="Connect to a host to configure delivery."
+        title={t("Notification settings unavailable")}
+        detail={t("Connect to a host to configure delivery.")}
       />
     );
   }
@@ -247,18 +253,21 @@ function NotificationSeverityList(props: {
   readonly configIsFetching: boolean;
   readonly setConfig: NotificationSetConfigMutation;
 }) {
+  const { t } = useTranslation("panels");
   return (
     <>
       {SEVERITY_ROWS.map((severity) => (
         <SettingsRow
           key={severity.id}
-          label={severity.label}
-          description={severity.description}
+          label={t(severity.label)}
+          description={t(severity.description)}
           control={
             <Switch
               checked={matrixValue(props.config, severity.id, "renderer")}
               disabled={props.setConfig.isPending || props.configIsFetching}
-              aria-label={`${severity.label} In-app notifications`}
+              aria-label={t("{{label}} In-app notifications", {
+                label: t(severity.label),
+              })}
               data-testid={`notifications-severity-${severity.id}`}
               onCheckedChange={(checked) => {
                 props.setConfig.mutate(

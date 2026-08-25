@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 import {
   FileAutosaveStatus,
@@ -10,12 +11,13 @@ export function GitDiffEditStatusContent(props: {
   readonly editing: GitDiffEditingModel;
   readonly appearance: FileStatusAppearance;
 }): ReactNode {
+  const { t } = useTranslation("canvas");
   const { editing } = props;
   if (editing.loading && editing.canOfferEdit && !editing.active) {
     return (
       <FileStatusPill
-        label="Preparing editor"
-        description="Loading the full file contents before editing starts."
+        label={t("Preparing editor")}
+        description={t("Loading the full file contents before editing starts.")}
         tone="active"
         busy
         appearance={props.appearance}
@@ -25,7 +27,7 @@ export function GitDiffEditStatusContent(props: {
   if (editing.notice !== null) {
     return (
       <FileStatusPill
-        label="Editor unavailable"
+        label={t("Editor unavailable")}
         description={editing.notice}
         tone="danger"
         busy={false}
@@ -37,8 +39,10 @@ export function GitDiffEditStatusContent(props: {
     <>
       {editing.stale ? (
         <FileStatusPill
-          label="Worktree changed"
-          description="This editor keeps its pinned comparison; saving will verify the file before replacing it."
+          label={t("Worktree changed")}
+          description={t(
+            "This editor keeps its pinned comparison; saving will verify the file before replacing it.",
+          )}
           tone="warning"
           busy={false}
           appearance={props.appearance}

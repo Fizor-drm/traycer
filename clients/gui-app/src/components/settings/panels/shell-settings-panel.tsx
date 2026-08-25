@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Check, Info, RotateCcw } from "lucide-react";
 import {
   defaultShellArgs,
@@ -116,6 +117,7 @@ const SHELL_CONFIG_GATE_METHOD = "config.shell.get";
  * local truth about it to fall back to.
  */
 export function ShellSettingsPanel() {
+  const { t } = useTranslation("panels");
   const scope = useHostScope();
   // Hoisted above the branch, because the branch itself depends on it. The
   // nullable form is load-bearing: `false` is a host that HANDSHAKED without
@@ -155,8 +157,8 @@ export function ShellSettingsPanel() {
 
   const inner = (
     <SettingsPanelShell
-      title="Shell"
-      description={PANEL_DESCRIPTION}
+      title={t("Shell")}
+      description={t(PANEL_DESCRIPTION)}
       bodyClassName="overflow-visible rounded-none border-none bg-transparent"
     >
       <HostScopeGate
@@ -222,19 +224,20 @@ function ShellSettingsPanelOverLocalStore(props: {
   readonly hostName: string;
   readonly reason: LocalConfigFallbackReason;
 }) {
+  const { t } = useTranslation("panels");
   const runnerHost = useRunnerHost();
   const traycerCli = runnerHost.traycerCli;
   if (traycerCli === null) {
     return (
-      <SettingsPanelShell title="Shell" description={PANEL_DESCRIPTION}>
+      <SettingsPanelShell title={t("Shell")} description={t(PANEL_DESCRIPTION)}>
         <NoConfigSourceNotice hostName={props.hostName} />
       </SettingsPanelShell>
     );
   }
   return (
     <SettingsPanelShell
-      title="Shell"
-      description={PANEL_DESCRIPTION}
+      title={t("Shell")}
+      description={t(PANEL_DESCRIPTION)}
       bodyClassName="overflow-visible rounded-none border-none bg-transparent"
     >
       <ShellSettingsPanelOverBridge
@@ -473,6 +476,7 @@ function ShellConfigUnavailable(props: {
   readonly configError: HostRpcError | null;
   readonly onRetryConfig: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (props.configError === null) {
     return (
       <div className={cn(props.compact ? "p-4" : "p-5")}>
@@ -486,7 +490,7 @@ function ShellConfigUnavailable(props: {
       data-testid="shell-config-read-failed"
     >
       <p className="text-ui-sm text-muted-foreground">
-        Couldn&apos;t read this host&apos;s shell settings.
+        {t("Couldn't read this host's shell settings.")}
       </p>
       <Button
         type="button"
@@ -494,7 +498,7 @@ function ShellConfigUnavailable(props: {
         size="sm"
         onClick={props.onRetryConfig}
       >
-        Try again
+        {t("Try again")}
       </Button>
     </div>
   );
@@ -519,13 +523,14 @@ function TerminalShellGroup(props: {
   readonly onRevertFlags: () => void;
 }) {
   const { config } = props;
+  const { t } = useTranslation("panels");
   const showWslCaption =
     config !== undefined &&
     isWindows() &&
     windowsShellCaptionFamily(config.path) === "wsl";
   return (
     <SettingsGroup
-      title="Terminal shell · New terminals"
+      title={t("Terminal shell · New terminals")}
       tone="default"
       dataTestId="terminal-shell-settings"
       fill={false}
@@ -563,10 +568,10 @@ function TerminalShellGroup(props: {
             >
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="text-ui-sm font-medium text-foreground">
-                  Shell program
+                  {t("Shell program")}
                 </div>
                 <p className="text-ui-xs text-muted-foreground">
-                  Pick a shell, or add any program on this machine.
+                  {t("Pick a shell, or add any program on this machine.")}
                 </p>
               </div>
               <div className="flex max-w-full flex-col items-end gap-1.5">
@@ -601,12 +606,16 @@ function TerminalShellGroup(props: {
             >
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="text-ui-sm font-medium text-foreground">
-                  {`Startup flags for ${programName(config.path)}`}
+                  {t("Startup flags for {{program}}", {
+                    program: programName(config.path),
+                  })}
                 </div>
                 <p className="text-ui-xs text-muted-foreground">
                   {isLoginShellFamily(config.path)
-                    ? "“-i -l” loads your full shell profile (PATH, aliases)."
-                    : `Passed to ${programName(config.path)} each time a terminal opens.`}
+                    ? t("“-i -l” loads your full shell profile (PATH, aliases).")
+                    : t("Passed to {{program}} each time a terminal opens.", {
+                        program: programName(config.path),
+                      })}
                 </p>
               </div>
               <div className="flex max-w-full flex-wrap items-center justify-end gap-2">
@@ -626,7 +635,7 @@ function TerminalShellGroup(props: {
                   className="inline-flex items-center gap-1 text-ui-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
                 >
                   <RotateCcw className="size-3" />
-                  Restore default flags
+                  {t("Restore default flags")}
                 </button>
                 <TransientSaveIndicator
                   pending={props.pending ? props.saveTarget === "flags" : false}
@@ -652,6 +661,7 @@ function TerminalShellGroup(props: {
  * users reach the remedy without a mouse.
  */
 function WslAgentCaption() {
+  const { t } = useTranslation("panels");
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
@@ -660,12 +670,12 @@ function WslAgentCaption() {
             aria-hidden
             className="size-1.5 rounded-full bg-[var(--term-ansi-yellow)]"
           />
-          WSL applies to terminal tabs only
+          {t("WSL applies to terminal tabs only")}
           <a
             href={WSL_INSTALL_DOCS_URL}
             target="_blank"
             rel="noreferrer"
-            aria-label="Install Traycer in WSL"
+            aria-label={t("Install Traycer in WSL")}
             className="rounded transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
           >
             <Info className="size-3" />
@@ -677,8 +687,9 @@ function WslAgentCaption() {
         className="w-[min(90vw,20rem)] space-y-2 text-ui-xs"
       >
         <p className="text-muted-foreground">
-          Choosing WSL here changes the shell for new terminal tabs. It does not
-          move the Traycer host or agents into WSL.
+          {t(
+            "Choosing WSL here changes the shell for new terminal tabs. It does not move the Traycer host or agents into WSL.",
+          )}
         </p>
         <a
           href={WSL_INSTALL_DOCS_URL}
@@ -686,7 +697,7 @@ function WslAgentCaption() {
           rel="noreferrer"
           className="inline-block font-medium text-foreground underline underline-offset-4 hover:opacity-80"
         >
-          Install Traycer in WSL
+          {t("Install Traycer in WSL")}
         </a>
       </HoverCardContent>
     </HoverCard>
@@ -706,9 +717,10 @@ function HostEnvironmentGroup(props: {
   ) => void;
   readonly onDelete: (key: string) => void;
 }) {
+  const { t } = useTranslation("panels");
   return (
     <SettingsGroup
-      title="Host environment · After restart"
+      title={t("Host environment · After restart")}
       tone="default"
       dataTestId="host-environment-settings"
       fill={false}
@@ -727,7 +739,9 @@ function HostEnvironmentGroup(props: {
           )}
         >
           <p className="text-ui-xs text-muted-foreground">
-            Per-provider environment variables live in Settings → Providers.
+            {t(
+              "Per-provider environment variables live in Settings → Providers.",
+            )}
           </p>
           <TransientSaveIndicator
             pending={props.pending ? props.saveActive : false}
@@ -740,7 +754,9 @@ function HostEnvironmentGroup(props: {
             overrides={props.overrides}
             disabled={props.pending}
             namePlaceholder="OPENAI_API_KEY"
-            emptyLabel="No host environment variables. The host starts with the environment your shell produces."
+            emptyLabel={t(
+              "No host environment variables. The host starts with the environment your shell produces.",
+            )}
             onCommit={props.onCommit}
             onDelete={props.onDelete}
           />
@@ -755,11 +771,12 @@ function TransientSaveLiveStatus(props: {
   readonly saved: boolean;
   readonly label: string;
 }) {
+  const { t } = useTranslation("panels");
   let text: string | null = null;
   if (props.pending) {
-    text = `${props.label} saving`;
+    text = t("{{label}} saving", { label: t(props.label) });
   } else if (props.saved) {
-    text = `${props.label} saved`;
+    text = t("{{label}} saved", { label: t(props.label) });
   }
   return (
     <span className="sr-only" role="status" aria-live="polite">

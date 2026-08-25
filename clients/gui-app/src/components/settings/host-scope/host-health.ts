@@ -4,6 +4,7 @@ import type {
   HostLeaseDeadState,
   HostLeaseSnapshot,
 } from "@traycer-clients/shared/host-selection/selection-authority-contract";
+import { i18n } from "@/lib/i18n/init-i18n";
 import {
   deriveHostPresence,
   formatLastSeen,
@@ -209,8 +210,10 @@ function localServiceHealth(
   if (service.state === "not-installed") {
     return {
       state: "not-installed",
-      label: "Not installed",
-      detail: "No Traycer host is installed on this computer yet.",
+      label: i18n.t("Not installed", { ns: "panels" }),
+      detail: i18n.t("No Traycer host is installed on this computer yet.", {
+        ns: "panels",
+      }),
       tone: HOST_HEALTH_TONE["not-installed"],
       live: false,
     };
@@ -218,8 +221,10 @@ function localServiceHealth(
   if (service.state === "stopped") {
     return {
       state: "stopped",
-      label: "Stopped",
-      detail: "Installed, but the host process isn't running.",
+      label: i18n.t("Stopped", { ns: "panels" }),
+      detail: i18n.t("Installed, but the host process isn't running.", {
+        ns: "panels",
+      }),
       tone: HOST_HEALTH_TONE.stopped,
       live: false,
     };
@@ -242,8 +247,8 @@ function localServiceHealth(
   }
   return {
     state: "online",
-    label: "Online",
-    detail: "Running on this computer.",
+    label: i18n.t("Online", { ns: "panels" }),
+    detail: i18n.t("Running on this computer.", { ns: "panels" }),
     tone: HOST_HEALTH_TONE.online,
     live: true,
   };
@@ -275,7 +280,7 @@ const DEAD_HEALTH: Record<
 > = {
   offline: (context) => ({
     state: "offline",
-    label: "Offline",
+    label: i18n.t("Offline", { ns: "panels" }),
     detail: capitalize(
       formatLastSeen(context.item?.status.lastSeenAt ?? null, context.nowMs),
     ),
@@ -284,7 +289,7 @@ const DEAD_HEALTH: Record<
   }),
   "plan-restricted": (context) => ({
     state: "local-only",
-    label: "Local only",
+    label: i18n.t("Local only", { ns: "panels" }),
     // The copy has to depend on WHOSE machine this is, because the claim
     // "reachable from this computer" is only true for one of them. It said
     // that unconditionally once, and for a remote row it was a fabrication
@@ -292,26 +297,35 @@ const DEAD_HEALTH: Record<
     // route to it exists. Both arms state the remedy — an upgrade — because
     // that is the one thing a person can act on.
     detail: context.isLocalMachine
-      ? "Reachable on this computer. Remote access needs a paid plan."
-      : "Not reachable from here — remote access needs a paid plan.",
+      ? i18n.t("Reachable on this computer. Remote access needs a paid plan.", {
+          ns: "panels",
+        })
+      : i18n.t("Not reachable from here — remote access needs a paid plan.", {
+          ns: "panels",
+        }),
     tone: HOST_HEALTH_TONE["local-only"],
     live: false,
   }),
   removed: () => ({
     state: "removed",
-    label: "Removed",
-    detail: "This host was removed from your account.",
+    label: i18n.t("Removed", { ns: "panels" }),
+    detail: i18n.t("This host was removed from your account.", {
+      ns: "panels",
+    }),
     tone: HOST_HEALTH_TONE.removed,
     live: false,
   }),
   incompatible: () => ({
     state: "update-required",
-    label: "Update required",
+    label: i18n.t("Update required", { ns: "panels" }),
     // The versions themselves are deliberately NOT here. This is a status
     // line on a row; the structured skew (host version, minimum supported,
     // reason code) belongs with the action that acts on it, which reads it
     // from the lease directly — see `host-update-required-action.tsx`.
-    detail: "This host is running an older version than this app supports.",
+    detail: i18n.t(
+      "This host is running an older version than this app supports.",
+      { ns: "panels" },
+    ),
     tone: HOST_HEALTH_TONE["update-required"],
     live: false,
   }),
@@ -346,7 +360,7 @@ function leaseHealth(options: DeriveHostHealthOptions): HostHealth | null {
     case "ready":
       return {
         state: "online",
-        label: "Online",
+        label: i18n.t("Online", { ns: "panels" }),
         detail: null,
         tone: HOST_HEALTH_TONE.online,
         live: true,
@@ -354,16 +368,16 @@ function leaseHealth(options: DeriveHostHealthOptions): HostHealth | null {
     case "degraded":
       return {
         state: "online",
-        label: "Online",
-        detail: "Connection is unstable.",
+        label: i18n.t("Online", { ns: "panels" }),
+        detail: i18n.t("Connection is unstable.", { ns: "panels" }),
         tone: HOST_HEALTH_TONE.online,
         live: true,
       };
     case "restarting-expected":
       return {
         state: "restarting",
-        label: "Restarting…",
-        detail: "Expected restart — reconnecting.",
+        label: i18n.t("Restarting…", { ns: "panels" }),
+        detail: i18n.t("Expected restart — reconnecting.", { ns: "panels" }),
         tone: HOST_HEALTH_TONE.restarting,
         live: false,
       };
@@ -388,8 +402,10 @@ function registryHealth(options: DeriveHostHealthOptions): HostHealth {
     // Online or Offline would be an invention.
     return {
       state: "unknown",
-      label: "Status unknown",
-      detail: "This host hasn't reported to your account yet.",
+      label: i18n.t("Status unknown", { ns: "panels" }),
+      detail: i18n.t("This host hasn't reported to your account yet.", {
+        ns: "panels",
+      }),
       tone: HOST_HEALTH_TONE.unknown,
       live: false,
     };
@@ -405,7 +421,7 @@ function registryHealth(options: DeriveHostHealthOptions): HostHealth {
       // Reached only through the live-session override, which is firsthand.
       return {
         state: "online",
-        label: "Online",
+        label: i18n.t("Online", { ns: "panels" }),
         detail: null,
         tone: HOST_HEALTH_TONE.online,
         live: presence.showLiveDot,
@@ -418,9 +434,11 @@ function registryHealth(options: DeriveHostHealthOptions): HostHealth {
       // this arm stops being reached.
       return {
         state: "reported-reachable",
-        label: "Reported reachable",
-        detail:
+        label: i18n.t("Reported reachable", { ns: "panels" }),
+        detail: i18n.t(
           "Your account last heard from this host. Nothing has connected to it from here yet.",
+          { ns: "panels" },
+        ),
         tone: HOST_HEALTH_TONE["reported-reachable"],
         live: false,
       };
@@ -429,16 +447,19 @@ function registryHealth(options: DeriveHostHealthOptions): HostHealth {
     case "unknown":
       return {
         state: "unknown",
-        label: "Status unknown",
-        detail: "Live status is unavailable right now — this may be stale.",
+        label: i18n.t("Status unknown", { ns: "panels" }),
+        detail: i18n.t(
+          "Live status is unavailable right now — this may be stale.",
+          { ns: "panels" },
+        ),
         tone: HOST_HEALTH_TONE.unknown,
         live: false,
       };
     case "client-offline":
       return {
         state: "viewer-offline",
-        label: "You're offline",
-        detail: "Reconnect to see this host's status.",
+        label: i18n.t("You're offline", { ns: "panels" }),
+        detail: i18n.t("Reconnect to see this host's status.", { ns: "panels" }),
         tone: HOST_HEALTH_TONE["viewer-offline"],
         live: false,
       };

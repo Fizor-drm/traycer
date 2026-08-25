@@ -1,5 +1,6 @@
 import { useId } from "react";
 import { ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   PROVIDER_DISPLAY_NAMES,
   type ProviderCliState,
@@ -10,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useProvidersSetApiKey } from "@/hooks/providers/use-providers-set-api-key-mutation";
 import { useProvidersClearApiKey } from "@/hooks/providers/use-providers-clear-api-key-mutation";
 import { useRunnerHost } from "@/providers/use-runner-host";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { envNamePlaceholder } from "./provider-env-name-placeholder";
 
 type ProviderId = ProviderCliState["providerId"];
@@ -59,8 +61,10 @@ const API_KEY_DASHBOARD_URL: Record<ProviderId, string | null> = {
 };
 
 function apiKeyStatusLabel(apiKey: ProviderCliState["apiKey"]): string {
-  if (!apiKey.configured) return "Not set";
-  return apiKey.source === "stored" ? "Key set" : "From environment";
+  if (!apiKey.configured) return i18n.t("Not set", { ns: "panels" });
+  return apiKey.source === "stored"
+    ? i18n.t("Key set", { ns: "panels" })
+    : i18n.t("From environment", { ns: "panels" });
 }
 
 // API-key-authenticated providers (Cursor) render a key field in addition to
@@ -86,6 +90,7 @@ export function ProviderApiKeySection({
   const setApiKey = useProvidersSetApiKey();
   const clearApiKey = useProvidersClearApiKey();
   const runnerHost = useRunnerHost();
+  const { t } = useTranslation("panels");
 
   if (!state.apiKey.supported) return null;
 
@@ -107,7 +112,7 @@ export function ProviderApiKeySection({
           htmlFor={inputId}
           className="text-ui-sm font-medium text-foreground"
         >
-          API key
+          {t("API key")}
         </label>
         <span className="text-ui-xs text-muted-foreground">
           {apiKeyStatusLabel(state.apiKey)}
@@ -121,7 +126,7 @@ export function ProviderApiKeySection({
           }}
           className="inline-flex w-fit items-center gap-1.5 text-ui-xs font-medium text-primary transition-colors hover:text-primary/80 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 rounded"
         >
-          Create an API key
+          {t("Create an API key")}
           <ExternalLink className="size-3" />
         </button>
       )}
@@ -133,8 +138,10 @@ export function ProviderApiKeySection({
           className="w-full font-mono text-ui-sm"
           placeholder={
             state.apiKey.source === "stored"
-              ? "Replace stored key…"
-              : `Paste your ${PROVIDER_DISPLAY_NAMES[providerId]} API key`
+              ? t("Replace stored key…")
+              : t("Paste your {{provider}} API key", {
+                  provider: PROVIDER_DISPLAY_NAMES[providerId],
+                })
           }
           value={draft}
           onChange={(e) => onDraftChange(e.target.value)}
@@ -150,7 +157,7 @@ export function ProviderApiKeySection({
           disabled={setApiKey.isPending || draft.trim().length === 0}
         >
           {setApiKey.isPending ? <MutedAgentSpinner /> : null}
-          Save
+          {t("Save")}
         </Button>
         {state.apiKey.source === "stored" ? (
           <Button
@@ -162,14 +169,20 @@ export function ProviderApiKeySection({
             disabled={clearApiKey.isPending}
           >
             {clearApiKey.isPending ? <MutedAgentSpinner /> : null}
-            Clear
+            {t("Clear")}
           </Button>
         ) : null}
       </div>
       <p className="text-ui-xs text-muted-foreground">
         {state.apiKey.source === "env"
-          ? `Using ${envNamePlaceholder(providerId)} from your shell environment. Save a key here to override it.`
-          : `Stored encrypted on this device. Falls back to ${envNamePlaceholder(providerId)} from your shell when unset.`}
+          ? t(
+              "Using {{envVar}} from your shell environment. Save a key here to override it.",
+              { envVar: envNamePlaceholder(providerId) },
+            )
+          : t(
+              "Stored encrypted on this device. Falls back to {{envVar}} from your shell when unset.",
+              { envVar: envNamePlaceholder(providerId) },
+            )}
       </p>
     </div>
   );

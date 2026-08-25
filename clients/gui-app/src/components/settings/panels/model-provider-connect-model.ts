@@ -5,6 +5,7 @@ import type {
   ModelProviderSource,
   ProviderModelProvidersCapabilities,
 } from "@traycer/protocol/host/provider-native-schemas";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 /**
  * The rules the Model Providers tab and its connect dialog render FROM, kept
@@ -54,13 +55,15 @@ export function sourceBadgeLabel(
 ): string {
   switch (source) {
     case "api":
-      return "API key";
+      return i18n.t("API key", { ns: "panels" });
     case "env":
-      return "Environment";
+      return i18n.t("Environment", { ns: "panels" });
     case "config":
-      return configDeclaredCustom ? "Custom" : "Config";
+      return configDeclaredCustom
+        ? i18n.t("Custom", { ns: "panels" })
+        : i18n.t("Config", { ns: "panels" });
     case "custom":
-      return "Custom";
+      return i18n.t("Custom", { ns: "panels" });
   }
 }
 
@@ -71,15 +74,30 @@ export function sourceBadgeHint(
 ): string {
   switch (source) {
     case "api":
-      return `This key is stored in ${providerLabel}'s own credential store, shared with its CLI, and can be removed from here.`;
+      return i18n.t(
+        "This key is stored in {{provider}}'s own credential store, shared with its CLI, and can be removed from here.",
+        { provider: providerLabel, ns: "panels" },
+      );
     case "env":
-      return "This credential comes from an environment variable, so it's managed outside Traycer.";
+      return i18n.t(
+        "This credential comes from an environment variable, so it's managed outside Traycer.",
+        { ns: "panels" },
+      );
     case "config":
       return configDeclaredCustom
-        ? `You declared this provider in ${providerLabel}'s config file, with its own base URL and models.`
-        : `This credential comes from a ${providerLabel} config file, so it's managed outside Traycer.`;
+        ? i18n.t(
+            "You declared this provider in {{provider}}'s config file, with its own base URL and models.",
+            { provider: providerLabel, ns: "panels" },
+          )
+        : i18n.t(
+            "This credential comes from a {{provider}} config file, so it's managed outside Traycer.",
+            { provider: providerLabel, ns: "panels" },
+          );
     case "custom":
-      return `This provider is loaded by a custom ${providerLabel} loader.`;
+      return i18n.t("This provider is loaded by a custom {{provider}} loader.", {
+        provider: providerLabel,
+        ns: "panels",
+      });
   }
 }
 
@@ -113,14 +131,23 @@ export function credentialPrecedenceNotice(
       // with the classifier. The provider's own env var name is not something
       // the client can know without one, and guessing it would be worse than
       // the general statement.
-      return "An environment variable on this host already provides this credential, and it takes precedence - what you save here will not take effect until that variable is unset.";
+      return i18n.t(
+        "An environment variable on this host already provides this credential, and it takes precedence - what you save here will not take effect until that variable is unset.",
+        { ns: "panels" },
+      );
     case "config":
       // Possessive rather than "A/An {label}": the article cannot be derived
       // from an arbitrary provider name, and "A OpenCode config file" is what
       // interpolating one blindly produces.
-      return `${providerLabel}'s own config file already provides this credential and takes precedence. What you save here will not take effect until it is removed there.`;
+      return i18n.t(
+        "{{provider}}'s own config file already provides this credential and takes precedence. What you save here will not take effect until it is removed there.",
+        { provider: providerLabel, ns: "panels" },
+      );
     case "custom":
-      return "This provider is loaded by a custom loader, which may already supply its credential.";
+      return i18n.t(
+        "This provider is loaded by a custom loader, which may already supply its credential.",
+        { ns: "panels" },
+      );
     case "api":
     case null:
       return null;
@@ -229,11 +256,15 @@ function unavailableReasonFor(
   if (method.type === "oauth") {
     return gates.canOauth
       ? null
-      : "Browser sign-in isn't available on this host.";
+      : i18n.t("Browser sign-in isn't available on this host.", {
+          ns: "panels",
+        });
   }
   return gates.canConnect
     ? null
-    : "Saving an API key isn't available on this host.";
+    : i18n.t("Saving an API key isn't available on this host.", {
+        ns: "panels",
+      });
 }
 
 /** The choice a freshly opened dialog starts on: the first usable one. */

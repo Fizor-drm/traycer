@@ -4,6 +4,7 @@ import { useAuthServiceError } from "@/hooks/auth/use-auth-service-error";
 import { useAuthService } from "@/lib/host";
 import { authSessionExpiredToast } from "@/lib/toast/channels";
 import { useAuthStore } from "@/stores/auth/auth-store";
+import { useTranslation } from "react-i18next";
 
 /**
  * Global auth lifecycle bridge for stored-session or refresh-token expiry.
@@ -17,14 +18,15 @@ export function AuthSessionExpiredToastBridge(): null {
   const auth = useAuthService();
   const status = useAuthStore((state) => state.status);
   const lastError = useAuthServiceError(auth);
+  const { t } = useTranslation("common");
 
   useEffect(() => {
     if (status !== "signed-out" || lastError !== AUTH_ERROR_SESSION_EXPIRED) {
       return;
     }
-    authSessionExpiredToast.error("Session expired - sign in again.");
+    authSessionExpiredToast.error(t("Session expired - sign in again."));
     auth.clearLastError();
-  }, [auth, lastError, status]);
+  }, [auth, lastError, status, t]);
 
   return null;
 }

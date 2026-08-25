@@ -1,3 +1,4 @@
+import { i18n } from "@/lib/i18n/init-i18n";
 import type { ProviderProfileLoginFlowCodePastePhase } from "./use-provider-profile-login-flow";
 
 export interface WaitingStepCopy {
@@ -23,29 +24,36 @@ export function waitingStepCopy(args: {
 }): WaitingStepCopy {
   if (args.cancelRequested) {
     return {
-      title: "Cancelling sign-in",
-      guidance:
+      title: i18n.t("Cancelling sign-in", { ns: "panels" }),
+      guidance: i18n.t(
         "Waiting for the sign-in attempt to start so it can be cancelled safely.",
+        { ns: "panels" },
+      ),
     };
   }
   if (args.queuePending) {
     return {
-      title: "Opening the sign-in page…",
-      guidance: "This should only take a moment.",
+      title: i18n.t("Opening the sign-in page…", { ns: "panels" }),
+      guidance: i18n.t("This should only take a moment.", { ns: "panels" }),
     };
   }
   if (args.phase === "submitting") {
-    return { title: "Sending the code…", guidance: null };
+    return {
+      title: i18n.t("Sending the code…", { ns: "panels" }),
+      guidance: null,
+    };
   }
   if (args.phase === "verifying") {
     return {
-      title: "Checking approval…",
-      guidance: "This usually takes only a moment.",
+      title: i18n.t("Checking approval…", { ns: "panels" }),
+      guidance: i18n.t("This usually takes only a moment.", { ns: "panels" }),
     };
   }
   return {
-    title: "Approve sign-in in your browser",
-    guidance:
+    title: i18n.t("Approve sign-in in your browser", { ns: "panels" }),
+    guidance: i18n.t(
       "We opened the sign-in page in your browser. We'll continue automatically after you approve.",
+      { ns: "panels" },
+    ),
   };
 }

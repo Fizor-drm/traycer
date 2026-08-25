@@ -9,6 +9,7 @@ import {
 } from "react";
 import { Bug, X } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { MAX_REPORT_IMAGES } from "@traycer-clients/shared/support/image-attachment-guards";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ import type {
 import { useRunnerHost } from "@/providers/use-runner-host";
 import { useDesktopDialogStore } from "@/stores/dialogs/desktop-dialog-store";
 import type { FileRouteTypes } from "@/routeTree.gen";
+import { i18n } from "@/lib/i18n/init-i18n";
 import type { DesktopSupportDialogProps } from "./types";
 import {
   Analytics,
@@ -143,7 +145,8 @@ const ROUTE_TEMPLATE_LABEL_LOOKUP: Readonly<
 const ROUTE_TEMPLATE_FALLBACK_LABEL = "This screen";
 
 function humanRouteLabel(template: string): string {
-  return ROUTE_TEMPLATE_LABEL_LOOKUP[template] ?? ROUTE_TEMPLATE_FALLBACK_LABEL;
+  const label = ROUTE_TEMPLATE_LABEL_LOOKUP[template] ?? ROUTE_TEMPLATE_FALLBACK_LABEL;
+  return i18n.t(label, { ns: "common" });
 }
 
 const CURRENT_LOCATION_VALUE = "__current__";
@@ -399,6 +402,7 @@ export function ReportIssueDialog(
   props: DesktopSupportDialogProps & { readonly draftId: number },
 ): ReactNode {
   const { draftId, onOpenChange, open, support } = props;
+  const { t } = useTranslation("common");
   const runnerHost = useRunnerHost();
   const draftContext = useDesktopDialogStore(
     (state) => state.reportIssueDraftContext,
@@ -578,13 +582,14 @@ export function ReportIssueDialog(
       return support.saveDiagnosticBundle(buildRequest(null));
     },
     onSuccess: () => {
-      toast.success("Diagnostic bundle saved", {
-        description:
+      toast.success(t("Diagnostic bundle saved"), {
+        description: t(
           "It's been revealed in your file browser. It contains scrubbed logs - review it before sharing publicly.",
+        ),
       });
     },
     onError: (error) =>
-      toastFromRunnerError(error, "Could not save the diagnostic bundle"),
+      toastFromRunnerError(error, t("Could not save the diagnostic bundle")),
   });
 
   // Single source of truth for what the private channel actually did with
@@ -642,17 +647,13 @@ export function ReportIssueDialog(
       setScreen("preview");
     },
     onError: (error) => {
-      toastFromRunnerErrorWithOptions(
-        error,
-        "Could not load the GitHub preview",
-        {
-          description: "Your report is safe - you can try again.",
-          action: {
-            label: "Try again",
-            onClick: () => buildDraftMutation.mutate(),
-          },
+      toastFromRunnerErrorWithOptions(error, t("Could not load the GitHub preview"), {
+        description: t("Your report is safe - you can try again."),
+        action: {
+          label: t("Try again"),
+          onClick: () => buildDraftMutation.mutate(),
         },
-      );
+      });
     },
   });
 
@@ -690,7 +691,7 @@ export function ReportIssueDialog(
       );
     },
     onSuccess: () => {
-      toast.success("Opened in your browser");
+      toast.success(t("Opened in your browser"));
       // KB1: "confirmed" claims a private send happened - only true when
       // delivered/unconfirmed actually minted a report. A no-DSN or definite-
       // failure open (privateOutcome "none") lands on the honest "opened"
@@ -698,17 +699,13 @@ export function ReportIssueDialog(
       setScreen(privateOutcome === "none" ? "opened" : "confirmed");
     },
     onError: (error) => {
-      toastFromRunnerErrorWithOptions(
-        error,
-        "Could not open the GitHub draft",
-        {
-          description: "Your report is safe - you can try opening it again.",
-          action: {
-            label: "Try again",
-            onClick: () => openPublicDraftMutation.mutate(),
-          },
+      toastFromRunnerErrorWithOptions(error, t("Could not open the GitHub draft"), {
+        description: t("Your report is safe - you can try opening it again."),
+        action: {
+          label: t("Try again"),
+          onClick: () => openPublicDraftMutation.mutate(),
         },
-      );
+      });
     },
   });
 
@@ -896,12 +893,13 @@ function ReportIssueDialogHeader({
   readonly isDeliveryUnavailable: boolean;
   readonly preparationIsError: boolean;
 }): ReactNode {
+  const { t } = useTranslation("common");
   if (screen === "confirmed") {
     return (
       <DialogHeader>
-        <DialogTitle>Report sent</DialogTitle>
+        <DialogTitle>{t("Report sent")}</DialogTitle>
         <DialogDescription className="sr-only">
-          Your report was sent privately.
+          {t("Your report was sent privately.")}
         </DialogDescription>
       </DialogHeader>
     );
@@ -909,9 +907,9 @@ function ReportIssueDialogHeader({
   if (screen === "opened") {
     return (
       <DialogHeader>
-        <DialogTitle>GitHub draft opened</DialogTitle>
+        <DialogTitle>{t("GitHub draft opened")}</DialogTitle>
         <DialogDescription className="sr-only">
-          Nothing was sent from this app - finish posting in your browser.
+          {t("Nothing was sent from this app - finish posting in your browser.")}
         </DialogDescription>
       </DialogHeader>
     );
@@ -919,10 +917,11 @@ function ReportIssueDialogHeader({
   if (screen === "preview") {
     return (
       <DialogHeader>
-        <DialogTitle>Preview the public issue</DialogTitle>
+        <DialogTitle>{t("Preview the public issue")}</DialogTitle>
         <DialogDescription>
-          This is what we will fill in for you on GitHub. You can edit
-          everything there before posting.
+          {t(
+            "This is what we will fill in for you on GitHub. You can edit everything there before posting.",
+          )}
         </DialogDescription>
       </DialogHeader>
     );
@@ -931,7 +930,7 @@ function ReportIssueDialogHeader({
     <DialogHeader>
       <DialogTitle className="flex items-center gap-2">
         <Bug className="size-4" />
-        Report an issue
+        {t("Report an issue")}
       </DialogTitle>
       <DialogDescription>
         {captureDescriptionCopy(
@@ -1008,6 +1007,7 @@ function CaptureScreenBody({
   // single source for the location selector's current-location option.
   readonly routeTemplateField: CapturedField<string>;
 }): ReactNode {
+  const { t } = useTranslation("common");
   // Paste is bound at this wrapper, not on the attachment target below: a
   // `paste` DOM event only bubbles through the FOCUSED element's ancestors,
   // and the intent textarea (the dialog's natural focus target) is this
@@ -1043,7 +1043,7 @@ function CaptureScreenBody({
         {!hasErrorEnvelope ? (
           <div
             role="radiogroup"
-            aria-label="Report type"
+            aria-label={t("Report type")}
             className="flex flex-wrap gap-1.5"
           >
             {TYPE_OPTIONS.map((option) => (
@@ -1056,7 +1056,7 @@ function CaptureScreenBody({
                 variant={form.type === option.value ? "default" : "outline"}
                 onClick={() => onSelectType(option.value)}
               >
-                {option.label}
+                {t(option.label)}
               </Button>
             ))}
           </div>
@@ -1067,7 +1067,10 @@ function CaptureScreenBody({
         ) : null}
 
         {showLocationSelector ? (
-          <Field htmlFor="report-issue-location" label="Where did this happen?">
+          <Field
+            htmlFor="report-issue-location"
+            label={t("Where did this happen?")}
+          >
             <Select
               value={
                 form.locationChanged
@@ -1091,11 +1094,13 @@ function CaptureScreenBody({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={CURRENT_LOCATION_VALUE}>
-                  {currentLocationLabel(routeTemplateField)} (current)
+                  {t("{{label}} (current)", {
+                    label: currentLocationLabel(routeTemplateField),
+                  })}
                 </SelectItem>
                 {LOCATION_OPTIONS.map((option) => (
                   <SelectItem key={option} value={option}>
-                    {option}
+                    {t(option)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -1111,7 +1116,7 @@ function CaptureScreenBody({
           <Textarea
             id="report-issue-intent"
             ref={intentRef}
-            placeholder="e.g. sending a message in an existing chat"
+            placeholder={t("e.g. sending a message in an existing chat")}
             value={form.intent}
             onChange={(e) => {
               setForm((prev) => ({ ...prev, intent: e.target.value }));
@@ -1132,7 +1137,7 @@ function CaptureScreenBody({
 
         {showFrequencyChips ? (
           <div className="flex flex-wrap items-center gap-1.5 text-ui-xs text-muted-foreground">
-            <span>How often?</span>
+            <span>{t("How often?")}</span>
             {FREQUENCY_OPTIONS.map((option) => (
               <Button
                 key={option.value}
@@ -1150,7 +1155,7 @@ function CaptureScreenBody({
                   }));
                 }}
               >
-                {option.label}
+                {t(option.label)}
               </Button>
             ))}
           </div>
@@ -1203,7 +1208,7 @@ function LegacyCapturedContextRow({
   return (
     <div className="rounded-md border border-border bg-foreground/3 px-3 py-2 text-ui-xs text-muted-foreground">
       <span className="font-medium text-foreground">
-        Captured automatically:{" "}
+        {i18n.t("Captured automatically:", { ns: "common" })}{" "}
       </span>
       {legacyContextSummaryLine(context)}
     </div>
@@ -1235,11 +1240,12 @@ function ReportIssueDialogFooter(props: {
   readonly onSaveDiagnosticBundle: () => void;
   readonly onOpenPublicDraft: () => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   if (props.screen === "confirmed") {
     return (
       <>
         <Button variant="outline" onClick={props.onDone}>
-          Done
+          {t("Done")}
         </Button>
         <Button
           onClick={props.onPostPubliclyOnGithub}
@@ -1252,7 +1258,7 @@ function ReportIssueDialogFooter(props: {
               variant={undefined}
             />
           ) : null}
-          Also post publicly on GitHub
+          {t("Also post publicly on GitHub")}
         </Button>
       </>
     );
@@ -1272,9 +1278,9 @@ function ReportIssueDialogFooter(props: {
               variant={undefined}
             />
           ) : null}
-          Save diagnostic bundle
+          {t("Save diagnostic bundle")}
         </Button>
-        <Button onClick={props.onDone}>Done</Button>
+        <Button onClick={props.onDone}>{t("Done")}</Button>
       </>
     );
   }
@@ -1282,7 +1288,7 @@ function ReportIssueDialogFooter(props: {
     return (
       <>
         <Button variant="outline" onClick={props.onBack}>
-          Back
+          {t("Back")}
         </Button>
         <Button
           onClick={props.onOpenPublicDraft}
@@ -1295,7 +1301,7 @@ function ReportIssueDialogFooter(props: {
               variant={undefined}
             />
           ) : null}
-          Open GitHub draft
+          {t("Open GitHub draft")}
         </Button>
       </>
     );
@@ -1307,7 +1313,7 @@ function ReportIssueDialogFooter(props: {
         onClick={props.onCancel}
         disabled={props.isSubmitPending}
       >
-        Cancel
+        {t("Cancel")}
       </Button>
       <ReportIssueFooterActions
         deliveryResult={props.deliveryResult}
@@ -1331,32 +1337,53 @@ function captureDescriptionCopy(
   preparationIsError: boolean,
 ): string {
   if (preparationIsError) {
-    return "We couldn't prepare private evidence for this report. Nothing was sent; you can still save a diagnostic bundle or open a GitHub issue.";
+    return i18n.t(
+      "We couldn't prepare private evidence for this report. Nothing was sent; you can still save a diagnostic bundle or open a GitHub issue.",
+      { ns: "common" },
+    );
   }
   if (isDeliveryUnavailable) {
-    return "Private reporting is not available in this build. You can save a diagnostic bundle and open a GitHub issue instead.";
+    return i18n.t(
+      "Private reporting is not available in this build. You can save a diagnostic bundle and open a GitHub issue instead.",
+      { ns: "common" },
+    );
   }
   if (hasErrorEnvelope) {
-    return "The details below were captured automatically. Add what you were doing and send.";
+    return i18n.t(
+      "The details below were captured automatically. Add what you were doing and send.",
+      { ns: "common" },
+    );
   }
-  return "Sent privately to the Traycer team so we can look into it.";
+  return i18n.t("Sent privately to the Traycer team so we can look into it.", {
+    ns: "common",
+  });
 }
 
 function intentLabel(
   hasErrorEnvelope: boolean,
   type: DesktopReportType,
 ): string {
-  if (hasErrorEnvelope) return "What were you trying to do?";
-  if (type === "bug") return "What were you trying to do, and what went wrong?";
-  if (type === "idea") return "What's your idea?";
-  return "What's on your mind?";
+  if (hasErrorEnvelope)
+    return i18n.t("What were you trying to do?", { ns: "common" });
+  if (type === "bug")
+    return i18n.t("What were you trying to do, and what went wrong?", {
+      ns: "common",
+    });
+  if (type === "idea") return i18n.t("What's your idea?", { ns: "common" });
+  return i18n.t("What's on your mind?", { ns: "common" });
 }
 
 function gateErrorCopy(type: DesktopReportType): string {
   if (type === "bug") {
-    return "Add a sentence, a screenshot, or pick where it happened - we need at least one to act on the report.";
+    return i18n.t(
+      "Add a sentence, a screenshot, or pick where it happened - we need at least one to act on the report.",
+      { ns: "common" },
+    );
   }
-  return "Add a sentence or a screenshot - we need at least one to act on the report.";
+  return i18n.t(
+    "Add a sentence or a screenshot - we need at least one to act on the report.",
+    { ns: "common" },
+  );
 }
 
 function IntentFieldHint({
@@ -1368,6 +1395,7 @@ function IntentFieldHint({
   readonly type: DesktopReportType;
   readonly intent: string;
 }): ReactNode {
+  const { t } = useTranslation("common");
   if (showGateError) {
     return <p className="text-ui-xs text-destructive">{gateErrorCopy(type)}</p>;
   }
@@ -1375,7 +1403,9 @@ function IntentFieldHint({
   if (trimmedLength > 0 && trimmedLength < 20) {
     return (
       <p className="text-ui-xs text-muted-foreground">
-        A little more detail helps - one short sentence is usually enough.
+        {t(
+          "A little more detail helps - one short sentence is usually enough.",
+        )}
       </p>
     );
   }
@@ -1444,7 +1474,9 @@ function capturedFieldDisplay(
   field: DesktopCapturedField<string> | undefined,
 ): string | null {
   if (field === undefined || field.status === "unavailable") return null;
-  return field.status === "stale" ? `${field.value} (last known)` : field.value;
+  return field.status === "stale"
+    ? `${field.value} ${i18n.t("(last known)", { ns: "common" })}`
+    : field.value;
 }
 
 // KB3: the "Where" row in the evidence review details is the same raw route
@@ -1471,6 +1503,7 @@ function EvidenceStrip({
   readonly snapshot: DesktopSupportSnapshot | null;
   readonly occurrence: DesktopFingerprintOccurrence | null;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const registry = draftContext?.privateDiagnostics.registry;
   const harness = capturedFieldDisplay(registry?.harnessId);
   const model = capturedFieldDisplay(registry?.model);
@@ -1481,7 +1514,7 @@ function EvidenceStrip({
       <div className="flex items-start justify-between gap-2 rounded-md border border-emerald-800/40 bg-emerald-950/10 px-3 py-2 text-ui-xs">
         <span>
           <span className="font-medium text-emerald-600 dark:text-emerald-400">
-            ✓ Captured
+            {t("✓ Captured")}
           </span>{" "}
           {summaryParts.join(" · ")}
         </span>
@@ -1490,7 +1523,7 @@ function EvidenceStrip({
           onClick={onToggleExpanded}
           className="shrink-0 text-muted-foreground underline"
         >
-          Review
+          {t("Review")}
         </button>
       </div>
     );
@@ -1500,14 +1533,14 @@ function EvidenceStrip({
     <div className="grid max-h-64 gap-2 overflow-y-auto rounded-md border border-border bg-foreground/3 px-3 py-2.5 text-ui-xs">
       <div className="flex items-center justify-between">
         <span className="font-medium text-emerald-600 dark:text-emerald-400">
-          ✓ Captured
+          {t("✓ Captured")}
         </span>
         <button
           type="button"
           onClick={onToggleExpanded}
           className="text-muted-foreground underline"
         >
-          Hide
+          {t("Hide")}
         </button>
       </div>
       <EvidenceReviewDetails
@@ -1519,8 +1552,9 @@ function EvidenceStrip({
         occurrence={occurrence}
       />
       <p className="text-muted-foreground">
-        Identifiers are opaque IDs; workspace paths and file contents are never
-        included. Log tails can be viewed or turned off below.
+        {t(
+          "Identifiers are opaque IDs; workspace paths and file contents are never included. Log tails can be viewed or turned off below.",
+        )}
       </p>
     </div>
   );
@@ -1564,7 +1598,9 @@ function EvidenceReviewDetails({
     <dl className="grid gap-1.5">
       {cause !== null ? (
         <div className="flex flex-col gap-1">
-          <dt className="text-muted-foreground">Error</dt>
+          <dt className="text-muted-foreground">
+            {i18n.t("Error", { ns: "common" })}
+          </dt>
           <dd>
             {[cause.errorCode, messageFirstLine].filter(Boolean).join(": ")}
           </dd>
@@ -1576,12 +1612,14 @@ function EvidenceReviewDetails({
         </div>
       ) : null}
       {cause !== null && cause.sourceAction !== null ? (
-        <ReviewRow label="Operation" value={cause.sourceAction} />
+        <ReviewRow label={i18n.t("Operation", { ns: "common" })} value={cause.sourceAction} />
       ) : null}
-      {where !== null ? <ReviewRow label="Where" value={where} /> : null}
+      {where !== null ? (
+        <ReviewRow label={i18n.t("Where", { ns: "common" })} value={where} />
+      ) : null}
       {harness !== null || model !== null ? (
         <ReviewRow
-          label="Agent"
+          label={i18n.t("Agent", { ns: "common" })}
           value={[harness, model]
             .filter((v): v is string => v !== null)
             .join(" · ")}
@@ -1589,14 +1627,14 @@ function EvidenceReviewDetails({
       ) : null}
       {snapshot !== null ? (
         <ReviewRow
-          label="Versions"
-          value={`app ${snapshot.appVersion} · host ${snapshot.host.version ?? "unknown"} · ${snapshot.platform} ${snapshot.arch}`}
+          label={i18n.t("Versions", { ns: "common" })}
+          value={`app ${snapshot.appVersion} · host ${snapshot.host.version ?? i18n.t("unknown", { ns: "common" })} · ${snapshot.platform} ${snapshot.arch}`}
         />
       ) : null}
       {occurrence !== null ? (
         <ReviewRow
-          label="Frequency here"
-          value={`${ordinal(occurrence.count)} time on this install`}
+          label={i18n.t("Frequency here", { ns: "common" })}
+          value={`${ordinal(occurrence.count)} ${i18n.t("time on this install", { ns: "common" })}`}
         />
       ) : null}
     </dl>
@@ -1637,6 +1675,7 @@ function AttachmentSection({
   readonly attachments: UseReportIssueAttachmentsResult;
   readonly disabled: boolean;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const { images, isIngesting, rejection, canAddMore, addFiles, removeImage } =
@@ -1674,7 +1713,7 @@ function AttachmentSection({
       <div
         role="button"
         tabIndex={disabled || !canAddMore ? -1 : 0}
-        aria-label="Attach screenshots"
+        aria-label={t("Attach screenshots")}
         aria-disabled={disabled || !canAddMore}
         onDragOver={(event) => {
           if (classifyFileTransferDrag(event.dataTransfer) === null) return;
@@ -1706,12 +1745,14 @@ function AttachmentSection({
         )}
       >
         {canAddMore
-          ? `Paste or drop screenshots (up to ${MAX_REPORT_IMAGES}, kept private)`
-          : `${MAX_REPORT_IMAGES} screenshots attached`}
+          ? t("Paste or drop screenshots (up to {{max}}, kept private)", {
+              max: MAX_REPORT_IMAGES,
+            })
+          : t("{{max}} screenshots attached", { max: MAX_REPORT_IMAGES })}
       </div>
       {isIngesting ? (
         <p className="text-ui-xs text-muted-foreground">
-          Adding image... Send is disabled until it finishes.
+          {t("Adding image... Send is disabled until it finishes.")}
         </p>
       ) : null}
       {rejection !== null ? (
@@ -1730,8 +1771,9 @@ function AttachmentSection({
             ))}
           </div>
           <p className="text-ui-xs text-muted-foreground">
-            Check images for anything you would not share - screens often show
-            code.
+            {t(
+              "Check images for anything you would not share - screens often show code.",
+            )}
           </p>
         </>
       ) : null}
@@ -1748,6 +1790,7 @@ function AttachmentThumbnail({
   readonly disabled: boolean;
   readonly onRemove: () => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   return (
     <div className="relative h-[38px] w-14 shrink-0 overflow-hidden rounded border border-border bg-foreground/8">
       <img
@@ -1757,7 +1800,7 @@ function AttachmentThumbnail({
       />
       <button
         type="button"
-        aria-label={`Remove ${image.fileName}`}
+        aria-label={t("Remove {{name}}", { name: image.fileName })}
         disabled={disabled}
         onClick={onRemove}
         className="absolute -right-1 -top-1 flex size-3.5 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"
@@ -1769,9 +1812,9 @@ function AttachmentThumbnail({
 }
 
 function logsToggleSummary(desktopOn: boolean, hostOn: boolean): string {
-  if (desktopOn && hostOn) return "log tails on";
-  if (!desktopOn && !hostOn) return "log tails off";
-  return "log tails partially on";
+  if (desktopOn && hostOn) return i18n.t("log tails on", { ns: "common" });
+  if (!desktopOn && !hostOn) return i18n.t("log tails off", { ns: "common" });
+  return i18n.t("log tails partially on", { ns: "common" });
 }
 
 function ConsentPanel(props: {
@@ -1792,6 +1835,7 @@ function ConsentPanel(props: {
   readonly onToggleDiagnostics: (checked: boolean) => void;
   readonly onToggleAllowContact: (checked: boolean) => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   // Honest per build: the no-DSN bundle never includes screenshots (a
   // deliberate ticket 08 choice - see `saveDiagnosticBundle`'s own doc
   // comment) and log tails only when their toggle is on below, so the
@@ -1799,8 +1843,12 @@ function ConsentPanel(props: {
   // "in the GitHub draft" (the public draft never carries images either -
   // only a private-report reference, and only when one exists).
   const summary = props.deliveryUnavailable
-    ? "Included in your diagnostic bundle: your words, type/frequency, and any log tails still toggled on below. Screenshots stay on this device - attach them manually if you post a GitHub issue."
-    : "Sent privately to the Traycer team: adds your words, screenshots and logs to the crash data we already receive.";
+    ? t(
+        "Included in your diagnostic bundle: your words, type/frequency, and any log tails still toggled on below. Screenshots stay on this device - attach them manually if you post a GitHub issue.",
+      )
+    : t(
+        "Sent privately to the Traycer team: adds your words, screenshots and logs to the crash data we already receive.",
+      );
 
   if (!props.expanded) {
     const logsState = logsToggleSummary(
@@ -1817,7 +1865,7 @@ function ConsentPanel(props: {
           onClick={props.onToggleExpanded}
           className="shrink-0 underline"
         >
-          details
+          {t("details")}
         </button>
       </div>
     );
@@ -1827,7 +1875,7 @@ function ConsentPanel(props: {
     <div className="grid gap-2.5 rounded-md border border-border px-3 py-2.5">
       <p className="text-ui-xs text-muted-foreground">{summary}</p>
       <ConsentLogToggleRow
-        label="App log tail"
+        label={t("App log tail")}
         target="desktop"
         draftId={props.draftId}
         support={props.support}
@@ -1836,7 +1884,7 @@ function ConsentPanel(props: {
         onCheckedChange={props.onToggleDesktopLog}
       />
       <ConsentLogToggleRow
-        label="Host log tail"
+        label={t("Host log tail")}
         target="host"
         draftId={props.draftId}
         support={props.support}
@@ -1849,7 +1897,7 @@ function ConsentPanel(props: {
           htmlFor="report-issue-diagnostics-toggle"
           className="text-ui-xs font-normal"
         >
-          Diagnostics (crash context, versions, provider info)
+          {t("Diagnostics (crash context, versions, provider info)")}
         </Label>
         <Switch
           id="report-issue-diagnostics-toggle"
@@ -1867,7 +1915,7 @@ function ConsentPanel(props: {
               props.onToggleAllowContact(value === true)
             }
           />
-          You may contact me at {props.contactEmail}
+          {t("You may contact me at {{email}}", { email: props.contactEmail })}
         </label>
       ) : null}
     </div>
@@ -1883,6 +1931,7 @@ function ConsentLogToggleRow(props: {
   readonly disabled: boolean;
   readonly onCheckedChange: (checked: boolean) => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const [viewOpen, setViewOpen] = useState(false);
   return (
     <div className="grid gap-1.5">
@@ -1894,13 +1943,13 @@ function ConsentLogToggleRow(props: {
             onClick={() => setViewOpen((v) => !v)}
             className="text-ui-xs text-muted-foreground underline"
           >
-            {viewOpen ? "hide" : "view"}
+            {viewOpen ? t("hide") : t("view")}
           </button>
           <Switch
             checked={props.checked}
             disabled={props.disabled}
             onCheckedChange={props.onCheckedChange}
-            aria-label={`Include ${props.label}`}
+            aria-label={t("Include {{label}}", { label: props.label })}
           />
         </div>
       </div>
@@ -1947,18 +1996,24 @@ function FrozenLogTailView(props: {
 
   if (isFetching) {
     return (
-      <p className="text-ui-xs text-muted-foreground">Loading frozen tail...</p>
+      <p className="text-ui-xs text-muted-foreground">
+        {i18n.t("Loading frozen tail...", { ns: "common" })}
+      </p>
     );
   }
   if (isError || data === undefined) {
     return (
       <p className="text-ui-xs text-muted-foreground">
-        Could not load the frozen log tail.
+        {i18n.t("Could not load the frozen log tail.", { ns: "common" })}
       </p>
     );
   }
   if (data.lines.length === 0) {
-    return <p className="text-ui-xs text-muted-foreground">Tail is empty.</p>;
+    return (
+      <p className="text-ui-xs text-muted-foreground">
+        {i18n.t("Tail is empty.", { ns: "common" })}
+      </p>
+    );
   }
   return (
     <pre className="max-h-32 overflow-auto rounded-md border border-border/60 bg-foreground/3 p-1.5 font-mono text-code-xs text-muted-foreground">
@@ -1976,25 +2031,26 @@ function ConfirmationScreen({
 }: {
   readonly reportId: string;
 }): ReactNode {
+  const { t } = useTranslation("common");
   return (
     <div className="grid gap-2 rounded-md border border-emerald-800/40 bg-emerald-950/10 px-3 py-3 text-ui-sm">
       <p className="font-medium text-emerald-600 dark:text-emerald-400">
-        Sent privately to the Traycer team.
+        {t("Sent privately to the Traycer team.")}
       </p>
       <p className="flex items-center gap-2 font-mono text-code-xs text-muted-foreground">
-        Report ID {reportId}
+        {t("Report ID {{id}}", { id: reportId })}
         <CopyTextButton
           value={reportId}
           label={null}
-          ariaLabel="Copy report ID"
+          ariaLabel={t("Copy report ID")}
           disabled={false}
         />
       </p>
       <p className="text-muted-foreground">
-        New reports get a first look within 1 business day.
+        {t("New reports get a first look within 1 business day.")}
       </p>
       <p className="text-muted-foreground">
-        Want other users to be able to find and follow this?
+        {t("Want other users to be able to find and follow this?")}
       </p>
     </div>
   );
@@ -2004,12 +2060,15 @@ function ConfirmationScreen({
 // privately delivered (no-DSN Case B, or a definite `failed`/rejected
 // submit) - never the green "Sent privately" confirmation.
 function GithubDraftOpenedScreen(): ReactNode {
+  const { t } = useTranslation("common");
   return (
     <div className="grid gap-2 rounded-md border border-border bg-foreground/3 px-3 py-3 text-ui-sm">
       <p className="font-medium text-foreground">
-        GitHub draft opened - finish posting in your browser.
+        {t("GitHub draft opened - finish posting in your browser.")}
       </p>
-      <p className="text-muted-foreground">Nothing was sent from this app.</p>
+      <p className="text-muted-foreground">
+        {t("Nothing was sent from this app.")}
+      </p>
     </div>
   );
 }
@@ -2030,24 +2089,29 @@ function previewFieldRows(
   switch (draft.template) {
     case "bug_report.yml":
       return [
-        { label: "What happened", value: draft.fields["what-happened"] },
-        { label: "Version", value: draft.fields.version },
-        { label: "OS / platform", value: draft.fields.os },
-        { label: "Component", value: draft.fields.component },
-        { label: "Steps to reproduce", value: draft.fields.repro },
+        { label: i18n.t("What happened", { ns: "common" }), value: draft.fields["what-happened"] },
+        { label: i18n.t("Version", { ns: "common" }), value: draft.fields.version },
+        { label: i18n.t("OS / platform", { ns: "common" }), value: draft.fields.os },
+        { label: i18n.t("Component", { ns: "common" }), value: draft.fields.component },
+        { label: i18n.t("Steps to reproduce", { ns: "common" }), value: draft.fields.repro },
       ];
     case "feature_request.yml":
       return [
-        { label: "Problem / motivation", value: draft.fields.problem },
-        { label: "Proposed solution", value: draft.fields.proposal },
+        { label: i18n.t("Problem / motivation", { ns: "common" }), value: draft.fields.problem },
+        { label: i18n.t("Proposed solution", { ns: "common" }), value: draft.fields.proposal },
         {
-          label: "Alternatives considered",
+          label: i18n.t("Alternatives considered", { ns: "common" }),
           value: draft.fields.alternatives,
         },
-        { label: "Component", value: draft.fields.component },
+        { label: i18n.t("Component", { ns: "common" }), value: draft.fields.component },
       ];
     case "general.yml":
-      return [{ label: "Details", value: draft.fields.details }];
+      return [
+        {
+          label: i18n.t("Details", { ns: "common" }),
+          value: draft.fields.details,
+        },
+      ];
   }
 }
 
@@ -2062,15 +2126,18 @@ function PublishPreviewScreen({
   readonly onTitleChange: (value: string) => void;
   readonly disabled: boolean;
 }): ReactNode {
+  const { t } = useTranslation("common");
   if (draft === null) {
     return (
-      <p className="text-ui-sm text-muted-foreground">Loading preview...</p>
+      <p className="text-ui-sm text-muted-foreground">
+        {t("Loading preview...")}
+      </p>
     );
   }
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="grid gap-3 py-1 pr-1">
-        <Field htmlFor="report-issue-preview-title" label="Title">
+        <Field htmlFor="report-issue-preview-title" label={t("Title")}>
           <Input
             id="report-issue-preview-title"
             value={title}
@@ -2089,9 +2156,9 @@ function PublishPreviewScreen({
           ))}
         </div>
         <p className="rounded-md border border-border px-3 py-2 text-ui-xs text-muted-foreground">
-          Logs, stack traces and identifiers stay in the private report.
-          Publishing needs a GitHub account; the issue is posted from yours, not
-          by the app.
+          {t(
+            "Logs, stack traces and identifiers stay in the private report. Publishing needs a GitHub account; the issue is posted from yours, not by the app.",
+          )}
         </p>
       </div>
     </div>
@@ -2121,6 +2188,7 @@ function ReportIssueFooterActions({
   readonly onReportOnGithub: () => void;
   readonly onSaveDiagnosticBundle: () => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   if (deliveryResult?.status === "unavailable") {
     return (
       <>
@@ -2136,7 +2204,7 @@ function ReportIssueFooterActions({
               variant={undefined}
             />
           ) : null}
-          Save diagnostic bundle
+          {t("Save diagnostic bundle")}
         </Button>
         <Button
           onClick={onOpenGithubIssue}
@@ -2149,7 +2217,7 @@ function ReportIssueFooterActions({
               variant={undefined}
             />
           ) : null}
-          Open a GitHub issue
+          {t("Open a GitHub issue")}
         </Button>
       </>
     );
@@ -2169,7 +2237,7 @@ function ReportIssueFooterActions({
               variant={undefined}
             />
           ) : null}
-          Report on GitHub instead
+          {t("Report on GitHub instead")}
         </Button>
         <Button onClick={onSubmit} disabled={isSubmitPending || isIngesting}>
           {isSubmitPending ? (
@@ -2179,7 +2247,7 @@ function ReportIssueFooterActions({
               variant={undefined}
             />
           ) : null}
-          Try again
+          {t("Try again")}
         </Button>
       </>
     );
@@ -2196,7 +2264,7 @@ function ReportIssueFooterActions({
           variant={undefined}
         />
       ) : null}
-      Send report
+      {t("Send report")}
     </Button>
   );
 }
@@ -2205,12 +2273,21 @@ function deliveryOutcomeMessage(
   result: DesktopSubmitReportResult | null,
 ): string {
   if (result?.status === "unconfirmed") {
-    return "We could not confirm your report was uploaded - it may have arrived. Trying again is safe; it reuses the same report ID.";
+    return i18n.t(
+      "We could not confirm your report was uploaded - it may have arrived. Trying again is safe; it reuses the same report ID.",
+      { ns: "common" },
+    );
   }
   if (result?.status === "unavailable") {
-    return "Private reporting is not available in this build. You can save a diagnostic bundle and open a GitHub issue instead.";
+    return i18n.t(
+      "Private reporting is not available in this build. You can save a diagnostic bundle and open a GitHub issue instead.",
+      { ns: "common" },
+    );
   }
-  return "Your report could not be sent. Nothing was lost - it is still here.";
+  return i18n.t(
+    "Your report could not be sent. Nothing was lost - it is still here.",
+    { ns: "common" },
+  );
 }
 
 function Field({

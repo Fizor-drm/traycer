@@ -25,6 +25,7 @@ import {
   describeOverviewDegrade,
   type OverviewDegradeReason,
 } from "@/components/settings/panels/host-overview-model";
+import { useTranslation } from "react-i18next";
 
 /**
  * The Overview status card's moving parts — the pieces that differ between a
@@ -150,6 +151,7 @@ export function HostOverviewNameAction(props: {
   readonly buttonRef: RefObject<HTMLButtonElement | null>;
 }): ReactNode {
   const { hostName, degrade, buttonRef } = props;
+  const { t } = useTranslation("panels");
   // A FAILED identity read is not a slow one, and conflating them stranded
   // rename outright: a rejected `host.identity.get` left the trigger
   // permanently busy with no error text and nothing to click. These reads do
@@ -167,7 +169,7 @@ export function HostOverviewNameAction(props: {
   if (props.failed) {
     return (
       <HostOverviewActionButton
-        label="Retry name"
+        label={t("Retry name")}
         hostName={hostName}
         variant="ghost"
         degrade={degrade}
@@ -194,7 +196,7 @@ export function HostOverviewNameAction(props: {
         degrade !== null || !props.loaded || props.pendingWrite || props.locked
       }
       onClick={props.onEdit}
-      aria-label="Edit name"
+      aria-label={t("Edit name")}
       data-testid="host-overview-edit-name"
       data-degraded={degrade ?? undefined}
     >
@@ -213,7 +215,7 @@ export function HostOverviewNameAction(props: {
     <TooltipWrapper
       label={
         degrade === null
-          ? `Rename ${hostName}`
+          ? t("Rename {{name}}", { name: hostName })
           : describeOverviewDegrade(degrade, hostName)
       }
       side="top"
@@ -251,6 +253,7 @@ export function HostOverviewUpdateProgress(props: {
   readonly state: "updating" | "failed";
   readonly error: string | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const failed = props.state === "failed";
   return (
     <div
@@ -273,8 +276,8 @@ export function HostOverviewUpdateProgress(props: {
       )}
       <span className="min-w-0 flex-1">
         {failed
-          ? (props.error ?? "The last update attempt failed on this host.")
-          : "Updating this host…"}
+          ? (props.error ?? t("The last update attempt failed on this host."))
+          : t("Updating this host…")}
       </span>
     </div>
   );
@@ -430,6 +433,7 @@ export function HostOverviewHeaderActions(props: {
   readonly onCopyHostId: () => void;
 }): ReactNode {
   const { hostName } = props;
+  const { t } = useTranslation("panels");
   return (
     <div className="flex shrink-0 items-center gap-1.5">
       {props.primaryAction}
@@ -439,7 +443,7 @@ export function HostOverviewHeaderActions(props: {
           data-testid="host-active-in-window"
         >
           <Check className="size-3.5" aria-hidden />
-          Active
+          {t("Active")}
         </span>
       ) : (
         // The asymmetry has to be said out loud somewhere, and the row that
@@ -457,8 +461,11 @@ export function HostOverviewHeaderActions(props: {
               ? // Not "tabs stay on the host they started on" - the active-host
                 // switch still reloads open tabs today (F2/F3/F7), so that
                 // promise would be false. This only says what IS true.
-                "Switching changes where new work starts."
-              : `${hostName} has no dialable route from this window, so it can't become this window's host.`
+                t("Switching changes where new work starts.")
+              : t(
+                  "{{name}} has no dialable route from this window, so it can't become this window's host.",
+                  { name: hostName },
+                )
           }
           side="top"
           sideOffset={undefined}
@@ -473,7 +480,7 @@ export function HostOverviewHeaderActions(props: {
               onClick={props.onMakeActive}
               data-testid="host-make-active"
             >
-              Activate
+              {t("Activate")}
             </Button>
           </span>
         </TooltipWrapper>
@@ -485,7 +492,7 @@ export function HostOverviewHeaderActions(props: {
             variant="ghost"
             size="sm"
             className="size-7 shrink-0 p-0 text-muted-foreground hover:text-foreground"
-            aria-label={`More actions for ${hostName}`}
+            aria-label={t("More actions for {{name}}", { name: hostName })}
             data-testid="host-overview-menu"
           >
             <MoreHorizontal className="size-4" />
@@ -493,7 +500,7 @@ export function HostOverviewHeaderActions(props: {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-56">
           <HostOverviewMenuAction
-            label="Restart"
+            label={t("Restart")}
             hostName={hostName}
             icon={<RotateCcw className="size-3.5" aria-hidden />}
             degrade={props.restartDegrade}
@@ -503,7 +510,7 @@ export function HostOverviewHeaderActions(props: {
             onSelect={props.onRestart}
           />
           <HostOverviewMenuAction
-            label="Run doctor"
+            label={t("Run doctor")}
             hostName={hostName}
             icon={<Stethoscope className="size-3.5" aria-hidden />}
             degrade={props.doctorDegrade}
@@ -517,7 +524,7 @@ export function HostOverviewHeaderActions(props: {
           />
           {props.onResetName === null ? null : (
             <HostOverviewMenuAction
-              label="Reset name to default"
+              label={t("Reset name to default")}
               hostName={hostName}
               icon={<Undo2 className="size-3.5" aria-hidden />}
               degrade={props.resetNameDegrade}
@@ -538,7 +545,7 @@ export function HostOverviewHeaderActions(props: {
             data-testid="host-overview-copy-host-id"
           >
             <Copy className="size-3.5" aria-hidden />
-            Copy host ID
+            {t("Copy host ID")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

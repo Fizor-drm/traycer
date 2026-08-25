@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { HostClient } from "@traycer-clients/shared/host-client/host-client";
 import type { HostDoctorIssue } from "@traycer/protocol/host/maintenance/index";
 import { HostDoctorCard } from "@/components/settings/panels/host-doctor-card";
@@ -78,6 +79,7 @@ interface DoctorSheetProps {
 
 export function DoctorSheet(props: DoctorSheetProps) {
   const { open, onOpenChange, source } = props;
+  const { t } = useTranslation("panels");
   const [recurrence, setRecurrence] = useState<RecurrenceState>(
     INITIAL_RECURRENCE_STATE,
   );
@@ -85,11 +87,16 @@ export function DoctorSheet(props: DoctorSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-xl" showCloseButton>
         <SheetHeader>
-          <SheetTitle>Host doctor</SheetTitle>
+          <SheetTitle>{t("Host doctor")}</SheetTitle>
           <SheetDescription>
             {source.kind === "rpc"
-              ? `Diagnostics ${source.hostName} ran on itself, with one-click fixes where this app can apply them.`
-              : "Diagnostics for the host on this computer, with one-click fixes for common issues."}
+              ? t(
+                  "Diagnostics {{name}} ran on itself, with one-click fixes where this app can apply them.",
+                  { name: source.hostName },
+                )
+              : t(
+                  "Diagnostics for the host on this computer, with one-click fixes for common issues.",
+                )}
           </SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-4 pb-4">

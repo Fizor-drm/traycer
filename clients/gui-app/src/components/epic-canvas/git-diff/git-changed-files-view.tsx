@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { Search, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { GitChangedFile } from "@traycer/protocol/host";
 import {
   InputGroup,
@@ -32,6 +33,7 @@ export interface GitChangedFilesViewProps {
 export function GitChangedFilesView(
   props: GitChangedFilesViewProps,
 ): ReactNode {
+  const { t } = useTranslation("canvas");
   const [searchQuery, setSearchQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
   const debounceTimerRef = useRef<number | null>(null);
@@ -85,8 +87,8 @@ export function GitChangedFilesView(
             value={searchQuery}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
-            placeholder="Filter changed files..."
-            aria-label="Filter changed files"
+            placeholder={t("Filter changed files...")}
+            aria-label={t("Filter changed files")}
             className="text-ui-sm"
           />
           {searchQuery.length > 0 ? (
@@ -94,7 +96,7 @@ export function GitChangedFilesView(
               <InputGroupButton
                 size="icon-xs"
                 onClick={handleClear}
-                aria-label="Clear filter"
+                aria-label={t("Clear filter")}
               >
                 <X className="size-3.5" aria-hidden />
               </InputGroupButton>

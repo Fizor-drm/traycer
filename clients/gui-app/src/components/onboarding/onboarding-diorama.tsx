@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { m, useReducedMotion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
   Bell,
@@ -39,6 +40,7 @@ import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import type { GuiHarnessId } from "@traycer/protocol/host/agent/shared";
 import { ORDERED_PROVIDERS } from "@/lib/provider-ordering";
 import { cn } from "@/lib/utils";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 interface OnboardingDioramaProps {
   readonly stage: number;
@@ -331,6 +333,9 @@ function sceneForStage(stage: number): SceneId {
 
 export function OnboardingDiorama(props: OnboardingDioramaProps) {
   const { stage, agentGuide } = props;
+  // Subscribing here re-renders the whole diorama on language change; the
+  // leaf labels below translate via the shared instance.
+  useTranslation("common");
   const scene = sceneForStage(stage);
   const reducedMotion = useReducedMotion() === true;
   const [taskIndex, setTaskIndex] = useState(0);
@@ -484,7 +489,9 @@ function NavigationDragDemo(props: {
   const zoneClass = second
     ? "left-[64%] top-[54%] h-[40%] w-[33%]"
     : "left-[64%] top-[14%] h-[80%] w-[33%]";
-  const zoneLabel = second ? "Drop to split below" : "Drop to split right";
+  const zoneLabel = second
+    ? i18n.t("Drop to split below", { ns: "common" })
+    : i18n.t("Drop to split right", { ns: "common" });
   const endTop = second ? "73%" : "40%";
   const startLeft = start === null ? "7.5%" : start.left;
   const startTop = start === null ? agent.startTop : start.top;
@@ -505,7 +512,9 @@ function NavigationDragDemo(props: {
         <div className="rounded border border-primary/35 bg-background/65 px-2 py-1 text-overline uppercase tracking-wider">
           {zoneLabel}
         </div>
-        <div className="mt-2 text-code-xs text-primary/80">opens here</div>
+        <div className="mt-2 text-code-xs text-primary/80">
+          {i18n.t("opens here", { ns: "common" })}
+        </div>
       </m.div>
       <m.div
         aria-hidden="true"
@@ -577,7 +586,9 @@ function TaskTabs(props: { readonly activeIndex: number }) {
                 : "text-muted-foreground/70",
             )}
           >
-            <span className="truncate">{task}</span>
+            <span className="truncate">
+              {i18n.t(task, { ns: "common" })}
+            </span>
             {showSeparator ? (
               <span
                 aria-hidden="true"
@@ -613,21 +624,29 @@ function TaskSidebar(props: {
           activeKind={activeKind}
           className=""
           rows={[
-            { kind: "chat", label: taskScene.chat, harnessId: null },
+            {
+              kind: "chat",
+              label: i18n.t(taskScene.chat, { ns: "common" }),
+              harnessId: null,
+            },
             {
               kind: "terminal-agent",
-              label: taskScene.terminal,
+              label: i18n.t(taskScene.terminal, { ns: "common" }),
               harnessId: taskScene.terminalHarness,
             },
-            { kind: "chat", label: taskScene.secondChat, harnessId: null },
+            {
+              kind: "chat",
+              label: i18n.t(taskScene.secondChat, { ns: "common" }),
+              harnessId: null,
+            },
             {
               kind: "terminal-agent",
-              label: OPENCODE_RUN_LABEL,
+              label: i18n.t(OPENCODE_RUN_LABEL, { ns: "common" }),
               harnessId: "opencode",
             },
             {
               kind: "terminal-agent",
-              label: "risk review run",
+              label: i18n.t("risk review run", { ns: "common" }),
               harnessId: "codex",
             },
           ]}
@@ -640,8 +659,16 @@ function TaskSidebar(props: {
           className=""
           rows={[
             { kind: "spec", label: taskScene.spec, harnessId: null },
-            { kind: "ticket", label: taskScene.ticket, harnessId: null },
-            { kind: "review", label: taskScene.review, harnessId: null },
+            {
+              kind: "ticket",
+              label: i18n.t(taskScene.ticket, { ns: "common" }),
+              harnessId: null,
+            },
+            {
+              kind: "review",
+              label: i18n.t(taskScene.review, { ns: "common" }),
+              harnessId: null,
+            },
             { kind: "spec", label: "grace-period.spec", harnessId: null },
           ]}
         />
@@ -691,7 +718,7 @@ function CanvasTopRail(props: { readonly className: string }) {
     >
       <div className="flex items-center gap-1 text-code-xs italic text-muted-foreground/80">
         <span className="size-1.5 rounded-full bg-emerald-400" />
-        All changes synced
+        {i18n.t("All changes synced", { ns: "common" })}
       </div>
     </div>
   );
@@ -712,7 +739,7 @@ function SidebarGroup(props: {
       <div className="flex h-9 items-center gap-2 px-3">
         <ChevronRight className="size-3 shrink-0 rotate-90 text-muted-foreground transition-transform" />
         <span className="min-w-0 flex-1 truncate text-ui-xs font-normal tracking-wide text-muted-foreground uppercase">
-          {props.title}
+          {i18n.t(props.title, { ns: "common" })}
         </span>
         <Plus className="size-3 shrink-0 text-muted-foreground" />
       </div>
@@ -1096,7 +1123,7 @@ function MainPane(props: {
           {
             icon: Terminal,
             harnessId: null,
-            label: "New Terminal",
+            label: i18n.t("New Terminal", { ns: "common" }),
             active: false,
             preview: false,
           },
@@ -1128,8 +1155,13 @@ function ChatPane(props: {
   }
   const userCopy =
     props.scene === "task-tabs"
-      ? `Continue ${TASKS[props.activeTaskIndex].toLowerCase()}`
-      : "Let's ship team usage limits.";
+      ? i18n.t("Continue {{task}}", {
+          ns: "common",
+          task: i18n
+            .t(TASKS[props.activeTaskIndex], { ns: "common" })
+            .toLowerCase(),
+        })
+      : i18n.t("Let's ship team usage limits.", { ns: "common" });
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex min-h-0 flex-1 flex-col justify-end gap-2 p-3">
@@ -1186,7 +1218,7 @@ function ProvidersFocusScene() {
             <ChevronUp className="size-2.5 opacity-70" />
           </span>
           <span className="min-w-0 flex-1 truncate text-code-xs text-muted-foreground/60">
-            Ask anything…
+            {i18n.t("Ask anything…", { ns: "common" })}
           </span>
         </div>
       </m.div>
@@ -1198,10 +1230,10 @@ function OpenHarnessPicker() {
   return (
     <div className="overflow-hidden rounded-md border border-border bg-popover shadow-2xl">
       <div className="border-b border-border px-2.5 py-1.5 text-overline uppercase tracking-wider text-muted-foreground">
-        Select harness
+        {i18n.t("Select harness", { ns: "common" })}
       </div>
       <ProviderList
-        ariaLabel="Diorama harness options"
+        ariaLabel={i18n.t("Diorama harness options", { ns: "common" })}
         variant="diorama"
         className="p-1"
         rows={ORDERED_PROVIDERS.map(({ providerId }) => {
@@ -1252,7 +1284,7 @@ function AgentChatPane(props: { readonly step: number }) {
             Codex
           </span>
           <span className="min-w-0 flex-1 truncate text-code-xs text-muted-foreground/60">
-            Ask anything…
+            {i18n.t("Ask anything…", { ns: "common" })}
           </span>
         </div>
       </div>
@@ -1289,7 +1321,10 @@ function GuiMessage(props: {
       >
         <span className="flex items-center gap-1 text-overline uppercase tracking-wider text-primary">
           <ArrowRight className="size-3" />
-          to {PANE_LABEL[props.to]}
+          {i18n.t("to {{agent}}", {
+            ns: "common",
+            agent: PANE_LABEL[props.to],
+          })}
         </span>
         <span className="text-foreground/85">{props.text}</span>
       </m.div>
@@ -1323,7 +1358,7 @@ function GuiMessage(props: {
         {isDecision ? (
           <>
             <Check className="size-3 text-[var(--term-ansi-green)]" />
-            Decision
+            {i18n.t("Decision", { ns: "common" })}
           </>
         ) : (
           <>
@@ -1422,9 +1457,12 @@ function claudeLineColor(kind: StoryKind): string {
 }
 
 function claudeLineText(beat: StoryBeat): string {
-  if (beat.kind === "blocked") return `blocked: ${beat.text}`;
-  if (beat.kind === "handoff") return `→ ${PANE_LABEL[beat.to]}: ${beat.text}`;
-  return `ok ${beat.text}`;
+  const text = i18n.t(beat.text, { ns: "common" });
+  if (beat.kind === "blocked") return `blocked: ${text}`;
+  if (beat.kind === "handoff") {
+    return `→ ${PANE_LABEL[beat.to]}: ${text}`;
+  }
+  return `ok ${text}`;
 }
 
 function ClaudeSessionLines(props: {
@@ -1472,7 +1510,9 @@ function OpencodeStoryBody(props: {
               </span>
             ) : null}
           </span>
-          <span className="text-foreground/85">{beat.text}</span>
+          <span className="text-foreground/85">
+            {i18n.t(beat.text, { ns: "common" })}
+          </span>
         </m.div>
       ))}
     </div>
@@ -1524,8 +1564,12 @@ function AgentGuidePane(props: {
       onValueChange={agentGuide.onValueChange}
       onBlur={null}
       disabled={agentGuide.loading || agentGuide.saving}
-      placeholder={agentGuide.loading ? "Loading…" : undefined}
-      ariaLabel="Onboarding agent selection instructions"
+      placeholder={
+        agentGuide.loading ? i18n.t("Loading…", { ns: "common" }) : undefined
+      }
+      ariaLabel={i18n.t("Onboarding agent selection instructions", {
+        ns: "common",
+      })}
       testId="onboarding-agent-guide-input"
       editorClassName="flex-1"
       className="size-full overflow-hidden rounded-lg border border-border bg-card p-4 shadow-2xl"
@@ -1541,7 +1585,11 @@ function OnboardingAgentGuideStatus(props: {
   readonly agentGuide: OnboardingAgentGuideState;
 }) {
   if (props.agentGuide.error) {
-    return <span className="text-code-xs text-destructive">Not saved</span>;
+    return (
+      <span className="text-code-xs text-destructive">
+        {i18n.t("Not saved", { ns: "common" })}
+      </span>
+    );
   }
   if (props.agentGuide.saving) {
     return (
@@ -1551,14 +1599,14 @@ function OnboardingAgentGuideStatus(props: {
           testId={undefined}
           variant={undefined}
         />
-        Saving
+        {i18n.t("Saving", { ns: "common" })}
       </span>
     );
   }
   return (
     <span className="flex items-center gap-1 text-code-xs text-muted-foreground">
       <ArrowRight className="size-3" />
-      Will save when you continue
+      {i18n.t("Will save when you continue", { ns: "common" })}
     </span>
   );
 }
@@ -1607,7 +1655,7 @@ function CommandPalette(props: { readonly reducedMotion: boolean }) {
       <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
         <Command className="size-3.5 text-muted-foreground" />
         <span className="text-ui-sm text-muted-foreground">
-          Type a command...
+          {i18n.t("Type a command...", { ns: "common" })}
         </span>
         <kbd className="ml-auto rounded border border-border bg-foreground/8 px-1.5 py-0.5 font-mono text-overline text-muted-foreground">
           Cmd K
@@ -1624,7 +1672,7 @@ function CommandPalette(props: { readonly reducedMotion: boolean }) {
                 : "text-muted-foreground",
             )}
           >
-            <span>{row.label}</span>
+            <span>{i18n.t(row.label, { ns: "common" })}</span>
             {row.hint.length > 0 ? (
               <span className="font-mono text-overline opacity-70">
                 {row.hint}

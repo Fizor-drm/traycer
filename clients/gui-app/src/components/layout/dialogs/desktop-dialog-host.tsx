@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { resolveDesktopSupportBridge } from "@/lib/windows/desktop-capabilities";
 import { useRunnerHost } from "@/providers/use-runner-host";
 import { useDesktopDialogStore } from "@/stores/dialogs/desktop-dialog-store";
@@ -8,11 +9,13 @@ import { UnsyncedEpicMoveDialog } from "@/components/layout/dialogs/unsynced-epi
 import { InstallGuidanceDialog } from "@/components/layout/dialogs/install-guidance-dialog";
 import { ConfirmDestructiveDialog } from "@/components/ui/confirm-destructive-dialog";
 import { confirmAppUpdateInstall } from "@/lib/app-update/request-app-update-install";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { AboutDetailsDialog } from "./desktop/about-details-dialog";
 import { LogsChooserDialog } from "./desktop/logs-chooser-dialog";
 import { OpenEpicInNewWindowDialog } from "./desktop/open-epic-in-new-window-dialog";
 
 export function DesktopDialogHost(): ReactNode {
+  const { t } = useTranslation("common");
   const runnerHost = useRunnerHost();
   const support = useMemo(
     () => resolveDesktopSupportBridge(runnerHost),
@@ -111,15 +114,15 @@ export function DesktopDialogHost(): ReactNode {
           title={
             updateUnsyncedOtherWindowsUnknown &&
             updateUnsyncedEpics.length === 0
-              ? "Install update without checking other windows?"
-              : "Install update and discard unsaved work?"
+              ? t("Install update without checking other windows?")
+              : t("Install update and discard unsaved work?")
           }
           description={describeUnsyncableWork(
             updateUnsyncedEpics,
             updateUnsyncedOtherWindowsUnknown,
           )}
           cascadeSummary={null}
-          actionLabel="Install and discard"
+          actionLabel={t("Install and discard")}
           isPending={updateInstallConfirmPending}
           onConfirm={() => {
             const bridge = appUpdates.bridge;
@@ -162,15 +165,26 @@ function describeUnsyncableWork(
   otherWindowsUnknown: boolean,
 ): string {
   const unknownSuffix = otherWindowsUnknown
-    ? " Traycer could not check the other windows, which may hold more."
+    ? i18n.t(" Traycer could not check the other windows, which may hold more.", {
+        ns: "common",
+      })
     : "";
   if (otherWindowsUnknown && epics.length === 0) {
-    return "Traycer could not check the other windows for changes that cannot be saved (changes kept when a host changed have nowhere left to sync to). Installing restarts Traycer and discards any such work in another window.";
+    return i18n.t(
+      "Traycer could not check the other windows for changes that cannot be saved (changes kept when a host changed have nowhere left to sync to). Installing restarts Traycer and discards any such work in another window.",
+      { ns: "common" },
+    );
   }
   const titles = epics.map((epic) => epic.title).join(", ");
   const subject =
     epics.length === 1
-      ? "1 Epic has changes"
-      : `${epics.length} Epics have changes`;
-  return `${subject} that cannot be saved - they were kept when their host changed and have nowhere left to sync to. Installing restarts Traycer and discards them: ${titles}.${unknownSuffix}`;
+      ? i18n.t("1 Epic has changes", { ns: "common" })
+      : i18n.t("{{count}} Epics have changes", {
+          ns: "common",
+          count: epics.length,
+        });
+  return i18n.t(
+    "{{subject}} that cannot be saved - they were kept when their host changed and have nowhere left to sync to. Installing restarts Traycer and discards them: {{titles}}.{{suffix}}",
+    { ns: "common", subject, titles, suffix: unknownSuffix },
+  );
 }

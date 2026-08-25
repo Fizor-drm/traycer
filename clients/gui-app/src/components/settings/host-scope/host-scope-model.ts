@@ -7,6 +7,7 @@ import type { ServiceStatusSnapshot } from "@traycer-clients/shared/platform/run
 import type { HostLeaseSnapshot } from "@traycer-clients/shared/host-selection/selection-authority-contract";
 import { hostUnavailability } from "@traycer-clients/shared/host-client/remote-fetcher";
 import { dialableHostEndpointFor } from "@/lib/host/transport-key";
+import { i18n } from "@/lib/i18n/init-i18n";
 import {
   deriveHostHealth,
   type HostHealth,
@@ -471,7 +472,7 @@ export function formatArchitecture(platform: string | null): string | null {
 export function formatHostVersion(version: string | null): string | null {
   if (version === null || version.length === 0) return null;
   if (/^\d+\.\d+\.\d+/.test(version)) return `v${version}`;
-  return "Preview build";
+  return i18n.t("Preview build", { ns: "panels" });
 }
 
 /**
@@ -505,7 +506,7 @@ export function unavailableHostOption(
     version: null,
     health: {
       state: "offline",
-      label: "Offline",
+      label: i18n.t("Offline", { ns: "panels" }),
       detail: null,
       tone: "idle",
       live: false,

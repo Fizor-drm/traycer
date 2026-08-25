@@ -8,6 +8,7 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   MarkdownEditPreview,
   MarkdownPreview,
@@ -30,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 import { useWorkspaceReadFile } from "@/hooks/workspace/use-read-file-query";
 import { useHostClient } from "@/lib/host";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { cn } from "@/lib/utils";
 import {
   SKILL_ENTRY_FILE,
@@ -174,6 +176,7 @@ function EditableSkillDetail(props: {
   readonly onClose: () => void;
 }): ReactNode {
   const initial = skillEditPrefill(props.skill, props.raw);
+  const { t } = useTranslation("panels");
   const baseline = useRef(initial.baseline);
   const lastRaw = useRef(props.raw);
   const formNode = useRef<HTMLFormElement>(null);
@@ -360,7 +363,13 @@ function EditableSkillDetail(props: {
                 const help =
                   error ??
                   (overSoftLimit
-                    ? `${field.state.value.trim().length} characters — over the ${SKILL_DESCRIPTION_SOFT_LIMIT}-character guideline.`
+                    ? t(
+                        "{{count}} characters — over the {{limit}}-character guideline.",
+                        {
+                          count: field.state.value.trim().length,
+                          limit: SKILL_DESCRIPTION_SOFT_LIMIT,
+                        },
+                      )
                     : null);
                 return (
                   <div className="min-w-0">
@@ -373,7 +382,7 @@ function EditableSkillDetail(props: {
                       >
                         {field.state.value.length > 0
                           ? field.state.value
-                          : "No description in this skill's frontmatter."}
+                          : t("No description in this skill's frontmatter.")}
                       </p>
                       <Textarea
                         id="skill-detail-description"
@@ -384,7 +393,7 @@ function EditableSkillDetail(props: {
                           field.handleChange(event.target.value);
                         }}
                         disabled={!editing || props.editPending}
-                        aria-label="When to use"
+                        aria-label={t("When to use")}
                         aria-invalid={editing ? error !== undefined : undefined}
                         aria-describedby={
                           editing && help !== null
@@ -435,10 +444,10 @@ function EditableSkillDetail(props: {
               <div className="flex min-h-0 flex-1 flex-col gap-2">
                 <div className="shrink-0">
                   <p className="text-ui-sm font-medium text-foreground">
-                    Instructions
+                    {t("Instructions")}
                     {editing ? (
                       <span className="ms-2 text-ui-xs font-normal text-muted-foreground">
-                        Markdown
+                        {t("Markdown")}
                       </span>
                     ) : null}
                   </p>
@@ -468,7 +477,7 @@ function EditableSkillDetail(props: {
                       onChange={field.handleChange}
                       readOnly={!editing || props.editPending}
                       placeholder={undefined}
-                      ariaLabel="Instructions"
+                      ariaLabel={t("Instructions")}
                       testId="skill-detail-instructions"
                       showPreview={false}
                     />
@@ -502,7 +511,7 @@ function EditableSkillDetail(props: {
                         requestExit("detail");
                       }}
                     >
-                      Cancel
+                      {t("Cancel")}
                     </Button>
                     <Button
                       type="submit"
@@ -512,7 +521,7 @@ function EditableSkillDetail(props: {
                       {props.editPending || isSubmitting ? (
                         <MutedAgentSpinner />
                       ) : null}
-                      Save changes
+                      {t("Save changes")}
                     </Button>
                   </>
                 ) : (
@@ -530,7 +539,7 @@ function EditableSkillDetail(props: {
                       }}
                     >
                       <Pencil className="size-3.5" />
-                      Edit
+                      {t("Edit")}
                     </Button>
                     {props.removal.kind === "removable" ? (
                       <Button
@@ -546,7 +555,7 @@ function EditableSkillDetail(props: {
                         ) : (
                           <Trash2 className="size-3.5" />
                         )}
-                        Remove
+                        {t("Remove")}
                       </Button>
                     ) : null}
                   </>
@@ -581,18 +590,19 @@ function EditableSkillHeader(props: {
   readonly updateDisabled: boolean;
   readonly onRequestUpdate: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <DialogHeader className="border-b border-border/40 px-5 py-4 text-left">
       <DialogTitle className="sr-only">{props.skill.name}</DialogTitle>
       <DialogDescription className="sr-only">
-        {props.skill.description ?? "Skill details"}
+        {props.skill.description ?? t("Skill details")}
       </DialogDescription>
       <div className="grid min-w-0 grid-cols-[max-content_minmax(0,1fr)] items-start gap-x-4 gap-y-3 pe-7">
         <Label
           className="pt-1.5 text-ui-xs font-medium text-muted-foreground"
           htmlFor="skill-detail-name"
         >
-          Name
+          {t("Name")}
         </Label>
         <div className="flex min-w-0 items-start gap-2">
           {props.nameField}
@@ -605,14 +615,14 @@ function EditableSkillHeader(props: {
           className="pt-1 text-ui-xs font-medium text-muted-foreground"
           htmlFor="skill-detail-description"
         >
-          When to use
+          {t("When to use")}
         </Label>
         {props.descriptionField}
 
         {props.origin === null ? null : (
           <>
             <span className="pt-1.5 text-ui-xs font-medium text-muted-foreground">
-              Source
+              {t("Source")}
             </span>
             <div className="flex min-h-8 min-w-0 flex-wrap items-center justify-between gap-2">
               <p className="min-w-0 py-1 text-ui-xs text-muted-foreground">
@@ -632,7 +642,7 @@ function EditableSkillHeader(props: {
                   ) : (
                     <RefreshCw className="size-3.5" />
                   )}
-                  Update from source
+                  {t("Update from source")}
                 </Button>
               ) : null}
             </div>
@@ -648,6 +658,7 @@ function UnsavedSkillChangesDialog(props: {
   readonly onKeepEditing: () => void;
   readonly onDiscard: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <Dialog
       open={props.open}
@@ -666,10 +677,10 @@ function UnsavedSkillChangesDialog(props: {
           </div>
           <div className="min-w-0 flex-1 space-y-1.5">
             <DialogTitle className="text-ui font-semibold leading-snug">
-              Discard unsaved changes?
+              {t("Discard unsaved changes?")}
             </DialogTitle>
             <DialogDescription className="text-ui-sm leading-relaxed">
-              Your edits to this skill will be lost.
+              {t("Your edits to this skill will be lost.")}
             </DialogDescription>
           </div>
         </div>
@@ -680,7 +691,7 @@ function UnsavedSkillChangesDialog(props: {
             size="sm"
             onClick={props.onKeepEditing}
           >
-            Keep editing
+            {t("Keep editing")}
           </Button>
           <Button
             type="button"
@@ -688,7 +699,7 @@ function UnsavedSkillChangesDialog(props: {
             size="sm"
             onClick={props.onDiscard}
           >
-            Discard changes
+            {t("Discard changes")}
           </Button>
         </div>
       </DialogContent>
@@ -712,6 +723,7 @@ function ReadOnlySkillDetail(props: {
   readonly onRequestUpdate: () => void;
   readonly onRequestRemove: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <>
       <ReadOnlySkillHeader
@@ -730,7 +742,7 @@ function ReadOnlySkillDetail(props: {
         )}
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           <p className="shrink-0 text-ui-sm font-medium text-foreground">
-            Instructions
+            {t("Instructions")}
           </p>
           <SkillBody
             pending={props.pending}
@@ -759,15 +771,16 @@ function ReadOnlySkillHeader(props: {
   readonly updateDisabled: boolean;
   readonly onRequestUpdate: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <DialogHeader className="border-b border-border/40 px-5 py-4 text-left">
       <DialogTitle className="sr-only">{props.skill.name}</DialogTitle>
       <DialogDescription className="sr-only">
-        {props.skill.description ?? "Skill details"}
+        {props.skill.description ?? t("Skill details")}
       </DialogDescription>
       <div className="grid min-w-0 grid-cols-[max-content_minmax(0,1fr)] items-start gap-x-4 gap-y-3 pe-7">
         <span className="pt-1.5 text-ui-xs font-medium text-muted-foreground">
-          Name
+          {t("Name")}
         </span>
         <div className="flex min-w-0 items-start gap-2">
           <p className="flex h-8 min-w-0 flex-1 items-center truncate text-title-sm font-semibold text-foreground">
@@ -779,19 +792,19 @@ function ReadOnlySkillHeader(props: {
         </div>
 
         <span className="pt-1 text-ui-xs font-medium text-muted-foreground">
-          When to use
+          {t("When to use")}
         </span>
         <p className="min-h-16 py-1 text-ui-sm leading-relaxed text-muted-foreground">
           {props.skill.description !== null &&
           props.skill.description.length > 0
             ? props.skill.description
-            : "No description in this skill's frontmatter."}
+            : t("No description in this skill's frontmatter.")}
         </p>
 
         {props.origin === null ? null : (
           <>
             <span className="pt-1.5 text-ui-xs font-medium text-muted-foreground">
-              Source
+              {t("Source")}
             </span>
             <div className="flex min-h-8 min-w-0 flex-wrap items-center justify-between gap-2">
               <p className="min-w-0 py-1 text-ui-xs text-muted-foreground">
@@ -811,7 +824,7 @@ function ReadOnlySkillHeader(props: {
                   ) : (
                     <RefreshCw className="size-3.5" />
                   )}
-                  Update from source
+                  {t("Update from source")}
                 </Button>
               ) : null}
             </div>
@@ -823,17 +836,18 @@ function ReadOnlySkillHeader(props: {
 }
 
 function SkillBadges({ skill }: { readonly skill: ProviderSkill }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <>
       <Badge
         variant="outline"
         className={cn("rounded-full", SKILL_SOURCE_TONE[skill.source])}
       >
-        {SKILL_SOURCE_LABEL[skill.source]}
+        {t(SKILL_SOURCE_LABEL[skill.source])}
       </Badge>
       {skill.conflict === true ? (
         <TooltipWrapper
-          label={SKILL_CONFLICT_TOOLTIP}
+          label={t(SKILL_CONFLICT_TOOLTIP)}
           side="top"
           sideOffset={4}
           align="center"
@@ -842,7 +856,7 @@ function SkillBadges({ skill }: { readonly skill: ProviderSkill }): ReactNode {
             variant="outline"
             className={cn("rounded-full", SKILL_CONFLICT_TONE)}
           >
-            {SKILL_CONFLICT_LABEL}
+            {t(SKILL_CONFLICT_LABEL)}
           </Badge>
         </TooltipWrapper>
       ) : null}
@@ -857,6 +871,7 @@ function ReadOnlySkillFooter(props: {
   readonly actionsDisabled: boolean;
   readonly onRequestRemove: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <DialogFooter className="mx-0 mb-0 flex-row items-center gap-3 rounded-none border-t border-border/40 px-5 py-3 sm:justify-between">
       <StartTruncatedText className="block min-w-0 flex-1 font-mono text-ui-xs text-muted-foreground">
@@ -881,7 +896,7 @@ function ReadOnlySkillFooter(props: {
           ) : (
             <Trash2 className="size-3.5" />
           )}
-          Remove
+          {t("Remove")}
         </Button>
       ) : null}
     </DialogFooter>
@@ -894,11 +909,12 @@ function SkillBody(props: {
   readonly content: string | null;
   readonly truncated: boolean;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (props.pending) {
     return (
       <div className="flex min-h-0 flex-1 items-start gap-2 py-4 text-ui-sm text-muted-foreground">
         <MutedAgentSpinner />
-        Loading skill
+        {t("Loading skill")}
       </div>
     );
   }
@@ -907,7 +923,7 @@ function SkillBody(props: {
       <div className="flex min-h-0 flex-1 items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-ui-sm text-amber-900 dark:text-amber-200">
         <FileWarning className="mt-0.5 size-3.5 shrink-0" aria-hidden />
         <span className="min-w-0">
-          {props.error ?? `Could not read ${SKILL_ENTRY_FILE}.`}
+          {props.error ?? t("Could not read {{file}}.", { file: SKILL_ENTRY_FILE })}
         </span>
       </div>
     );
@@ -917,12 +933,12 @@ function SkillBody(props: {
     <>
       {props.truncated ? (
         <p className="mb-3 rounded-md border border-border/40 bg-foreground/3 px-3 py-2 text-ui-xs text-muted-foreground">
-          This skill is large - showing the beginning of the file.
+          {t("This skill is large - showing the beginning of the file.")}
         </p>
       ) : null}
       {body.trim().length === 0 ? (
         <p className="min-h-0 flex-1 py-3 text-ui-sm text-muted-foreground">
-          This skill has frontmatter but no instructions.
+          {t("This skill has frontmatter but no instructions.")}
         </p>
       ) : (
         <div
@@ -955,12 +971,17 @@ function normalizeEditValues(values: SkillEditValues): SkillEditValues {
 }
 
 function editNameError(value: string): string | undefined {
-  if (value.trim().length === 0) return "Give the skill a name.";
+  if (value.trim().length === 0) {
+    return i18n.t("Give the skill a name.", { ns: "panels" });
+  }
   return skillNameError(value) ?? undefined;
 }
 
 function editDescriptionError(value: string): string | undefined {
   return value.trim().length === 0
-    ? "Add a description — the agent reads it to decide when to use this skill."
+    ? i18n.t(
+        "Add a description — the agent reads it to decide when to use this skill.",
+        { ns: "panels" },
+      )
     : undefined;
 }

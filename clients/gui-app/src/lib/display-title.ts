@@ -33,6 +33,7 @@
  * tab name) - those still source the literal from `UNTITLED_LABELS` here so the
  * strings stay single-sourced.
  */
+import { i18n } from "@/lib/i18n/init-i18n";
 import type { EpicNodeKind } from "@/lib/artifacts/node-display";
 import { createEpicName } from "@/lib/epic-name";
 
@@ -75,7 +76,7 @@ export const UNTITLED_EPIC_TITLE = UNTITLED_LABELS.epic;
 
 /** The "Untitled <kind>" fallback label for a given kind. */
 function untitledLabel(kind: DisplayTitleKind): string {
-  return UNTITLED_LABELS[kind];
+  return i18n.t(UNTITLED_LABELS[kind], { ns: "common" });
 }
 
 /**

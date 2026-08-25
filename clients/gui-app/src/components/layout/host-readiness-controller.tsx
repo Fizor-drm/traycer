@@ -7,6 +7,8 @@ import {
   type ReactNode,
 } from "react";
 import { useRouterState } from "@tanstack/react-router";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import type { HostDirectoryEntry } from "@traycer-clients/shared/host-client/host-directory";
 import type { HostLeaseSnapshot } from "@traycer-clients/shared/host-selection/selection-authority-contract";
 import { Button } from "@/components/ui/button";
@@ -434,6 +436,7 @@ export function SurfaceReadinessFallback(props: {
   readonly readiness: GateDrawnReadiness;
 }): ReactNode {
   const controller = useHostReadinessController();
+  const { t } = useTranslation("common");
   const presentation = controller.defaultHostPresentation;
   // The auth-restore wait is a WAIT, not a terminal, and it can sit between
   // the attach cover and the narrator's card on any launch. It therefore wears
@@ -461,7 +464,7 @@ export function SurfaceReadinessFallback(props: {
   // streaming behind them.
   return (
     <FallbackFrame
-      fallback={fallbackContent(props.readiness, presentation)}
+      fallback={fallbackContent(props.readiness, presentation, t)}
       testId={`host-ready-gate-${props.readiness.kind}`}
       messageTestId={
         props.readiness.kind === "mobile-no-host" ? "mobile-no-host" : null
@@ -727,32 +730,35 @@ type GateTerminalReadiness = Exclude<
 function fallbackContent(
   readiness: GateTerminalReadiness,
   presentation: DefaultHostReadinessPresentation,
+  t: TFunction<"common">,
 ): ReadinessFallback {
   switch (readiness.kind) {
     case "mobile-no-host":
       return {
         title: null,
-        message:
+        message: t(
           "No host connected. Connect a host from this device to get started.",
+        ),
         body: null,
         footer: null,
         actions: [],
       };
     case "provisioning-error":
-      return provisioningErrorFallback(presentation);
+      return provisioningErrorFallback(presentation, t);
     case "removed-host":
       return {
-        title: "Traycer was removed",
+        title: t("Traycer was removed"),
         // The original card named the actual next step. "Reinstall to start
         // the host again" answered a question the user was not asking: they
         // removed it on purpose and need to know how to finish.
-        message:
+        message: t(
           "You removed Traycer's background components from this device, so the host won't start. Your agents and history are preserved. To finish, quit Traycer and drag it from Applications to the Trash.",
+        ),
         body: null,
         footer: null,
         actions: [
           {
-            label: "Quit Traycer",
+            label: t("Quit Traycer"),
             testId: "local-host-removed-quit",
             variant: "destructive",
             disabled: false,
@@ -762,7 +768,7 @@ function fallbackContent(
             },
           },
           {
-            label: "Reinstall",
+            label: t("Reinstall"),
             testId: "local-host-removed-reinstall",
             variant: "outline",
             disabled: false,
@@ -776,7 +782,7 @@ function fallbackContent(
           // be doing so to work from a remote machine. Same rule as every
           // other card in the launch: never a terminal with no way to Settings.
           {
-            label: "Open settings",
+            label: t("Open settings"),
             testId: "local-host-removed-open-settings",
             variant: "outline",
             disabled: false,
@@ -790,14 +796,15 @@ function fallbackContent(
 
 function provisioningErrorFallback(
   presentation: DefaultHostReadinessPresentation,
+  t: TFunction<"common">,
 ): ReadinessFallback {
   return {
     // The same heading the narrator's settled cold-start face uses: both cards
     // say "this machine's host didn't start", and they say it identically.
-    title: "Traycer Host didn't start",
+    title: t("Traycer Host didn't start"),
     message:
       presentation.provisioningError?.message ??
-      "Could not start Traycer Host.",
+      t("Could not start Traycer Host."),
     // THE DIAGNOSTICS, and this card had none. It is drawn when this machine's
     // install just failed, and it WINS over the window narrator on that state
     // (`gateCardReadiness`) - which meant the narrator's settled arm, the one
@@ -829,7 +836,7 @@ function provisioningErrorFallback(
     }),
     actions: [
       {
-        label: "Retry",
+        label: t("Retry"),
         testId: "local-host-provisioning-retry",
         variant: "outline",
         disabled: presentation.provisioning,
@@ -854,7 +861,7 @@ function provisioningErrorFallback(
       // card: the gap is real on its own, and this card has to be survivable
       // whether it is the only narrator or not.
       {
-        label: "Open settings",
+        label: t("Open settings"),
         testId: "local-host-provisioning-open-settings",
         variant: "outline",
         disabled: false,

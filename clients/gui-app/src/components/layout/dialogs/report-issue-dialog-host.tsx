@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { resolveDesktopSupportBridge } from "@/lib/windows/desktop-capabilities";
 import { useRunnerHost } from "@/providers/use-runner-host";
 import { useDesktopDialogStore } from "@/stores/dialogs/desktop-dialog-store";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { ReportIssueDialog } from "./desktop/report-issue-dialog";
 
 export function ReportIssueDialogHost(): ReactNode {
@@ -53,8 +54,11 @@ export function ReportIssueDialogHost(): ReactNode {
     ) {
       return;
     }
-    toast.info("Your previous report is safe", {
-      description: `Report ID ${lastConfirmedReport.reportId}`,
+    toast.info(i18n.t("Your previous report is safe", { ns: "common" }), {
+      description: i18n.t("Report ID {{id}}", {
+        ns: "common",
+        id: lastConfirmedReport.reportId,
+      }),
     });
     setLastConfirmedReport(null);
   }, [reportIssueDraftId, lastConfirmedReport, setLastConfirmedReport]);

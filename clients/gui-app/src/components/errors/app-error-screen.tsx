@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AlertTriangle, House, RotateCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ReportIssueAction } from "@/components/report-issue/report-issue-action";
@@ -34,6 +35,7 @@ export interface AppErrorScreenProps {
  * "return home" do.
  */
 export function AppErrorScreen(props: AppErrorScreenProps): ReactNode {
+  const { t } = useTranslation("common");
   const detail = errorDetail(props.error);
   return (
     <div
@@ -48,11 +50,12 @@ export function AppErrorScreen(props: AppErrorScreenProps): ReactNode {
           </div>
           <div className="flex flex-col gap-1.5">
             <h1 className="text-title-md font-semibold text-foreground">
-              Something went wrong
+              {t("Something went wrong")}
             </h1>
             <p className="text-ui-sm text-muted-foreground">
-              The app hit an unexpected error. Refreshing the window usually
-              clears it; if it keeps happening, return home and try again.
+              {t(
+                "The app hit an unexpected error. Refreshing the window usually clears it; if it keeps happening, return home and try again.",
+              )}
             </p>
           </div>
           {detail === null ? null : (
@@ -72,7 +75,7 @@ export function AppErrorScreen(props: AppErrorScreenProps): ReactNode {
               onClick={props.onRefresh}
             >
               <RotateCw aria-hidden />
-              Refresh window
+              {t("Refresh window")}
             </Button>
             <Button
               type="button"
@@ -81,9 +84,9 @@ export function AppErrorScreen(props: AppErrorScreenProps): ReactNode {
               className="w-full"
               onClick={props.onReturnHome}
             >
-              <House aria-hidden />
-              Return to Home
-            </Button>
+                <House aria-hidden />
+                {t("Return to Home")}
+              </Button>
             <ReportIssueAction
               context={createReportIssueDraftContext({
                 title: "Something went wrong",

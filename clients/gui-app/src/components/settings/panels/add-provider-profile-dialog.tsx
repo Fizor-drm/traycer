@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlertTriangle,
   Check,
@@ -44,6 +45,7 @@ import { useRenameProviderProfileForClient } from "@/hooks/providers/use-rename-
 import { useRunnerOpenExternalLink } from "@/hooks/runner/use-open-external-link-mutation";
 import { useClipboardCopy } from "@/hooks/ui/use-clipboard-copy";
 import { redactEmail } from "@/lib/providers/redact-email";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { CodePasteField, CodePasteRestartNotice } from "./code-paste-field";
 import { handleSignInLinkCopyError } from "./provider-sign-in-link";
 import { waitingStepCopy } from "./waiting-step-copy";
@@ -126,13 +128,16 @@ export function AddProviderProfileDialog({
   ) => void;
   readonly onProfileCreated: (profileId: string) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const openExternalLink = useRunnerOpenExternalLink();
   const supportsShareSkillsAndPlugins =
     PROVIDER_SHARES_SKILLS_AND_PLUGINS[state.providerId];
   const [shareSkillsAndPlugins, setShareSkillsAndPlugins] = useState(
     supportsShareSkillsAndPlugins,
   );
-  const [label, setLabel] = useState("New profile");
+  const [label, setLabel] = useState(() =>
+    i18n.t("New profile", { ns: "panels" }),
+  );
   const [accentColor, setAccentColor] = useState<ProviderProfileAccentColor>(
     () => nextAvailableAccentColor(state.profiles),
   );
@@ -168,9 +173,10 @@ export function AddProviderProfileDialog({
     submitLoginCode,
     touchLogin,
     failureMessages: {
-      notStarted:
+      notStarted: t(
         "Sign-in did not start. You can retry when the provider is available.",
-      notFinished: "Sign-in did not finish. Retry when you are ready.",
+      ),
+      notFinished: t("Sign-in did not finish. Retry when you are ready."),
     },
     onFailed: (message) =>
       onFailedAttempt({ providerId: state.providerId, message }),
@@ -309,11 +315,15 @@ export function AddProviderProfileDialog({
       >
         <DialogHeader className="gap-1.5 px-5 pt-5 pr-12 pb-4">
           <DialogTitle className="text-ui font-semibold leading-snug">
-            Add new {PROVIDER_DISPLAY_NAMES[state.providerId]} profile
+            {t("Add new {{provider}} profile", {
+              provider: PROVIDER_DISPLAY_NAMES[state.providerId],
+            })}
           </DialogTitle>
           <DialogDescription className="text-ui-sm leading-relaxed text-muted-foreground">
-            Name this {PROVIDER_DISPLAY_NAMES[state.providerId]} profile, choose
-            its color, then link the account it should use.
+            {t(
+              "Name this {{provider}} profile, choose its color, then link the account it should use.",
+              { provider: PROVIDER_DISPLAY_NAMES[state.providerId] },
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -366,7 +376,7 @@ export function AddProviderProfileDialog({
               variant="ghost"
               onClick={() => close(false)}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
           </DialogFooter>
         ) : null}
@@ -380,7 +390,7 @@ export function AddProviderProfileDialog({
               onClick={() => commitNaming(naming.profile)}
             >
               {finalizing ? <MutedAgentSpinner /> : null}
-              Save profile
+              {t("Save profile")}
             </Button>
           </DialogFooter>
         ) : null}
@@ -392,7 +402,7 @@ export function AddProviderProfileDialog({
               variant="ghost"
               onClick={linkAccount}
             >
-              Sign in again
+              {t("Sign in again")}
             </Button>
             <Button
               type="button"
@@ -400,7 +410,7 @@ export function AddProviderProfileDialog({
               variant="secondary"
               onClick={() => close(false)}
             >
-              Done
+              {t("Done")}
             </Button>
           </DialogFooter>
         ) : null}
@@ -448,11 +458,12 @@ function AddProfileAccountSection({
   readonly onRetryLogin: () => void;
   readonly onRetryFinalize: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (flowState.kind === "start") {
     return (
       <button
         type="button"
-        aria-label="Link account"
+        aria-label={t("Link account")}
         className="group flex w-full items-center gap-3 rounded-lg border border-border/60 bg-foreground/3 p-3 text-left transition-colors hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={linkDisabled}
         onClick={onLink}
@@ -462,10 +473,10 @@ function AddProfileAccountSection({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-ui-sm font-medium text-foreground">
-            Link account
+            {t("Link account")}
           </span>
           <span className="block text-ui-xs text-muted-foreground">
-            Sign in to the account this profile should use.
+            {t("Sign in to the account this profile should use.")}
           </span>
         </span>
         <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -507,7 +518,7 @@ function AddProfileAccountSection({
     return (
       <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-foreground/3 p-3 text-ui-sm text-muted-foreground">
         <MutedAgentSpinner />
-        <span>Cancelling sign-in</span>
+        <span>{t("Cancelling sign-in")}</span>
       </div>
     );
   }
@@ -531,7 +542,9 @@ function AddProfileAccountSection({
   if (finalizeError !== null) {
     return (
       <AddProfileFailureStep
-        message="The account was linked, but the profile color could not be saved."
+        message={t(
+          "The account was linked, but the profile color could not be saved.",
+        )}
         onCancel={onCancel}
         onRetry={onRetryFinalize}
       />
@@ -541,7 +554,9 @@ function AddProfileAccountSection({
   return (
     <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-foreground/3 p-3 text-ui-sm text-muted-foreground">
       <MutedAgentSpinner />
-      <span>{finalizing ? "Finishing profile setup" : "Account linked"}</span>
+      <span>
+        {finalizing ? t("Finishing profile setup") : t("Account linked")}
+      </span>
     </div>
   );
 }
@@ -551,14 +566,19 @@ function DuplicateAccountNotice({
 }: {
   readonly profile: ProviderProfile;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-amber-900 dark:text-amber-200">
       <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
       <div className="min-w-0">
-        <div className="text-ui-sm font-medium">Account already linked</div>
+        <div className="text-ui-sm font-medium">
+          {t("Account already linked")}
+        </div>
         <p className="mt-0.5 text-ui-xs leading-relaxed">
-          {profile.label} already uses this account and organization. Sign in
-          again and choose a different organization.
+          {t(
+            "{{label}} already uses this account and organization. Sign in again and choose a different organization.",
+            { label: profile.label },
+          )}
         </p>
       </div>
     </div>
@@ -578,6 +598,7 @@ function AddProfileNamingStep({
   readonly emailRevealed: boolean;
   readonly setEmailRevealed: (value: boolean) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div className="flex flex-col gap-3">
       <AddProfileIdentityStep
@@ -587,13 +608,15 @@ function AddProfileNamingStep({
         setEmailRevealed={setEmailRevealed}
       />
       <p className="text-ui-xs leading-relaxed text-muted-foreground">
-        {collisionProfile.label} already uses this email. Name this profile so
-        you can tell them apart.
+        {t(
+          "{{label}} already uses this email. Name this profile so you can tell them apart.",
+          { label: collisionProfile.label },
+        )}
       </p>
       {error !== null ? (
         <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-ui-xs text-destructive">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
-          <span>Couldn&apos;t save the name. Try again.</span>
+          <span>{t("Couldn't save the name. Try again.")}</span>
         </div>
       ) : null}
     </div>
@@ -610,11 +633,12 @@ function ShareSkillsAndPluginsField({
   readonly onCheckedChange: (value: boolean) => void;
 }): ReactNode {
   const id = useId();
+  const { t } = useTranslation("panels");
   return (
     <div className="flex items-start gap-2 text-ui-sm text-muted-foreground">
       <Checkbox
         id={id}
-        aria-label="Use terminal account skills and plugins"
+        aria-label={t("Use terminal account skills and plugins")}
         checked={checked}
         disabled={disabled}
         onCheckedChange={(value) => onCheckedChange(value === true)}
@@ -623,10 +647,13 @@ function ShareSkillsAndPluginsField({
         htmlFor={id}
         className="flex min-w-0 cursor-pointer flex-col gap-0.5 select-none"
       >
-        <span className="text-foreground">Use terminal skills and plugins</span>
+        <span className="text-foreground">
+          {t("Use terminal skills and plugins")}
+        </span>
         <span>
-          Share the terminal account&apos;s installed skills and plugins with
-          this profile.
+          {t(
+            "Share the terminal account's installed skills and plugins with this profile.",
+          )}
         </span>
       </label>
     </div>
@@ -664,6 +691,7 @@ export function AddProfileWaitingStep({
     onSuccess: null,
     onError: handleSignInLinkCopyError,
   });
+  const { t } = useTranslation("panels");
   const processingCode = codePaste.phase !== "idle";
   const { title, guidance } = waitingStepCopy({
     phase: codePaste.phase,
@@ -697,13 +725,15 @@ export function AddProfileWaitingStep({
             onClick={() => onOpenExternalLink(loginUrl)}
           >
             <ExternalLink className="size-3.5" />
-            Open browser again
+            {t("Open browser again")}
           </Button>
           <Button
             type="button"
             size="icon-sm"
             variant="outline"
-            aria-label={copied ? "Copied sign-in link" : "Copy sign-in link"}
+            aria-label={
+              copied ? t("Copied sign-in link") : t("Copy sign-in link")
+            }
             onClick={() => copy(loginUrl)}
           >
             {copied ? (
@@ -720,10 +750,10 @@ export function AddProfileWaitingStep({
           {!processingCode ? (
             <div className="mb-2">
               <p className="text-ui-xs font-medium text-foreground">
-                Didn&apos;t return automatically?
+                {t("Didn't return automatically?")}
               </p>
               <p className="mt-0.5 text-ui-xs text-muted-foreground">
-                If the browser shows a code, paste it here.
+                {t("If the browser shows a code, paste it here.")}
               </p>
             </div>
           ) : null}
@@ -741,12 +771,12 @@ export function AddProfileWaitingStep({
           type="button"
           size="sm"
           variant="destructive"
-          aria-label="Cancel sign-in"
+          aria-label={t("Cancel sign-in")}
           disabled={cancelRequested || cancelPending || cancelDisabled}
           onClick={onCancel}
         >
           {cancelPending ? <MutedAgentSpinner /> : null}
-          Cancel
+          {t("Cancel")}
         </Button>
       </div>
     </div>
@@ -766,7 +796,8 @@ export function AddProfileIdentityStep({
 }): ReactNode {
   const email = profile.identity?.email ?? null;
   const tier = profile.identity?.tier ?? null;
-  let identityText = "Authenticated profile";
+  const { t } = useTranslation("panels");
+  let identityText = t("Authenticated profile");
   if (email !== null) {
     identityText = emailRevealed ? email : redactEmail(email);
   }
@@ -774,7 +805,7 @@ export function AddProfileIdentityStep({
     <div className="flex flex-col gap-3">
       <div className="rounded-md border border-border/60 bg-foreground/3 p-3">
         <div className="text-ui-xs font-medium uppercase text-muted-foreground">
-          Signed in as
+          {t("Signed in as")}
         </div>
         <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-ui-sm">
           <span className="min-w-0 truncate font-medium text-foreground">
@@ -783,7 +814,7 @@ export function AddProfileIdentityStep({
           {email !== null ? (
             <button
               type="button"
-              aria-label={emailRevealed ? "Hide email" : "Reveal email"}
+              aria-label={emailRevealed ? t("Hide email") : t("Reveal email")}
               aria-pressed={emailRevealed}
               className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
               onClick={() => setEmailRevealed(!emailRevealed)}
@@ -805,7 +836,7 @@ export function AddProfileIdentityStep({
       {duplicateLabel !== null ? (
         <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-ui-xs text-amber-900 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
-          <span>This is the same account as {duplicateLabel}.</span>
+          <span>{t("This is the same account as {{label}}.", { label: duplicateLabel })}</span>
         </div>
       ) : null}
     </div>
@@ -821,6 +852,7 @@ function AddProfileFailureStep({
   readonly onCancel: () => void;
   readonly onRetry: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-ui-sm text-destructive">
       <div className="flex items-start gap-2">
@@ -829,17 +861,17 @@ function AddProfileFailureStep({
       </div>
       <div className="flex items-center gap-2">
         <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button type="button" size="sm" variant="secondary" onClick={onRetry}>
-          Retry
+          {t("Retry")}
         </Button>
         <ReportIssueAction
           context={createReportIssueContext({
-            title: "Provider sign-in failed",
+            title: t("Provider sign-in failed"),
             message: null,
             code: null,
-            source: "Add profile",
+            source: t("Add profile"),
           })}
           presentation="link"
           className="h-auto p-0 text-current"

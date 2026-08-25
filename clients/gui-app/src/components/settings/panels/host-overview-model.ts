@@ -1,3 +1,4 @@
+import { i18n } from "@/lib/i18n/init-i18n";
 import type { HostDoctorIssue } from "@traycer/protocol/host/maintenance/index";
 
 /**
@@ -96,15 +97,24 @@ export function describeOverviewDegrade(
 ): string {
   switch (reason) {
     case "unsupported":
-      return `${hostName} is running a version that doesn't support this yet. Update it and this comes back on its own.`;
+      return i18n.t(
+        "{{name}} is running a version that doesn't support this yet. Update it and this comes back on its own.",
+        { ns: "panels", name: hostName },
+      );
     case "cli-unavailable":
-      return `${hostName} has no Traycer CLI installed to run this, so it can't be done over the connection.`;
+      return i18n.t(
+        "{{name}} has no Traycer CLI installed to run this, so it can't be done over the connection.",
+        { ns: "panels", name: hostName },
+      );
     case "externally-managed":
       // Deliberately offers no alternative inside Traycer, because there is
       // none: this host skips the update reconciler entirely, so neither the
       // version list nor the auto-update switch below reaches it. An earlier
       // wording sent people to a version pin that this page no longer has.
-      return `${hostName}'s updates are managed outside Traycer. Whatever deploys it decides its version — nothing here will change it.`;
+      return i18n.t(
+        "{{name}}'s updates are managed outside Traycer. Whatever deploys it decides its version — nothing here will change it.",
+        { ns: "panels", name: hostName },
+      );
   }
 }
 
@@ -125,11 +135,20 @@ export function describeCliShellFailure(
 ): string {
   switch (failure) {
     case "cli-unavailable":
-      return `${hostName} has no Traycer CLI installed, so it can't run this.`;
+      return i18n.t("{{name}} has no Traycer CLI installed, so it can't run this.", {
+        ns: "panels",
+        name: hostName,
+      });
     case "cli-failed":
-      return `${hostName}'s Traycer CLI couldn't complete the request.`;
+      return i18n.t("{{name}}'s Traycer CLI couldn't complete the request.", {
+        ns: "panels",
+        name: hostName,
+      });
     case "invalid-output":
-      return `${hostName}'s Traycer CLI answered in a format this app doesn't understand. It's probably a different version than this app expects.`;
+      return i18n.t(
+        "{{name}}'s Traycer CLI answered in a format this app doesn't understand. It's probably a different version than this app expects.",
+        { ns: "panels", name: hostName },
+      );
   }
 }
 

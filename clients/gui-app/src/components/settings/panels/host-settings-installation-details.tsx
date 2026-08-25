@@ -1,8 +1,10 @@
+import { useTranslation } from "react-i18next";
 import { HostSettingsDisclosure } from "@/components/settings/panels/host-settings-disclosure";
 import {
   formatInstallDate,
   formatSource,
 } from "@/components/settings/panels/host-settings-panel-model";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { cn } from "@/lib/utils";
 import type { HostInstallSourceTag } from "@traycer-clients/shared/platform/runner-host";
 
@@ -75,16 +77,17 @@ export function InstallationDetailsDisclosure(
   props: InstallationDetailsDisclosureProps,
 ) {
   const { record, loading } = props;
+  const { t } = useTranslation("panels");
   return (
-    <HostSettingsDisclosure label="Installation details" defaultOpen={false}>
+    <HostSettingsDisclosure label={t("Installation details")} defaultOpen={false}>
       {record === null ? (
         <div className="text-ui-sm text-muted-foreground">
-          {loading ? "Reading install record…" : props.emptyMessage}
+          {loading ? t("Reading install record…") : props.emptyMessage}
         </div>
       ) : (
         <dl className="flex flex-col gap-3 text-ui-sm">
           <DetailField
-            label="Version"
+            label={t("Version")}
             value={`v${record.runtimeVersion ?? record.version}`}
             valueClassName={undefined}
             testId="settings-host-install-version"
@@ -92,26 +95,26 @@ export function InstallationDetailsDisclosure(
           {record.runtimeVersion === null ||
           record.runtimeVersion === record.version ? null : (
             <DetailField
-              label="Build"
+              label={t("Build")}
               value={record.version}
               valueClassName={undefined}
               testId="settings-host-install-build"
             />
           )}
           <DetailField
-            label="Source"
+            label={t("Source")}
             value={formatSource(record.source)}
             valueClassName={undefined}
             testId={undefined}
           />
           <DetailField
-            label="Installed"
+            label={t("Installed")}
             value={formatInstallDate(record.installedAt)}
             valueClassName={undefined}
             testId={undefined}
           />
           <DetailField
-            label="Verification"
+            label={t("Verification")}
             value={describeVerification(record)}
             valueClassName={
               isSignatureVerified(record)
@@ -122,14 +125,14 @@ export function InstallationDetailsDisclosure(
           />
           {record.archiveSha256 !== null && record.archiveSha256.length > 0 ? (
             <DetailField
-              label="SHA-256"
+              label={t("SHA-256")}
               value={record.archiveSha256}
               valueClassName={undefined}
               testId={undefined}
             />
           ) : null}
           <DetailField
-            label="Platform"
+            label={t("Platform")}
             value={`${record.platform}/${record.arch}`}
             valueClassName={undefined}
             testId={undefined}
@@ -160,11 +163,14 @@ function describeVerification(record: InstallationDetailsRecord): string {
     // installed from a local file or run from a tree, so there was no
     // signature to check in the first place, and saying so is the difference
     // between a state and a fault.
-    return "Unsigned local build";
+    return i18n.t("Unsigned local build", { ns: "panels" });
   }
   return record.signatureVerifiedAt === null
-    ? "Unverified"
-    : `Verified ${formatInstallDate(record.signatureVerifiedAt)}`;
+    ? i18n.t("Unverified", { ns: "panels" })
+    : i18n.t("Verified {{datetime}}", {
+        ns: "panels",
+        datetime: formatInstallDate(record.signatureVerifiedAt),
+      });
 }
 
 function DetailField(props: DetailFieldProps) {

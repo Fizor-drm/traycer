@@ -4,14 +4,13 @@ import { ReportIssueAction } from "@/components/report-issue/report-issue-action
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import { createReportIssueContext } from "@/lib/report-issue-context";
+import { i18n } from "@/lib/i18n/init-i18n";
 import {
   epicsSeen,
   taskChainsSeen,
   useMigrationRunStore,
   type MigrationRunState,
 } from "@/stores/migration/migration-run-store";
-
-const MIGRATION_PROGRESS_LABEL = "Migrating tasks";
 
 export function MigrationBlockingModalHost(): ReactNode {
   const status = useMigrationRunStore((s) => s.status);
@@ -86,12 +85,18 @@ function RunningBody(props: RunningBodyProps): ReactNode {
         data-slot="dialog-title"
         className="font-heading text-lg leading-none font-medium"
       >
-        {MIGRATION_PROGRESS_LABEL}
+        {i18n.t("Migrating tasks", { ns: "common" })}
       </DialogPrimitive.Title>
       <p className="text-sm text-muted-foreground">
         {isRemote
-          ? "A migration is running in another window. Please wait - it will finish shortly."
-          : "Moving your local tasks and epics to the cloud. Please don't close the app."}
+          ? i18n.t(
+              "A migration is running in another window. Please wait - it will finish shortly.",
+              { ns: "common" },
+            )
+          : i18n.t(
+              "Moving your local tasks and epics to the cloud. Please don't close the app.",
+              { ns: "common" },
+            )}
       </p>
       <div className="flex items-center gap-3 rounded-md border border-border/60 bg-muted/40 px-3 py-2">
         <AgentSpinningDots
@@ -116,22 +121,28 @@ function ErrorBody(props: ErrorBodyProps): ReactNode {
   const { finalSuccess, onAcknowledge } = props;
   const message =
     finalSuccess === false
-      ? "Migration finished with some incomplete items. You can re-attempt later from Settings."
-      : "Migration connection was interrupted. The host-side state is preserved - re-open settings to retry.";
+      ? i18n.t(
+          "Migration finished with some incomplete items. You can re-attempt later from Settings.",
+          { ns: "common" },
+        )
+      : i18n.t(
+          "Migration connection was interrupted. The host-side state is preserved - re-open settings to retry.",
+          { ns: "common" },
+        );
   return (
     <>
       <DialogPrimitive.Title
         data-slot="dialog-title"
         className="font-heading text-lg leading-none font-medium"
       >
-        Migration interrupted
+        {i18n.t("Migration interrupted", { ns: "common" })}
       </DialogPrimitive.Title>
       <p className="text-sm text-muted-foreground">{message}</p>
       <div className="flex flex-wrap justify-end gap-2">
         <ReportIssueAction
           context={createReportIssueContext({
-            title: "Migration interrupted",
-            message: "The migration did not finish.",
+            title: i18n.t("Migration interrupted", { ns: "common" }),
+            message: i18n.t("The migration did not finish.", { ns: "common" }),
             code: null,
             source: "Data migration",
           })}
@@ -139,7 +150,7 @@ function ErrorBody(props: ErrorBodyProps): ReactNode {
           className={undefined}
         />
         <Button type="button" onClick={onAcknowledge}>
-          Dismiss
+          {i18n.t("Dismiss", { ns: "common" })}
         </Button>
       </div>
     </>
@@ -152,10 +163,19 @@ function progressLabel(
   counts: MigrationRunState["counts"],
 ): string {
   if (status !== "running") {
-    return "Waiting for live progress…";
+    return i18n.t("Waiting for live progress…", { ns: "common" });
   }
   if (totals === null) {
-    return "Counting items…";
+    return i18n.t("Counting items…", { ns: "common" });
   }
-  return `tasks ${taskChainsSeen(counts)}/${totals.totalTaskChains}, epics ${epicsSeen(counts)}/${totals.totalLocalEpics}`;
+  return i18n.t(
+    "tasks {{tasksSeen}}/{{tasksTotal}}, epics {{epicsSeen}}/{{epicsTotal}}",
+    {
+      ns: "common",
+      tasksSeen: taskChainsSeen(counts),
+      tasksTotal: totals.totalTaskChains,
+      epicsSeen: epicsSeen(counts),
+      epicsTotal: totals.totalLocalEpics,
+    },
+  );
 }

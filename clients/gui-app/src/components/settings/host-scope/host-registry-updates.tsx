@@ -1,9 +1,11 @@
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { HostListItem } from "@traycer/protocol/host/host-status";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ConfirmDestructiveDialog } from "@/components/ui/confirm-destructive-dialog";
 import { cn } from "@/lib/utils";
+import { i18n } from "@/lib/i18n/init-i18n";
 import type { UpdateHostVersionPolicyMutation } from "@/components/settings/host-scope/use-host-registry-update-mutation";
 import type { HostBusyBreakdown } from "@traycer/protocol/host/status/index";
 import { busyWorkPhrase } from "@/components/host/host-restart-copy";
@@ -42,6 +44,7 @@ export function HostAutoUpdateRow(props: {
   readonly className: string;
 }): ReactNode {
   const { item, mutation } = props;
+  const { t } = useTranslation("panels");
   const pill = deriveUpdatePill(item.status.updateState);
   const isAuto = item.updatePolicy === "auto";
 
@@ -62,11 +65,13 @@ export function HostAutoUpdateRow(props: {
             force: undefined,
           });
         }}
-        aria-label={isAuto ? "Turn off auto-update" : "Turn on auto-update"}
+        aria-label={
+          isAuto ? t("Turn off auto-update") : t("Turn on auto-update")
+        }
         data-testid={`host-auto-update-${item.hostId}`}
       />
       <div className="min-w-0 flex-1">
-        <p className="text-ui-sm text-foreground">Auto-update</p>
+        <p className="text-ui-sm text-foreground">{t("Auto-update")}</p>
         {/* ONE sentence, both vantages. This used to fork on `isLocalHost`,
               saying "Installs new versions when no sessions are running."
               locally — which was fiction. The pin is applied by the HOST's own
@@ -88,8 +93,9 @@ export function HostAutoUpdateRow(props: {
               promises the slower one and lets the faster one be a pleasant
               surprise. */}
         <p className="text-ui-xs text-muted-foreground">
-          Applied on this host&apos;s next check-in — within ~10 minutes, and
-          only when no sessions are running.
+          {t(
+            "Applied on this host's next check-in — within ~10 minutes, and only when no sessions are running.",
+          )}
         </p>
       </div>
       {pill === null ? null : (
@@ -142,6 +148,7 @@ export function HostUpdateDrainGateRow(props: {
   readonly settledBusyBreakdown: HostBusyBreakdown | null;
 }): ReactNode {
   const { item, mutation } = props;
+  const { t } = useTranslation("panels");
   const affordance = deriveUpdateAffordance({
     updateState: item.status.updateState,
     liveBusySessionCount: props.liveBusySessionCount,
@@ -152,7 +159,7 @@ export function HostUpdateDrainGateRow(props: {
     <div className="flex flex-wrap items-center gap-3 border-t border-border/40 px-5 py-3">
       <p className="min-w-0 flex-1 text-ui-sm text-muted-foreground">
         {affordance.waitingForSessionsLabel ??
-          "Waiting for open sessions before applying."}
+          t("Waiting for open sessions before applying.")}
       </p>
       <ApplyNowControl
         hostId={item.hostId}
@@ -225,6 +232,7 @@ function ApplyNowControl(props: {
   const [armedCount, setArmedCount] = useState<number | null>(null);
   const [armedBreakdown, setArmedBreakdown] =
     useState<HostBusyBreakdown | null>(null);
+  const { t } = useTranslation("panels");
   const open = armedHostId !== null;
   const targetMoved = armedHostId !== null && armedHostId !== hostId;
   // `null` covers "the live source is gone", "it never reported", and "a
@@ -265,7 +273,7 @@ function ApplyNowControl(props: {
         onOpenChange={(next) => {
           if (!next) setArmedHostId(null);
         }}
-        title="Apply the update now?"
+        title={t("Apply the update now?")}
         description={describeApplyNowConfirmation({
           targetMoved,
           countMoved,
@@ -276,7 +284,7 @@ function ApplyNowControl(props: {
           currentBreakdown: props.settledBusyBreakdown,
         })}
         cascadeSummary={null}
-        actionLabel="Apply now"
+        actionLabel={t("Apply now")}
         isPending={mutation.isPending}
         onConfirm={() => {
           // Refuse rather than retarget. A destructive action whose subject,
@@ -321,7 +329,10 @@ function describeApplyNowConfirmation(input: {
   readonly currentBreakdown: HostBusyBreakdown | null;
 }): string {
   if (input.targetMoved) {
-    return "The host this was aimed at is no longer the one selected. Close this and try again on the host you mean.";
+    return i18n.t(
+      "The host this was aimed at is no longer the one selected. Close this and try again on the host you mean.",
+      { ns: "panels" },
+    );
   }
   if (input.countMoved || input.breakdownMoved) {
     const lost =
@@ -329,19 +340,38 @@ function describeApplyNowConfirmation(input: {
       (input.armedBreakdown !== null && input.currentBreakdown === null);
     if (lost) {
       return input.armedBreakdown === null
-        ? "We can't currently see how many sessions are open on this host, so we can't say what applying now would end. Close this and try again once the count is back."
-        : "We can't currently see what is working on this host, so we can't say what applying now would end. Close this and try again once that is visible again.";
+        ? i18n.t(
+            "We can't currently see how many sessions are open on this host, so we can't say what applying now would end. Close this and try again once the count is back.",
+            { ns: "panels" },
+          )
+        : i18n.t(
+            "We can't currently see what is working on this host, so we can't say what applying now would end. Close this and try again once that is visible again.",
+            { ns: "panels" },
+          );
     }
     if (input.breakdownMoved) {
       const was =
         input.armedBreakdown === null
-          ? `${input.armedCount} sessions`
-          : (busyWorkPhrase(input.armedBreakdown) ?? "that work");
-      return `The work applying now would end changed since you opened this — it is no longer ${was}. Close this and try again so you can see what applying now would end.`;
+          ? i18n.t("{{count}} sessions", {
+              ns: "panels",
+              count: input.armedCount,
+            })
+          : (busyWorkPhrase(input.armedBreakdown) ??
+            i18n.t("that work", { ns: "panels" }));
+      return i18n.t(
+        "The work applying now would end changed since you opened this — it is no longer {{was}}. Close this and try again so you can see what applying now would end.",
+        { ns: "panels", was },
+      );
     }
-    return `The number of open sessions changed since you opened this — it is no longer ${input.armedCount}. Close this and try again so you can see what applying now would end.`;
+    return i18n.t(
+      "The number of open sessions changed since you opened this — it is no longer {{count}}. Close this and try again so you can see what applying now would end.",
+      { ns: "panels", count: input.armedCount },
+    );
   }
-  return "This ends every open terminal and agent session on this host so the update can apply immediately. Sessions can be reopened once the host is back.";
+  return i18n.t(
+    "This ends every open terminal and agent session on this host so the update can apply immediately. Sessions can be reopened once the host is back.",
+    { ns: "panels" },
+  );
 }
 
 function sameBusyBreakdown(

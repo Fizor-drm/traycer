@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
@@ -59,10 +60,11 @@ export function HostVersionRows(props: {
   readonly onInstall: (version: string) => void;
 }): ReactNode {
   const { rows } = props;
+  const { t } = useTranslation("panels");
   if (rows.length === 0) {
     return (
       <div className="text-ui-sm text-muted-foreground">
-        No versions available.
+        {t("No versions available.")}
       </div>
     );
   }
@@ -93,7 +95,7 @@ export function HostVersionRows(props: {
             onClick={props.onToggleShowAll}
             data-testid="host-version-rows-toggle"
           >
-            {props.showAll ? "Show recent" : "Show all"}
+            {props.showAll ? t("Show recent") : t("Show all")}
           </Button>
         </div>
       ) : null}
@@ -108,6 +110,7 @@ function VersionRow(props: {
   readonly onInstall: (version: string) => void;
 }): ReactNode {
   const { row } = props;
+  const { t } = useTranslation("panels");
   const blocked =
     row.isInstalled || row.yanked || row.unavailableReason !== null;
   return (
@@ -116,17 +119,17 @@ function VersionRow(props: {
         <span className="font-mono text-code-xs">v{row.version}</span>
         {row.isLatest ? (
           <VersionPill className="bg-emerald-900/40 text-emerald-300">
-            latest
+            {t("latest")}
           </VersionPill>
         ) : null}
         {row.isInstalled ? (
           <VersionPill className="bg-sky-900/40 text-sky-300">
-            installed
+            {t("installed")}
           </VersionPill>
         ) : null}
         {row.yanked ? (
           <VersionPill className="bg-rose-900/40 text-rose-300">
-            yanked
+            {t("yanked")}
           </VersionPill>
         ) : null}
         <span className="text-ui-xs text-muted-foreground">
@@ -151,7 +154,7 @@ function VersionRow(props: {
             disabled={props.disabled || blocked}
             // The version lives in a SIBLING element, so every row's button
             // otherwise reads as the same bare "Install" to a screen reader.
-            aria-label={`Install ${row.version}`}
+            aria-label={t("Install {{version}}", { version: row.version })}
             onClick={() => props.onInstall(row.version)}
           >
             {props.installing ? (
@@ -161,7 +164,7 @@ function VersionRow(props: {
                 variant={undefined}
               />
             ) : null}
-            Install
+            {t("Install")}
           </Button>
         </span>
       </TooltipWrapper>

@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Copy, Download } from "lucide-react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { HostClient } from "@traycer-clients/shared/host-client/host-client";
@@ -84,6 +85,7 @@ const COARSE_POINTER_TRIGGER =
  * surface (Settings' `UsageSummaryPanel`).
  */
 export function EpicUsageDialog(props: EpicUsageDialogProps): ReactNode {
+  const { t } = useTranslation("canvas");
   const { epicId, client, open, onOpenChange } = props;
   const [windowDays, setWindowDays] =
     useState<UsageSummaryWindowDays>(DEFAULT_WINDOW_DAYS);
@@ -119,8 +121,8 @@ export function EpicUsageDialog(props: EpicUsageDialogProps): ReactNode {
         USAGE_EXPORT_REGION_SELECTOR,
       ) ?? null,
     fileName: `traycer-usage-${String(windowDays)}d.png`,
-    heading: "Usage",
-    subheading: "Cost and token usage for this task.",
+    heading: t("Usage"),
+    subheading: t("Cost and token usage for this task."),
     errorSource: "Epic usage dialog",
     analyticsSource: "epic_dialog",
   });
@@ -147,8 +149,8 @@ export function EpicUsageDialog(props: EpicUsageDialogProps): ReactNode {
         data-testid="epic-usage-dialog"
       >
         <UsageDialogFrame
-          title="Usage"
-          description="Cost and token usage for this task."
+          title={t("Usage")}
+          description={t("Cost and token usage for this task.")}
           headerControls={
             <UsageWindowPicker
               windowDays={windowDays}

@@ -1,5 +1,6 @@
 import { useCallback, type ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { TaskLight } from "@traycer/protocol/host/epic/unary-schemas";
 import { Button } from "@/components/ui/button";
 import { ReportIssueAction } from "@/components/report-issue/report-issue-action";
@@ -25,6 +26,7 @@ const OPEN_EPIC_REFRESH_TIMEOUT_MS = 10_000;
 export function OpenEpicInNewWindowDialog(
   props: OpenEpicInNewWindowDialogProps,
 ): ReactNode {
+  const { t } = useTranslation("common");
   const {
     hostId,
     tasks,
@@ -50,10 +52,10 @@ export function OpenEpicInNewWindowDialog(
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ExternalLink className="size-4" />
-            Open Epic in New Window
+            {t("Open Epic in New Window")}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Select an Epic to move or focus in a Traycer window.
+            {t("Select an Epic to move or focus in a Traycer window.")}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-2">
@@ -62,7 +64,7 @@ export function OpenEpicInNewWindowDialog(
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label="Refresh epics"
+              aria-label={t("Refresh epics")}
               disabled={refresh.refreshing || hostId === null}
               onClick={refresh.trigger}
             >
@@ -132,17 +134,18 @@ interface OpenEpicPickerPagination {
 }
 
 function OpenEpicPickerBody(props: OpenEpicPickerBodyProps): ReactNode {
+  const { t } = useTranslation("common");
   if (props.state.kind === "unavailable") {
     return (
       <p className="text-ui-sm text-muted-foreground">
-        Desktop window controls are unavailable.
+        {t("Desktop window controls are unavailable.")}
       </p>
     );
   }
   if (props.state.kind === "error") {
     return (
       <div className="grid gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-ui-sm">
-        <p className="font-medium text-destructive">Couldn't load Epics.</p>
+        <p className="font-medium text-destructive">{t("Couldn't load Epics.")}</p>
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
@@ -150,11 +153,11 @@ function OpenEpicPickerBody(props: OpenEpicPickerBodyProps): ReactNode {
             size="sm"
             onClick={props.onRetry}
           >
-            Retry
+            {t("Retry")}
           </Button>
           <ReportIssueAction
             context={createReportIssueContext({
-              title: "Couldn't load Epics",
+              title: t("Couldn't load Epics"),
               message: null,
               code: null,
               source: "Open Epic in new window",
@@ -177,12 +180,14 @@ function OpenEpicPickerBody(props: OpenEpicPickerBodyProps): ReactNode {
           variant="orbit"
           className="text-muted-foreground"
         />
-        Loading Epics…
+        {t("Loading Epics…")}
       </div>
     );
   }
   if (props.state.kind === "empty") {
-    return <p className="text-ui-sm text-muted-foreground">No Epics yet.</p>;
+    return (
+      <p className="text-ui-sm text-muted-foreground">{t("No Epics yet.")}</p>
+    );
   }
   return (
     <div className="max-h-80 overflow-y-auto">
@@ -224,7 +229,7 @@ function OpenEpicPickerBody(props: OpenEpicPickerBodyProps): ReactNode {
               testId={undefined}
             />
           ) : null}
-          Show more
+          {t("Show more")}
         </Button>
       ) : null}
     </div>

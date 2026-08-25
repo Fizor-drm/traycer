@@ -7,6 +7,8 @@ import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { RoleClaim } from "@traycer/protocol/persistence/epic/role-claims";
 import type { CloudChatSummary } from "@traycer/protocol/host/epic/cloud-chat";
 import { v4 as uuidv4 } from "uuid";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { useHostReachability } from "@/hooks/agent/use-host-reachability";
 import { UNKNOWN_HOST_PLACEHOLDER } from "@/lib/host/constants";
 import { makePublishedChatTileRef } from "@/stores/epics/canvas/tile-schema/published-chat-tile";
@@ -325,19 +327,20 @@ const noopRowAction = (): void => undefined;
 function archiveEmptyStateCopy(
   visibility: ChatArchiveVisibility,
   canArchive: boolean,
+  t: TFunction<"canvas">,
 ): { readonly title: string; readonly description: string | null } {
   if (visibility === CHAT_ARCHIVE_VISIBILITY.Archived) {
     return {
-      title: "No archived agents match this view.",
+      title: t("No archived agents match this view."),
       description: canArchive
-        ? 'Choose "Unarchived only" or "All chats" under Show.'
+        ? t('Choose "Unarchived only" or "All chats" under Show.')
         : null,
     };
   }
   return {
-    title: "Every agent here is archived.",
+    title: t("Every agent here is archived."),
     description: canArchive
-      ? 'Choose "Archived only" or "All chats" under Show.'
+      ? t('Choose "Archived only" or "All chats" under Show.')
       : null,
   };
 }
@@ -652,16 +655,19 @@ function cloudRowMatchesOwnershipFilter(
   return matchesChatOwnershipFilter(chat.isOwnedByViewer, filter.ownership);
 }
 
-function chatFilterEmptyStateDescription(filter: ChatFilter): string {
+function chatFilterEmptyStateDescription(
+  filter: ChatFilter,
+  t: TFunction<"canvas">,
+): string {
   const interfaceActive = filter.origin !== CHAT_ORIGIN.All;
   const ownershipActive = filter.ownership !== CHAT_OWNERSHIP.All;
   if (interfaceActive && !ownershipActive) {
-    return "The Interface filter is hiding the other agents.";
+    return t("The Interface filter is hiding the other agents.");
   }
   if (ownershipActive && !interfaceActive) {
-    return "The Ownership filter is hiding the other agents.";
+    return t("The Ownership filter is hiding the other agents.");
   }
-  return "The current filters are hiding the other agents.";
+  return t("The current filters are hiding the other agents.");
 }
 
 // Panel body composes sort/filter/expansion/selection/pending-create hooks in
@@ -669,6 +675,7 @@ function chatFilterEmptyStateDescription(filter: ChatFilter): string {
 // eslint-disable-next-line complexity
 export function ChatTreePanelBody(props: ChatTreePanelBodyProps) {
   const { epicId, tabId } = props;
+  const { t } = useTranslation("canvas");
   const shouldReduceMotion = useReducedMotion() === true;
   const panelId: RootCreatePanelId = "chats";
   const sort = useChatSort(epicId);
@@ -1129,6 +1136,7 @@ export function ChatTreePanelBody(props: ChatTreePanelBodyProps) {
   const archiveEmptyState = archiveEmptyStateCopy(
     archiveVisibility,
     canArchive,
+    t,
   );
 
   let panelContent: ReactNode;
@@ -1136,8 +1144,8 @@ export function ChatTreePanelBody(props: ChatTreePanelBodyProps) {
     panelContent = (
       <SidebarPanelEmptyState
         icon={MessagesSquare}
-        title="No agents yet."
-        description="Add an agent and choose a Chat or Terminal interface."
+        title={t("No agents yet.")}
+        description={t("Add an agent and choose a Chat or Terminal interface.")}
         testId="epic-chat-sidebar-empty"
       />
     );
@@ -1148,10 +1156,10 @@ export function ChatTreePanelBody(props: ChatTreePanelBodyProps) {
     panelContent = (
       <SidebarPanelEmptyState
         icon={SearchX}
-        title="No agents match your search."
+        title={t("No agents match your search.")}
         description={
           isChatFilterActive(chatFilter)
-            ? "The current filters may also be hiding matches."
+            ? t("The current filters may also be hiding matches.")
             : null
         }
         testId="epic-chat-sidebar-search-empty"
@@ -1161,8 +1169,8 @@ export function ChatTreePanelBody(props: ChatTreePanelBodyProps) {
     panelContent = (
       <SidebarPanelEmptyState
         icon={MessagesSquare}
-        title="No matches for the current filters."
-        description={chatFilterEmptyStateDescription(chatFilter)}
+        title={t("No matches for the current filters.")}
+        description={chatFilterEmptyStateDescription(chatFilter, t)}
         testId="epic-chat-sidebar-filter-empty"
       />
     );
@@ -1193,7 +1201,7 @@ export function ChatTreePanelBody(props: ChatTreePanelBodyProps) {
           >
             <ul
               role="tree"
-              aria-label="Epic agents tree"
+              aria-label={t("Epic agents tree")}
               className="space-y-0.5"
             >
               {/* Clearing an archived row's last notification indicator removes
@@ -1826,6 +1834,7 @@ function ChatNodeShell(props: ChatNodeShellProps) {
 
 /** The archive-capable arm: resolves the row's status kind, then renders. */
 function ChatNodeShellArchivable(props: ChatNodeShellProps) {
+  const { t } = useTranslation("canvas");
   // Resolved once per row and used by both archive affordances, so the hover
   // button and the menu entry can never disagree about whether this row is
   // busy. Same lattice the leading status icon renders from.
@@ -1847,6 +1856,7 @@ function ChatNodeShellArchivable(props: ChatNodeShellProps) {
         isRenaming: props.isRenaming,
         hasChildren: props.hasChildren,
         expanded: props.expanded,
+        t,
       })}
     />
   );
@@ -1855,6 +1865,7 @@ function ChatNodeShellArchivable(props: ChatNodeShellProps) {
 function ChatNodeShellBody(
   props: ChatNodeShellProps & { readonly decision: ChatRowArchiveDecision },
 ) {
+  const { t } = useTranslation("canvas");
   const shouldReduceMotion = useReducedMotion() === true;
   const {
     epicId,
@@ -1934,6 +1945,7 @@ function ChatNodeShellBody(
     onToggleArchive: archiveRow.onToggle,
     onToggleSharing: sharing.onToggle,
     onPerformDelete,
+    t,
   });
 
   return (
@@ -2035,10 +2047,13 @@ function ChatNodeShellBody(
       <ConfirmDestructiveDialog
         open={confirmDeleteOpen}
         onOpenChange={onConfirmDeleteOpenChange}
-        title={`Delete ${EPIC_NODE_SENTENCE_NOUNS[artifactType]} "${nodeName}"?`}
-        description="This action cannot be undone."
+        title={t('Delete {{noun}} "{{name}}"?', {
+          noun: t(EPIC_NODE_SENTENCE_NOUNS[artifactType]),
+          name: nodeName,
+        })}
+        description={t("This action cannot be undone.")}
         cascadeSummary={cascadeSummary}
-        actionLabel="Delete"
+        actionLabel={t("Delete")}
         isPending={deletePending}
         onConfirm={onConfirmDelete}
       />
@@ -2109,6 +2124,7 @@ function SidebarRowCheckbox(props: {
   readonly isSelected: boolean;
   readonly onToggleSelection: (id: string) => void;
 }) {
+  const { t } = useTranslation("canvas");
   const { inputId, nodeId, nodeName, isSelected, onToggleSelection } = props;
   return (
     <span className="relative flex size-4 shrink-0">
@@ -2116,7 +2132,7 @@ function SidebarRowCheckbox(props: {
         id={inputId}
         type="checkbox"
         checked={isSelected}
-        aria-label={`Select ${nodeName}`}
+        aria-label={t("Select {{name}}", { name: nodeName })}
         data-testid={`epic-sidebar-select-${nodeId}`}
         className="peer absolute inset-0 m-0 size-4 cursor-pointer opacity-0"
         onChange={() => {
@@ -2316,6 +2332,7 @@ function TerminalAgentProgressIcon(props: {
   readonly nodeId: string;
   readonly ownerHostId: string | null;
 }) {
+  const { t } = useTranslation("canvas");
   const isActive = useEpicActiveAgentIds().has(props.nodeId);
   const tier = useEpicAgentActivityTiers().get(props.nodeId);
   const harnessId = useMaybeEpicTuiAgentHarnessId(props.nodeId);
@@ -2342,7 +2359,7 @@ function TerminalAgentProgressIcon(props: {
       testIdPrefix="terminal-agent-sidebar"
       className={icon.className}
       style={icon.style}
-      runningTitle="Agent in progress"
+      runningTitle={t("Agent in progress")}
       defaultIcon={idleIcon}
       statusPresentation="message"
       agentSurface="tui"
@@ -2360,6 +2377,7 @@ function SidebarAgentHarnessIcon(props: {
   readonly nodeId: string;
   readonly harnessId: ProviderId;
 }) {
+  const { t } = useTranslation("canvas");
   const TerminalIcon = EPIC_NODE_ICONS.terminal;
   const tuiAgent = useEpicStore((state) =>
     Object.hasOwn(state.tuiAgents.byId, props.nodeId)
@@ -2369,7 +2387,7 @@ function SidebarAgentHarnessIcon(props: {
   const managedProfileId = tuiAgent?.profileId ?? null;
   return (
     <TooltipWrapper
-      label="TUI terminal agent"
+      label={t("TUI terminal agent")}
       side="top"
       sideOffset={undefined}
       align={undefined}
@@ -2458,6 +2476,7 @@ interface ChatRenameRowProps {
 }
 
 function ChatRenameRow(props: ChatRenameRowProps) {
+  const { t } = useTranslation("canvas");
   const {
     epicId,
     depth,
@@ -2509,7 +2528,7 @@ function ChatRenameRow(props: ChatRenameRowProps) {
             onKeyDown={onKeyDown}
             disabled={renamePending}
             className="min-w-0 flex-1 border-0 bg-transparent text-ui-sm text-foreground outline-none focus:ring-1 focus:ring-ring rounded px-1"
-            aria-label={`Rename ${nodeName}`}
+            aria-label={t("Rename {{name}}", { name: nodeName })}
             data-testid={`epic-sidebar-rename-input-${nodeId}`}
           />
           {renamePending ? (
@@ -2590,17 +2609,22 @@ function chatRowOpensPublishedCopy(input: {
  * screen-reader user never receives it - the lock's tooltip is hover-or-focus
  * on a trigger that is not focusable.
  */
-function chatRowAriaLabel(input: {
-  readonly nodeName: string;
-  readonly isArchived: boolean;
-  readonly sharedWithTask: boolean;
-  readonly offlineHostLabel: string | null;
-}): string {
+function chatRowAriaLabel(
+  input: {
+    readonly nodeName: string;
+    readonly isArchived: boolean;
+    readonly sharedWithTask: boolean;
+    readonly offlineHostLabel: string | null;
+  },
+  t: TFunction<"canvas">,
+): string {
   const stateSuffix = [
-    input.isArchived ? "archived" : null,
-    input.sharedWithTask ? "shared with task" : null,
+    input.isArchived ? t("archived") : null,
+    input.sharedWithTask ? t("shared with task") : null,
     input.offlineHostLabel !== null
-      ? `on ${input.offlineHostLabel}, offline, opens read-only`
+      ? t("on {{host}}, offline, opens read-only", {
+          host: input.offlineHostLabel,
+        })
       : null,
   ]
     .filter((part): part is string => part !== null)
@@ -2661,6 +2685,7 @@ function chatRowClassName(state: {
 }
 
 function ChatRowButton(props: ChatRowButtonProps) {
+  const { t } = useTranslation("canvas");
   const {
     epicId,
     viewTabId,
@@ -2824,14 +2849,17 @@ function ChatRowButton(props: ChatRowButtonProps) {
       type="button"
       // Explicit, so the row's accessible name is its title plus archive state
       // rather than a concatenation of every resource chip and timestamp.
-      aria-label={chatRowAriaLabel({
-        nodeName,
-        isArchived,
-        sharedWithTask: showSharedIndicator,
-        offlineHostLabel: showUnreachableLock
-          ? ownerReachability.hostLabel
-          : null,
-      })}
+      aria-label={chatRowAriaLabel(
+        {
+          nodeName,
+          isArchived,
+          sharedWithTask: showSharedIndicator,
+          offlineHostLabel: showUnreachableLock
+            ? ownerReachability.hostLabel
+            : null,
+        },
+        t,
+      )}
       data-testid={`epic-sidebar-item-${nodeId}`}
       data-artifact-type={artifactType}
       className={rowClassName}
@@ -2862,7 +2890,7 @@ function ChatRowButton(props: ChatRowButtonProps) {
           <span className="min-w-0 flex-1 truncate">{nodeName}</span>
           {showSharedIndicator ? (
             <TooltipWrapper
-              label={SHARED_WITH_TASK_TOOLTIP}
+              label={t(SHARED_WITH_TASK_TOOLTIP)}
               side="top"
               sideOffset={undefined}
               align={undefined}
@@ -2876,7 +2904,10 @@ function ChatRowButton(props: ChatRowButtonProps) {
           ) : null}
           {showUnreachableLock ? (
             <TooltipWrapper
-              label={`Lives on ${ownerReachability.hostLabel}, which is offline. Opens read-only from the last published copy.`}
+              label={t(
+                "Lives on {{host}}, which is offline. Opens read-only from the last published copy.",
+                { host: ownerReachability.hostLabel },
+              )}
               side="right"
               sideOffset={undefined}
               align={undefined}
@@ -2944,12 +2975,13 @@ function ChatRowButton(props: ChatRowButtonProps) {
  * timestamps and controls in the trailing metadata cluster.
  */
 function ArchivedTitlePrefix(): ReactNode {
+  const { t } = useTranslation("canvas");
   return (
     <span
       className="inline-flex shrink-0 items-center gap-1 text-muted-foreground"
       data-testid="chat-row-archived-label"
     >
-      <span className="font-semibold">Archived</span>
+      <span className="font-semibold">{t("Archived")}</span>
       <span aria-hidden="true">·</span>
     </span>
   );
@@ -3015,33 +3047,44 @@ function chatSelfStatusRank(
 }
 
 /** "Nested: 1 needs attention · 2 running" - non-zero tiers, priority order. */
-function nestedChatStatusSummary(rollup: ChatDescendantStatusRollup): string {
+function nestedChatStatusSummary(
+  rollup: ChatDescendantStatusRollup,
+  t: TFunction<"canvas">,
+): string {
   const parts: string[] = [];
   if (rollup.failureCount > 0) {
     parts.push(
-      `${rollup.failureCount} ${rollup.failureCount === 1 ? "needs" : "need"} attention`,
+      rollup.failureCount === 1
+        ? t("{{count}} needs attention", { count: rollup.failureCount })
+        : t("{{count}} need attention", { count: rollup.failureCount }),
     );
   }
   if (rollup.forkCount > 0) {
-    parts.push(`${rollup.forkCount} waiting for fork resolution`);
+    parts.push(t("{{count}} waiting for fork resolution", { count: rollup.forkCount }));
   }
   if (rollup.interviewCount > 0) {
-    parts.push(`${rollup.interviewCount} waiting for interview`);
+    parts.push(t("{{count}} waiting for interview", { count: rollup.interviewCount }));
   }
   if (rollup.approvalCount > 0) {
-    parts.push(`${rollup.approvalCount} waiting for approval`);
+    parts.push(t("{{count}} waiting for approval", { count: rollup.approvalCount }));
   }
-  if (rollup.runningCount > 0) parts.push(`${rollup.runningCount} running`);
+  if (rollup.runningCount > 0) {
+    parts.push(t("{{count}} running", { count: rollup.runningCount }));
+  }
   if (rollup.backgroundCount > 0) {
-    parts.push(`${rollup.backgroundCount} in background`);
+    parts.push(t("{{count}} in background", { count: rollup.backgroundCount }));
   }
-  if (rollup.doneCount > 0) parts.push(`${rollup.doneCount} completed`);
+  if (rollup.doneCount > 0) {
+    parts.push(t("{{count}} completed", { count: rollup.doneCount }));
+  }
   if (rollup.terminalFailureCount > 0) {
     parts.push(
-      `${rollup.terminalFailureCount} terminal ${rollup.terminalFailureCount === 1 ? "failure" : "failures"}`,
+      rollup.terminalFailureCount === 1
+        ? t("{{count}} terminal failure", { count: rollup.terminalFailureCount })
+        : t("{{count}} terminal failures", { count: rollup.terminalFailureCount }),
     );
   }
-  return `Nested: ${parts.join(" · ")}`;
+  return t("Nested: {{summary}}", { summary: parts.join(" · ") });
 }
 
 /**
@@ -3054,7 +3097,8 @@ function NestedChatStatusIcon(props: {
   readonly nodeId: string;
   readonly rollup: ChatDescendantStatusRollup;
 }): ReactNode {
-  const title = nestedChatStatusSummary(props.rollup);
+  const { t } = useTranslation("canvas");
+  const title = nestedChatStatusSummary(props.rollup, t);
   return (
     <TooltipWrapper
       label={title}
@@ -3223,6 +3267,7 @@ function archiveBlockedReason(
   // the background-items copy, which describes a state that is not blocked at
   // all - a wrong explanation, not a missing one.
   running: Exclude<IndicatorRunningKind, false>,
+  t: TFunction<"canvas">,
 ): string {
   if (running === "turn") {
     // Hedged, because this tier is NOT "a turn is running". `chatActivityIndicator`
@@ -3232,9 +3277,13 @@ function archiveBlockedReason(
     // reports no active turn for that same state, precisely so a Stop-turn
     // affordance does not surface. Promising a stop here would contradict that
     // and send the user after an action the host early-returns from.
-    return "Can't archive while this agent is working. Stopping it ends a turn, but not a detached subagent or workflow. Wait for it to go idle, or stop it, then archive.";
+    return t(
+      "Can't archive while this agent is working. Stopping it ends a turn, but not a detached subagent or workflow. Wait for it to go idle, or stop it, then archive.",
+    );
   }
-  return "Can't archive while this agent has background items running. Stopping the agent won't clear them — wait for them to finish, or stop them from its chat.";
+  return t(
+    "Can't archive while this agent has background items running. Stopping the agent won't clear them — wait for them to finish, or stop them from its chat.",
+  );
 }
 
 /**
@@ -3299,6 +3348,7 @@ function chatRowArchiveState(args: {
   readonly isRenaming: boolean;
   readonly hasChildren: boolean;
   readonly expanded: boolean;
+  readonly t: TFunction<"canvas">;
 }): ChatRowArchiveDecision {
   // The tier that BLOCKS, or `false` for none. Carrying the narrowed value
   // rather than a separate boolean is what lets `archiveBlockedReason` refuse
@@ -3313,7 +3363,9 @@ function chatRowArchiveState(args: {
       isArchived: args.isArchived,
       disabled: blockingRun !== false || args.archivePending,
       disabledTooltip:
-        blockingRun === false ? null : archiveBlockedReason(blockingRun),
+        blockingRun === false
+          ? null
+          : archiveBlockedReason(blockingRun, args.t),
     },
     showButton:
       args.canMutate &&
@@ -3334,6 +3386,7 @@ interface ChatRowMenuEntriesProps {
   readonly onToggleArchive: () => void;
   readonly onToggleSharing: () => void;
   readonly onPerformDelete: () => void;
+  readonly t: TFunction<"canvas">;
 }
 
 /**
@@ -3352,7 +3405,7 @@ function archiveMenuEntries(
     {
       kind: "item",
       id: "archive",
-      label: archiveEntry.isArchived ? "Unarchive" : "Archive",
+      label: archiveEntry.isArchived ? props.t("Unarchive") : props.t("Archive"),
       icon: archiveEntry.isArchived ? (
         <ArchiveRestore className="size-3.5" />
       ) : (
@@ -3390,7 +3443,7 @@ function sharingMenuEntries(
     {
       kind: "item",
       id: "share",
-      label: makePrivate ? "Make private" : "Share with task",
+      label: makePrivate ? props.t("Make private") : props.t("Share with task"),
       icon: makePrivate ? (
         <Lock className="size-3.5" />
       ) : (
@@ -3460,7 +3513,7 @@ function chatRowMenuEntries(
     {
       kind: "item",
       id: "new-child-agent",
-      label: "New child agent",
+      label: props.t("New child agent"),
       icon: <Plus className="size-3.5" />,
       disabled: !props.canMutate,
       disabledTooltip: null,
@@ -3474,7 +3527,7 @@ function chatRowMenuEntries(
     {
       kind: "item",
       id: "rename",
-      label: "Rename",
+      label: props.t("Rename"),
       icon: <Pencil className="size-3.5" />,
       disabled: !props.canMutate,
       disabledTooltip: null,
@@ -3491,7 +3544,7 @@ function chatRowMenuEntries(
     {
       kind: "item",
       id: "delete",
-      label: "Delete",
+      label: props.t("Delete"),
       icon: <Trash2 className="size-3.5" />,
       disabled: !props.canMutate,
       disabledTooltip: null,
@@ -3600,9 +3653,10 @@ function ChatRowArchiveButton(props: {
   readonly pending: boolean;
   readonly onToggle: () => void;
 }) {
+  const { t } = useTranslation("canvas");
   const label = props.isArchived
-    ? `Unarchive ${props.nodeName}`
-    : `Archive ${props.nodeName}`;
+    ? t("Unarchive {{name}}", { name: props.nodeName })
+    : t("Archive {{name}}", { name: props.nodeName });
   return (
     <TooltipWrapper
       label={label}
@@ -3638,6 +3692,7 @@ function ChatMoreMenu(props: {
   readonly nodeName: string;
   readonly entries: ReadonlyArray<SidebarRowMenuEntry>;
 }) {
+  const { t } = useTranslation("canvas");
   const { nodeId, nodeName, entries } = props;
   return (
     <DropdownMenu>
@@ -3646,7 +3701,7 @@ function ChatMoreMenu(props: {
           type="button"
           variant="ghost"
           size="icon-xs"
-          aria-label={`Agent actions for ${nodeName}`}
+          aria-label={t("Agent actions for {{name}}", { name: nodeName })}
           data-testid={`epic-sidebar-more-${nodeId}`}
           className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity focus-visible:opacity-100 group-hover/tree-item:opacity-100 aria-expanded:opacity-100"
           onClick={(event) => {

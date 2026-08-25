@@ -4,6 +4,7 @@
  * that surfacing three rows on the palette root pushes more
  * valuable items off screen.
  */
+import { i18n } from "@/lib/i18n/init-i18n";
 import {
   useSettingsStore,
   type ThemeMode,
@@ -21,16 +22,19 @@ interface ThemeOption {
   readonly keywords: ReadonlyArray<string>;
 }
 
+// `label` is the i18n key (English source text); it is resolved through
+// `i18n.t` at item-build time so a language switch is picked up when the
+// palette reopens.
 const THEME_OPTIONS: ReadonlyArray<ThemeOption> = [
   { mode: "light", label: "Light", keywords: ["theme", "light"] },
   { mode: "dark", label: "Dark", keywords: ["theme", "dark"] },
   { mode: "system", label: "System", keywords: ["theme", "auto", "system"] },
 ];
 
-const THEME_SUBPAGE_ITEMS: ReadonlyArray<CommandItem> = THEME_OPTIONS.map(
-  (option) => ({
+function buildThemeSubpageItems(): ReadonlyArray<CommandItem> {
+  return THEME_OPTIONS.map((option) => ({
     id: `theme:${option.mode}`,
-    label: option.label,
+    label: i18n.t(option.label, { ns: "palette" }),
     description: null,
     keywords: option.keywords,
     group: "theme",
@@ -41,31 +45,37 @@ const THEME_SUBPAGE_ITEMS: ReadonlyArray<CommandItem> = THEME_OPTIONS.map(
     run: () => {
       useSettingsStore.getState().setTheme(option.mode);
     },
-  }),
-);
+  }));
+}
 
-const THEME_SUBPAGE: CommandSubpage = {
-  id: "theme:pick",
-  title: "Change theme",
-  useItems: () => THEME_SUBPAGE_ITEMS,
-};
+function buildThemeSubpage(): CommandSubpage {
+  return {
+    id: "theme:pick",
+    title: i18n.t("Change theme", { ns: "palette" }),
+    useItems: () => buildThemeSubpageItems(),
+  };
+}
 
-const CHANGE_THEME_ITEM: CommandItem = {
-  id: "theme:change",
-  label: "Change theme",
-  description: null,
-  keywords: withSubpageLabels(["theme", "appearance"], [THEME_SUBPAGE_ITEMS]),
-  group: "theme",
-  scope: "actions",
-  shortcut: null,
-  actionId: null,
-  subpage: THEME_SUBPAGE,
-  run: () => undefined,
-};
-
-const ROOT_ITEMS: ReadonlyArray<CommandItem> = [CHANGE_THEME_ITEM];
+function buildRootItems(): ReadonlyArray<CommandItem> {
+  const themeSubpage = buildThemeSubpage();
+  const subpageItems = buildThemeSubpageItems();
+  return [
+    {
+      id: "theme:change",
+      label: i18n.t("Change theme", { ns: "palette" }),
+      description: null,
+      keywords: withSubpageLabels(["theme", "appearance"], [subpageItems]),
+      group: "theme",
+      scope: "actions",
+      shortcut: null,
+      actionId: null,
+      subpage: themeSubpage,
+      run: () => undefined,
+    },
+  ];
+}
 
 export const themeSource: CommandSource = {
   id: "theme",
-  getItems: (): ReadonlyArray<CommandItem> => ROOT_ITEMS,
+  getItems: (): ReadonlyArray<CommandItem> => buildRootItems(),
 };

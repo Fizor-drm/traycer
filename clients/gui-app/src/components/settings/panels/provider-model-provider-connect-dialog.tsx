@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Check, Copy, ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type {
   ModelProviderAuthResult,
   ModelProviderEntry,
@@ -112,6 +113,7 @@ export function ProviderModelProviderConnectDialog(props: {
     resumedAttempt,
     onDone,
   } = props;
+  const { t } = useTranslation("panels");
 
   const choices = useMemo(
     () => connectChoicesFor(entry, capabilities),
@@ -225,7 +227,7 @@ export function ProviderModelProviderConnectDialog(props: {
         case "unsupported":
           setErrorMessage(
             redactLogText(
-              result.reason ?? "This sign-in isn't available on this host.",
+              result.reason ?? t("This sign-in isn't available on this host."),
             ),
           );
           return;
@@ -297,7 +299,7 @@ export function ProviderModelProviderConnectDialog(props: {
         }
       }
     },
-    [forgetAttempt, liveAttemptId, onDone],
+    [forgetAttempt, liveAttemptId, onDone, t],
   );
 
   /**
@@ -530,11 +532,11 @@ export function ProviderModelProviderConnectDialog(props: {
         onError: () => {
           // Keep the panel and the record: the host may still hold this
           // attempt, and this is the only surface that can ask again.
-          setCancelError("Couldn't stop the sign-in. Try again.");
+          setCancelError(t("Couldn't stop the sign-in. Try again."));
         },
       },
     );
-  }, [applyResult, attempt, cancelAuth, entry.id, forgetAttempt, providerId]);
+  }, [applyResult, attempt, cancelAuth, entry.id, forgetAttempt, providerId, t]);
 
   // Three mutually exclusive bodies, resolved as statements rather than nested
   // ternaries inside the JSX: the surface a live attempt owns is not a variant
@@ -549,8 +551,10 @@ export function ProviderModelProviderConnectDialog(props: {
   if (choices.length === 0) {
     body = (
       <p className="text-ui-xs text-muted-foreground">
-        {entry.name} advertises no sign-in method Traycer can drive. Sign in
-        with the provider&apos;s own CLI and it will appear as connected here.
+        {t(
+          "{{name}} advertises no sign-in method Traycer can drive. Sign in with the provider's own CLI and it will appear as connected here.",
+          { name: entry.name },
+        )}
       </p>
     );
   } else if (attempt !== null) {
@@ -611,10 +615,13 @@ export function ProviderModelProviderConnectDialog(props: {
               aria-hidden
               className="size-4 shrink-0"
             />
-            Connect {entry.name}
+            {t("Connect {{name}}", { name: entry.name })}
           </DialogTitle>
           <DialogDescription>
-            {providerLabel} will use this credential for {entry.name} models.
+            {t("{{provider}} will use this credential for {{name}} models.", {
+              provider: providerLabel,
+              name: entry.name,
+            })}
           </DialogDescription>
         </DialogHeader>
         {body}
@@ -647,6 +654,7 @@ function ConnectForm(props: {
   readonly onSubmit: () => void;
 }): ReactNode {
   const { choice } = props;
+  const { t } = useTranslation("panels");
   const visiblePrompts = visibleModelProviderPrompts(
     choice?.prompts ?? [],
     props.answers,
@@ -695,7 +703,9 @@ function ConnectForm(props: {
 
       {choice !== null && choice.kind === "oauth" ? (
         <p className="text-ui-xs text-muted-foreground">
-          Continuing opens {props.entry.name} in your browser.
+          {t("Continuing opens {{name}} in your browser.", {
+            name: props.entry.name,
+          })}
         </p>
       ) : null}
 
@@ -711,7 +721,7 @@ function ConnectForm(props: {
       <div className="flex items-center gap-2">
         <Button type="submit" size="sm" disabled={props.submitDisabled}>
           {props.submitting ? <MutedAgentSpinner /> : null}
-          {choice !== null && choice.kind === "oauth" ? "Continue" : "Connect"}
+          {choice !== null && choice.kind === "oauth" ? t("Continue") : t("Connect")}
         </Button>
       </div>
     </form>
@@ -744,13 +754,14 @@ function MethodPicker(props: {
   readonly onChoiceChange: (id: string) => void;
 }): ReactNode {
   const fieldId = useId();
+  const { t } = useTranslation("panels");
   if (props.choices.length <= 1) return null;
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={fieldId}>Sign-in method</Label>
+      <Label htmlFor={fieldId}>{t("Sign-in method")}</Label>
       <Select value={props.selectedId} onValueChange={props.onChoiceChange}>
         <SelectTrigger id={fieldId} className="w-full">
-          <SelectValue placeholder="Choose a method" />
+          <SelectValue placeholder={t("Choose a method")} />
         </SelectTrigger>
         <SelectContent>
           {props.choices.map((option) => (
@@ -771,16 +782,17 @@ function CredentialField(props: {
   readonly disabled: boolean;
 }): ReactNode {
   const fieldId = useId();
+  const { t } = useTranslation("panels");
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={fieldId}>API key</Label>
+      <Label htmlFor={fieldId}>{t("API key")}</Label>
       <Input
         id={fieldId}
         type="password"
         autoComplete="off"
         spellCheck={false}
         className="w-full font-mono text-ui-sm"
-        placeholder="API key"
+        placeholder={t("API key")}
         value={props.secret}
         disabled={props.disabled}
         onChange={(event) => props.onSecretChange(event.target.value)}
@@ -790,7 +802,9 @@ function CredentialField(props: {
           at all. The destination is still worth stating - it is what makes this
           tab and the provider's own CLI interchangeable. */}
       <p className="text-ui-xs text-muted-foreground">
-        Stored by {props.providerLabel}. It is never shown again.
+        {t("Stored by {{provider}}. It is never shown again.", {
+          provider: props.providerLabel,
+        })}
       </p>
     </div>
   );
@@ -802,6 +816,7 @@ function PromptField(props: {
   readonly onChange: (value: string) => void;
 }): ReactNode {
   const fieldId = useId();
+  const { t } = useTranslation("panels");
   const { prompt } = props;
   if (prompt.type === "select") {
     return (
@@ -809,7 +824,7 @@ function PromptField(props: {
         <Label htmlFor={fieldId}>{prompt.message}</Label>
         <Select value={props.value} onValueChange={props.onChange}>
           <SelectTrigger id={fieldId} className="w-full">
-            <SelectValue placeholder="Choose one" />
+            <SelectValue placeholder={t("Choose one")} />
           </SelectTrigger>
           <SelectContent>
             {prompt.options.map((option) => (
@@ -856,6 +871,7 @@ function ConfirmationCodeField(props: {
   readonly code: string | null;
 }): ReactNode {
   const fieldId = useId();
+  const { t } = useTranslation("panels");
   const { copied, copy } = useClipboardCopy({
     resetMs: 1600,
     onSuccess: null,
@@ -865,7 +881,7 @@ function ConfirmationCodeField(props: {
   if (code === null) return null;
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={fieldId}>Confirmation code</Label>
+      <Label htmlFor={fieldId}>{t("Confirmation code")}</Label>
       <div className="flex items-center gap-2">
         <Input
           id={fieldId}
@@ -879,7 +895,9 @@ function ConfirmationCodeField(props: {
           size="icon-sm"
           variant="secondary"
           aria-label={
-            copied ? "Confirmation code copied" : "Copy confirmation code"
+            copied
+              ? t("Confirmation code copied")
+              : t("Copy confirmation code")
           }
           onClick={() => copy(code)}
         >
@@ -915,6 +933,7 @@ function OauthWaitingPanel(props: {
   readonly cancelError: string | null;
 }): ReactNode {
   const codeId = useId();
+  const { t } = useTranslation("panels");
   const { attempt } = props;
   return (
     <div className="flex flex-col gap-3">
@@ -934,12 +953,12 @@ function OauthWaitingPanel(props: {
             role="status"
           >
             <MutedAgentSpinner />
-            Waiting for the browser to finish signing in
+            {t("Waiting for the browser to finish signing in")}
           </div>
         </>
       ) : (
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor={codeId}>Paste the code</Label>
+          <Label htmlFor={codeId}>{t("Paste the code")}</Label>
           <div className="flex items-center gap-2">
             <Input
               id={codeId}
@@ -947,7 +966,7 @@ function OauthWaitingPanel(props: {
               autoComplete="off"
               spellCheck={false}
               className="min-w-0 flex-1 font-mono text-ui-sm"
-              placeholder="Paste code"
+              placeholder={t("Paste code")}
               value={props.code}
               onChange={(event) => props.onCodeChange(event.target.value)}
               onKeyDown={(event) => {
@@ -963,7 +982,7 @@ function OauthWaitingPanel(props: {
               onClick={props.onSubmitCode}
             >
               {props.submitting ? <MutedAgentSpinner /> : null}
-              Submit
+              {t("Submit")}
             </Button>
           </div>
         </div>
@@ -984,7 +1003,7 @@ function OauthWaitingPanel(props: {
           onClick={props.onReopen}
         >
           <ExternalLink className="size-3.5" />
-          Reopen sign-in page
+          {t("Reopen sign-in page")}
         </Button>
         {/* Honest label: upstream has no OAuth-cancel endpoint, so this stops
             Traycer waiting and releases the server it was holding. It does not
@@ -996,7 +1015,7 @@ function OauthWaitingPanel(props: {
           disabled={props.cancelling}
           onClick={props.onCancel}
         >
-          Stop waiting
+          {t("Stop waiting")}
         </Button>
       </div>
     </div>

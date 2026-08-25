@@ -1,5 +1,6 @@
 import { LOG_LEVELS, isLogLevel } from "@traycer/protocol/config/log-level";
 import type { LogLevel } from "@traycer/protocol/config/log-level";
+import { useTranslation } from "react-i18next";
 import { SettingsRow } from "@/components/settings/settings-row";
 import {
   Select,
@@ -34,6 +35,7 @@ interface LogLevelRowProps {
  */
 export function LogLevelRow(props: LogLevelRowProps) {
   const { control, disabled } = props;
+  const { t } = useTranslation("panels");
 
   return (
     <SettingsRow
@@ -57,12 +59,12 @@ export function LogLevelRow(props: LogLevelRowProps) {
             aria-label={control.label}
             data-testid={`settings-log-level-${control.scope}`}
           >
-            <SelectValue placeholder="Loading…" />
+            <SelectValue placeholder={t("Loading…")} />
           </SelectTrigger>
           <SelectContent>
             {LOG_LEVELS.map((level) => (
               <SelectItem key={level} value={level}>
-                {LOG_LEVEL_LABEL[level]}
+                {t(LOG_LEVEL_LABEL[level])}
               </SelectItem>
             ))}
           </SelectContent>

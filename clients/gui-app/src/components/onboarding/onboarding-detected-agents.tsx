@@ -3,6 +3,7 @@ import {
   type ProviderId,
 } from "@traycer/protocol/host/provider-schemas";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { ProviderList } from "@/components/providers/provider-list";
 import type { ProviderListRow } from "@/components/providers/provider-list";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
   providerDisplayName,
 } from "@/lib/provider-ordering";
 import { cn } from "@/lib/utils";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 type InstallState = "detected" | "missing" | "pending";
@@ -50,44 +52,49 @@ interface AccountLine {
 function accountLineFor(state: ProviderCliState): AccountLine {
   if (state.providerId === "traycer" && state.enabled) {
     return {
-      text: "Ready with your Traycer subscription",
+      text: i18n.t("Ready with your Traycer subscription", { ns: "common" }),
       tone: "good",
       title: null,
     };
   }
-  if (!state.enabled) return { text: "Disabled", tone: "muted", title: null };
+  if (!state.enabled)
+    return { text: i18n.t("Disabled", { ns: "common" }), tone: "muted", title: null };
   const { auth } = state;
   if (state.authPending) {
-    return { text: "Checking account…", tone: "muted", title: null };
+    return { text: i18n.t("Checking account…", { ns: "common" }), tone: "muted", title: null };
   }
   if (auth.status === "authenticated") {
     return {
-      text: auth.label ?? "Signed in",
+      text: auth.label ?? i18n.t("Signed in", { ns: "common" }),
       tone: "good",
       title: auth.detail,
     };
   }
   if (auth.status === "configured") {
     return {
-      text: "Configured, not verified",
+      text: i18n.t("Configured, not verified", { ns: "common" }),
       tone: "muted",
       title: auth.detail,
     };
   }
   if (auth.status === "unavailable") {
     return {
-      text: "Status check failed",
+      text: i18n.t("Status check failed", { ns: "common" }),
       tone: "muted",
       title: auth.detail,
     };
   }
   if (auth.status === "unauthenticated") {
-    return { text: "Not signed in", tone: "muted", title: null };
+    return { text: i18n.t("Not signed in", { ns: "common" }), tone: "muted", title: null };
   }
   if (state.apiKey.configured) {
-    return { text: "API key set", tone: "good", title: null };
+    return { text: i18n.t("API key set", { ns: "common" }), tone: "good", title: null };
   }
-  return { text: "Account status unavailable", tone: "muted", title: null };
+  return {
+    text: i18n.t("Account status unavailable", { ns: "common" }),
+    tone: "muted",
+    title: null,
+  };
 }
 
 function installLabelFor(
@@ -95,9 +102,9 @@ function installLabelFor(
   hostUnavailable: boolean,
   installState: InstallState,
 ): string {
-  if (traycerProvider) return "Built in";
-  if (hostUnavailable) return "Unavailable";
-  return INSTALL_LABELS[installState];
+  if (traycerProvider) return i18n.t("Built in", { ns: "common" });
+  if (hostUnavailable) return i18n.t("Unavailable", { ns: "common" });
+  return i18n.t(INSTALL_LABELS[installState], { ns: "common" });
 }
 
 function providerStateFor(
@@ -188,6 +195,7 @@ function providerNeedsSignInToEnable(state: ProviderCliState): boolean {
  */
 function SignInToEnableButton(props: { readonly state: ProviderCliState }) {
   const { state } = props;
+  const { t } = useTranslation("common");
   const startLogin = useProvidersStartLogin();
   const awaitLogin = useHostScopedProvidersAwaitLogin();
   // Browser OAuth opens a browser on the machine running the host, so it is
@@ -239,7 +247,7 @@ function SignInToEnableButton(props: { readonly state: ProviderCliState }) {
         sideOffset={undefined}
         align={undefined}
       >
-        <span className="text-ui-xs text-white/40">Not signed in</span>
+        <span className="text-ui-xs text-white/40">{t("Not signed in")}</span>
       </TooltipWrapper>
     );
   }
@@ -247,7 +255,7 @@ function SignInToEnableButton(props: { readonly state: ProviderCliState }) {
     <span className="flex min-w-0 items-center gap-2">
       {declined ? (
         <span className="text-ui-xs text-destructive" role="alert">
-          Sign-in did not start. Try again when ready.
+          {t("Sign-in did not start. Try again when ready.")}
         </span>
       ) : null}
       <Button
@@ -257,7 +265,7 @@ function SignInToEnableButton(props: { readonly state: ProviderCliState }) {
         disabled={isPending}
         onClick={() => onSignIn(state.providerId)}
       >
-        Sign in to enable
+        {t("Sign in to enable")}
         {/* Unchanged label + inline spinner: starting a login spawns the
             provider CLI host-side, so a press with no feedback invites a
             second one. */}
@@ -283,10 +291,13 @@ function ProviderEnableSwitch(props: {
     isSettingEnabled,
     onSetEnabled,
   } = props;
+  const { t } = useTranslation("common");
   return (
     <TooltipWrapper
       label={
-        disablingLastEnabled ? "At least one provider must stay enabled." : null
+        disablingLastEnabled
+          ? t("At least one provider must stay enabled.")
+          : null
       }
       side="top"
       sideOffset={undefined}
@@ -302,7 +313,7 @@ function ProviderEnableSwitch(props: {
             onSetEnabled(providerId, next);
           }}
           disabled={isSettingEnabled || disablingLastEnabled}
-          aria-label={`Enable ${name}`}
+          aria-label={t("Enable {{name}}", { name })}
         />
       </span>
     </TooltipWrapper>
@@ -317,6 +328,7 @@ function ProviderEnableSwitch(props: {
  * "Unavailable" instead of erroring.
  */
 export function OnboardingDetectedAgents() {
+  const { t } = useTranslation("common");
   // The agents act is on-screen and active while mounted, so keep the query
   // both enabled and subscribed to cache updates.
   const providersQuery = useProvidersList({ enabled: true, subscribed: true });
@@ -402,7 +414,7 @@ export function OnboardingDetectedAgents() {
 
   return (
     <ProviderList
-      ariaLabel="Coding agent CLIs"
+      ariaLabel={t("Coding agent CLIs")}
       variant="onboarding"
       rows={rows}
       className="my-auto flex max-h-full min-h-0 w-full flex-col gap-2.5 overflow-y-auto overscroll-contain pr-2"

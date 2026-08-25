@@ -1,3 +1,4 @@
+import { i18n } from "@/lib/i18n/init-i18n";
 import type { HostHealthState } from "@/components/settings/host-scope/host-health";
 import type { HostScopeOption } from "@/components/settings/host-scope/host-scope-model";
 
@@ -152,7 +153,6 @@ const STATUS_WORD: Record<HostHealthState, string | null> = {
   stopped: "stopped",
   "not-installed": "not installed",
 };
-
 export function hostOptionStatusWord(
   host: HostScopeOption,
   surfaceState: HostRowSurfaceState,
@@ -163,9 +163,11 @@ export function hostOptionStatusWord(
   // upgrade" on a row the class already ruled out reads as a problem with
   // THAT machine, and invites trying another one when no other one can help.
   if (surfaceState.kind === "inert") return null;
-  if (host.settingUp) return "setting up";
+  if (host.settingUp) {
+    return i18n.t("setting up", { ns: "panels" });
+  }
   const statusWord = STATUS_WORD[host.health.state];
-  if (statusWord !== null) return statusWord;
+  if (statusWord !== null) return i18n.t(statusWord, { ns: "panels" });
   return surfaceState.kind === "refused" ? surfaceState.word : null;
 }
 
@@ -180,8 +182,10 @@ export function hostOptionStatusWord(
  * icon they cannot see.
  */
 export function hostOptionKindLabel(host: HostScopeOption): string {
-  if (host.isLocalMachine) return "This machine";
-  if (host.entry?.kind === "remote") return "Remote host";
-  if (host.entry?.kind === "mock") return "Mock host";
-  return "Host";
+  if (host.isLocalMachine) return i18n.t("This machine", { ns: "panels" });
+  if (host.entry?.kind === "remote") {
+    return i18n.t("Remote host", { ns: "panels" });
+  }
+  if (host.entry?.kind === "mock") return i18n.t("Mock host", { ns: "panels" });
+  return i18n.t("Host", { ns: "panels" });
 }

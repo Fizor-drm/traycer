@@ -1,4 +1,5 @@
 import { useMemo, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { LineChart } from "lucide-react";
 import type { HostClient } from "@traycer-clients/shared/host-client/host-client";
 import { SettingsPanelShell } from "@/components/settings/settings-panel-shell";
@@ -48,6 +49,7 @@ import { useHostClient, type HostRpcRegistry } from "@/lib/host";
  * on.
  */
 export function UsageSettingsPanel(): ReactNode {
+  const { t } = useTranslation("panels");
   const activeHostId = useAddressableHostId();
   const client = useHostClient();
   const scope = useHostScope();
@@ -68,7 +70,7 @@ export function UsageSettingsPanel(): ReactNode {
   const support = useHostMethodSupport(activeHostId, "host.usage.summary");
   return (
     <SettingsPanelShell
-      title="Usage"
+      title={t("Usage")}
       // Scope-neutral by design. The read's actual scope is a property of
       // the RESPONSE plus the in-page host filter, not of the section's
       // placement: `servedBy: "cloud"` spans every device on the account
@@ -80,7 +82,7 @@ export function UsageSettingsPanel(): ReactNode {
       // account-wide total is exactly what the reader expects. Leaving that
       // helper as the one place scope is asserted keeps a single source of
       // truth for it.
-      description="Token and cost usage across your agents."
+      description={t("Token and cost usage across your agents.")}
       fillHeight
       bodyClassName="overflow-visible rounded-none border-none bg-transparent"
       headerAction={undefined}
@@ -90,7 +92,7 @@ export function UsageSettingsPanel(): ReactNode {
         client={client}
         hostNames={hostNames}
         activeHostId={activeHostId}
-        activeHostLabel={scope.activeHost?.name ?? activeHostId ?? "this host"}
+        activeHostLabel={scope.activeHost?.name ?? activeHostId ?? t("this host")}
         hostsResolving={scope.isLoading}
       />
     </SettingsPanelShell>
@@ -107,6 +109,7 @@ function UsageSettingsPanelBody(props: {
   /** The host lists are still in flight, so a null active host is not yet an answer. */
   readonly hostsResolving: boolean;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   // Checked BEFORE `support`, because with no active host `support` is
   // permanently `null` - there is no host to hand shake with, so the pending
   // branch below could never resolve and would spin forever. This section is
@@ -116,8 +119,10 @@ function UsageSettingsPanelBody(props: {
   if (props.activeHostId === null && !props.hostsResolving) {
     return (
       <UsageNotice
-        title="No host connected"
-        detail="Install the Traycer host on a computer and sign in — your usage appears here on its own."
+        title={t("No host connected")}
+        detail={t(
+          "Install the Traycer host on a computer and sign in — your usage appears here on its own.",
+        )}
         testId="usage-no-host-notice"
       />
     );
@@ -133,15 +138,19 @@ function UsageSettingsPanelBody(props: {
           variant="orbit"
           className="text-muted-foreground"
         />
-        Loading usage…
+        {t("Loading usage…")}
       </div>
     );
   }
   if (!props.support) {
     return (
       <UsageNotice
-        title={`Usage isn't available on ${props.activeHostLabel} yet`}
-        detail="This host predates usage analytics. Update it to see token and cost usage here."
+        title={t("Usage isn't available on {{host}} yet", {
+          host: props.activeHostLabel,
+        })}
+        detail={t(
+          "This host predates usage analytics. Update it to see token and cost usage here.",
+        )}
         testId="usage-unsupported-notice"
       />
     );
@@ -165,13 +174,18 @@ function UsageSettingsPanelBody(props: {
 export function UsageSettingsPanelForClient(props: {
   readonly client: HostClient<HostRpcRegistry> | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const hostId = props.client?.getActiveHostId() ?? null;
   const supported = useUsageSummarySupported(hostId);
   if (!supported) {
     return (
       <UsageNotice
-        title={`Usage isn't available on ${hostId ?? "this host"} yet`}
-        detail="This host predates usage analytics. Update it to see token and cost usage here."
+        title={t("Usage isn't available on {{host}} yet", {
+          host: hostId ?? t("this host"),
+        })}
+        detail={t(
+          "This host predates usage analytics. Update it to see token and cost usage here.",
+        )}
         testId="usage-unsupported-notice"
       />
     );

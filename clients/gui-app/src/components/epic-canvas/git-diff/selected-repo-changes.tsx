@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import type Fuse from "fuse.js";
+import { useTranslation } from "react-i18next";
 import type { HostRpcError } from "@traycer-clients/shared/host-transport/host-messenger";
 import {
   ChevronDown,
@@ -861,6 +862,7 @@ function GitModuleSearch(props: {
   readonly onSearchKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
   readonly onClearSearch: () => void;
 }): ReactNode {
+  const { t } = useTranslation("canvas");
   return (
     <div className="shrink-0 bg-background/50 px-2 py-1.5">
       <InputGroup className="h-7 border-transparent bg-muted/25 shadow-none focus-within:bg-muted/35">
@@ -881,7 +883,7 @@ function GitModuleSearch(props: {
             <InputGroupButton
               size="icon-xs"
               onClick={props.onClearSearch}
-              aria-label="Clear filter"
+              aria-label={t("Clear filter")}
             >
               <X className="size-3.5" aria-hidden />
             </InputGroupButton>

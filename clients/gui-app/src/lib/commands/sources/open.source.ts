@@ -9,6 +9,7 @@
  * creation leaves, default-host bound). T6 fills Files / Diff (two-step
  * workspace → file).
  */
+import { i18n } from "@/lib/i18n/init-i18n";
 import { useArtifactsOpenerItems } from "@/lib/commands/sources/open/artifacts-subpage";
 import { useAgentsOpenerItems } from "@/lib/commands/sources/open/agents-subpage";
 import { useDiffOpenerItems } from "@/lib/commands/sources/open/diff-subpage";
@@ -30,6 +31,9 @@ interface OpenerCategory {
   readonly useItems: (ctx: CommandContext) => ReadonlyArray<CommandItem>;
 }
 
+// `title` is the i18n key (English source text); it is resolved through
+// `i18n.t` when the entries are built (per palette open) so a language
+// switch is picked up on reopen.
 const OPENER_CATEGORIES: ReadonlyArray<OpenerCategory> = [
   {
     // ONE Agent category. Chat and Terminal are interfaces within it, not peer
@@ -76,7 +80,7 @@ const OPENER_CATEGORIES: ReadonlyArray<OpenerCategory> = [
 function makeCategorySubpage(category: OpenerCategory): CommandSubpage {
   return {
     id: `open:${category.id}`,
-    title: category.title,
+    title: i18n.t(category.title, { ns: "palette" }),
     useItems: category.useItems,
   };
 }
@@ -84,7 +88,7 @@ function makeCategorySubpage(category: OpenerCategory): CommandSubpage {
 function makeCategoryEntry(category: OpenerCategory): CommandItem {
   return {
     id: `open:category:${category.id}`,
-    label: category.title,
+    label: i18n.t(category.title, { ns: "palette" }),
     description: null,
     keywords: category.keywords,
     group: "open",
@@ -96,9 +100,6 @@ function makeCategoryEntry(category: OpenerCategory): CommandItem {
   };
 }
 
-const CATEGORY_ENTRIES: ReadonlyArray<CommandItem> =
-  OPENER_CATEGORIES.map(makeCategoryEntry);
-
 export const openSource: CommandSource = {
   id: "open",
   getItems: (ctx) =>
@@ -107,5 +108,8 @@ export const openSource: CommandSource = {
       : // The communication graph is a LEAF, not a category: there is exactly
         // one graph per epic, so a sub-page listing one row would be a wasted
         // step. It also needs no host pick - the tile fans in across hosts.
-        [...CATEGORY_ENTRIES, commGraphOpenerItem(ctx)],
+        [
+          ...OPENER_CATEGORIES.map(makeCategoryEntry),
+          commGraphOpenerItem(ctx),
+        ],
 };

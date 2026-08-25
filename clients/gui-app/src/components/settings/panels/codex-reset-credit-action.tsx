@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import { ConfirmDestructiveDialog } from "@/components/ui/confirm-destructive-dialog";
@@ -9,6 +10,7 @@ import {
   useIsFarReset,
   useResetCountdown,
 } from "@/lib/relative-time";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 function resetCreditDescription(
   selectedCredit: CodexResetCredit | null,
@@ -17,17 +19,40 @@ function resetCreditDescription(
   availableCount: number,
 ): string {
   if (selectedCredit === null) {
-    return "This uses one manual reset on the currently reached Codex usage limit. The reset can't be returned or undone.";
+    return i18n.t(
+      "This uses one manual reset on the currently reached Codex usage limit. The reset can't be returned or undone.",
+      { ns: "panels" },
+    );
   }
-  let expiry = "with no expiry";
+  let expiry = i18n.t("with no expiry", { ns: "panels" });
   if (selectedCredit.expiresAt !== null) {
     expiry = farExpiry
-      ? `expiring ${formatResetFullDateTime(selectedCredit.expiresAt)}`
-      : `expiring in ${expiryCountdown ?? "less than a minute"}`;
+      ? i18n.t("expiring {{datetime}}", {
+          ns: "panels",
+          datetime: formatResetFullDateTime(selectedCredit.expiresAt),
+        })
+      : i18n.t("expiring in {{countdown}}", {
+          ns: "panels",
+          countdown:
+            expiryCountdown ?? i18n.t("less than a minute", { ns: "panels" }),
+        });
   }
   const remaining = Math.max(0, availableCount - 1);
-  const remainingLabel = remaining === 1 ? "manual reset" : "manual resets";
-  return `This uses the reset ${expiry} on the currently reached Codex usage limit. It can't be returned or undone. You'll have ${remaining} ${remainingLabel} left.`;
+  const body = i18n.t(
+    "This uses the reset {{expiry}} on the currently reached Codex usage limit. It can't be returned or undone.",
+    { ns: "panels", expiry },
+  );
+  const tail =
+    remaining === 1
+      ? i18n.t(
+          "You'll have 1 manual reset left.",
+          { ns: "panels" },
+        )
+      : i18n.t("You'll have {{count}} manual resets left.", {
+          ns: "panels",
+          count: remaining,
+        });
+  return `${body} ${tail}`;
 }
 
 export function CodexResetCreditAction({
@@ -41,6 +66,7 @@ export function CodexResetCreditAction({
 }): ReactNode {
   const [open, setOpen] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
+  const { t } = useTranslation("panels");
   const mutation = useConsumeRateLimitResetCreditMutation();
   const expiresAt = selectedCredit?.expiresAt ?? null;
   const expiryCountdown = useResetCountdown(expiresAt);
@@ -65,7 +91,7 @@ export function CodexResetCreditAction({
             variant={undefined}
           />
         ) : null}
-        Use reset
+        {t("Use reset")}
       </Button>
       <ConfirmDestructiveDialog
         open={open}
@@ -73,7 +99,7 @@ export function CodexResetCreditAction({
           setOpen(nextOpen);
           if (!nextOpen) setIdempotencyKey(null);
         }}
-        title="Use a Codex manual reset?"
+        title={t("Use a Codex manual reset?")}
         description={resetCreditDescription(
           selectedCredit,
           expiryCountdown,
@@ -81,7 +107,7 @@ export function CodexResetCreditAction({
           availableCount,
         )}
         cascadeSummary={null}
-        actionLabel="Use reset"
+        actionLabel={t("Use reset")}
         isPending={mutation.isPending}
         onConfirm={() => {
           if (idempotencyKey === null) return;

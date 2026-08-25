@@ -34,6 +34,7 @@ import {
   type HostRpcRegistry,
 } from "@/lib/host";
 import { UNKNOWN_HOST_PLACEHOLDER } from "@/lib/host/constants";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { openTileIntoTargetGroup } from "@/lib/commands/actions";
 import { makeListedEpicTerminalRef } from "@/lib/terminals/listed-epic-terminal-ref";
 import { isVisibleEpicTerminalSession } from "@/lib/terminals/terminal-session-filters";
@@ -84,7 +85,10 @@ function terminalWorkspaceLeaf(props: {
         // that offered this launch a moment ago went stale between listing
         // and selection (host dropped its lease, session died).
         toast(
-          `Can't create a terminal on ${liveEntry?.label ?? target.hostId} right now - it's not reachable.`,
+          i18n.t(
+            "Can't create a terminal on {{host}} right now - it's not reachable.",
+            { ns: "palette", host: liveEntry?.label ?? target.hostId },
+          ),
         );
         return;
       }
@@ -110,8 +114,8 @@ function terminalWorkspaceCheckingHint(
   return {
     id: `open:terminals:new:${row.hostId}:${encodeURIComponent(row.runningDir)}:checking`,
     label: row.runningDir,
-    description: "Checking workspace…",
-    statusBadge: "Checking workspace…",
+    description: i18n.t("Checking workspace…", { ns: "palette" }),
+    statusBadge: i18n.t("Checking workspace…", { ns: "palette" }),
     disabled: true,
     keywords: [row.runningDir, "new", "terminal", "workspace", "checking"],
     group: "open",
@@ -130,8 +134,14 @@ function terminalWorkspaceDisabledHint(
   return {
     id: `open:terminals:new:${row.hostId}:${encodeURIComponent(row.runningDir)}:disabled`,
     label: row.runningDir,
-    description: `Workspace unavailable: ${reason}`,
-    statusBadge: `Unavailable: ${reason}`,
+    description: i18n.t("Workspace unavailable: {{reason}}", {
+      ns: "palette",
+      reason,
+    }),
+    statusBadge: i18n.t("Unavailable: {{reason}}", {
+      ns: "palette",
+      reason,
+    }),
     disabled: true,
     keywords: [row.runningDir, "new", "terminal", "workspace", reason],
     group: "open",
@@ -146,9 +156,12 @@ function terminalWorkspaceDisabledHint(
 function terminalWorkspaceFolderlessCwdErrorHint(hostId: string): CommandItem {
   return {
     id: `open:terminals:new:host:${hostId}:folderless-cwd-error`,
-    label: "Couldn't resolve terminal directory",
-    description: "This host doesn't support folderless terminal directories",
-    statusBadge: "Unavailable",
+    label: i18n.t("Couldn't resolve terminal directory", { ns: "palette" }),
+    description: i18n.t(
+      "This host doesn't support folderless terminal directories",
+      { ns: "palette" },
+    ),
+    statusBadge: i18n.t("Unavailable", { ns: "palette" }),
     disabled: true,
     keywords: ["workspace", "terminal", "directory", "error"],
     group: "open",
@@ -231,11 +244,15 @@ function terminalWorkspaceStatusHint(
   const isLoading = status === "loading";
   return {
     id: `open:terminals:new:host:${hostId}:${status}`,
-    label: isLoading ? "Loading workspaces…" : "Couldn't load workspaces",
+    label: isLoading
+      ? i18n.t("Loading workspaces…", { ns: "palette" })
+      : i18n.t("Couldn't load workspaces", { ns: "palette" }),
     description: isLoading
-      ? "Fetching workspaces for this host"
-      : "Try again after the host reconnects",
-    statusBadge: isLoading ? "Loading" : "Unavailable",
+      ? i18n.t("Fetching workspaces for this host", { ns: "palette" })
+      : i18n.t("Try again after the host reconnects", { ns: "palette" }),
+    statusBadge: isLoading
+      ? i18n.t("Loading", { ns: "palette" })
+      : i18n.t("Unavailable", { ns: "palette" }),
     disabled: true,
     keywords: ["workspace", status],
     group: "open",
@@ -314,7 +331,10 @@ function makeHostWorkspaceSubpage(
 ): CommandSubpage {
   return {
     id: `open:terminals:new:host:${hostId}`,
-    title: `Create terminal on ${hostLabel}`,
+    title: i18n.t("Create terminal on {{host}}", {
+      ns: "palette",
+      host: hostLabel,
+    }),
     useItems: (ctx) => useHostTerminalWorkspaceItems(ctx, hostId),
   };
 }
@@ -394,11 +414,13 @@ function useNewTerminalWorkspaceItems(
   ]);
 }
 
-const NEW_TERMINAL_WORKSPACE_SUBPAGE: CommandSubpage = {
-  id: "open:terminals:new:workspace",
-  title: "Create terminal in workspace",
-  useItems: useNewTerminalWorkspaceItems,
-};
+function makeNewTerminalWorkspaceSubpage(): CommandSubpage {
+  return {
+    id: "open:terminals:new:workspace",
+    title: i18n.t("Create terminal in workspace", { ns: "palette" }),
+    useItems: useNewTerminalWorkspaceItems,
+  };
+}
 
 export function useTerminalsOpenerItems(
   ctx: CommandContext,
@@ -424,9 +446,9 @@ export function useTerminalsOpenerItems(
     );
     const newTerminal = openerSubpageLeaf({
       id: "open:terminals:new",
-      label: "Create new terminal",
+      label: i18n.t("Create new terminal", { ns: "palette" }),
       keywords: ["new", "terminal", "shell"],
-      subpage: NEW_TERMINAL_WORKSPACE_SUBPAGE,
+      subpage: makeNewTerminalWorkspaceSubpage(),
     });
     const existing = sessions.map((session) => {
       const ref = makeListedEpicTerminalRef({

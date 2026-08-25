@@ -6,6 +6,7 @@ import { readHostRuntimeStatusAwareness } from "@traycer/protocol/host/notificat
 import type { HostBusyBreakdown } from "@traycer/protocol/host/status/index";
 import { hasRecentHostCheckIn } from "@traycer-clients/shared/host-client/remote-fetcher";
 import { busyWorkPhrase } from "@/components/host/host-restart-copy";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 /**
  * The DTO's own reading of a host — **evidence, not a vocabulary**.
@@ -108,29 +109,41 @@ export function deriveHostPresence(
   if (status.clientCloud === "down") {
     return {
       reading: "client-offline",
-      label: "You're offline",
+      label: i18n.t("You're offline", { ns: "panels" }),
       showLiveDot: false,
     };
   }
   // Live-session-evidence override (R4-B5): a client holding an open E2E
   // session to this host renders Online regardless of everything below.
   if (hasLiveSession) {
-    return { reading: "online", label: "Online", showLiveDot: true };
+    return {
+      reading: "online",
+      label: i18n.t("Online", { ns: "panels" }),
+      showLiveDot: true,
+    };
   }
   if (status.connectivity === "local-only") {
     // Transitional value from a pre-cutover server. It carries the plan fact
     // but no liveness evidence, so never turn it into a death claim.
-    return { reading: "local-only", label: "Local only", showLiveDot: false };
+    return {
+      reading: "local-only",
+      label: i18n.t("Local only", { ns: "panels" }),
+      showLiveDot: false,
+    };
   }
   if (status.connectivity === "offline") {
     if (!planAllowsRemote && hasRecentHostCheckIn(status, nowMs)) {
       return {
         reading: "local-only",
-        label: "Local only",
+        label: i18n.t("Local only", { ns: "panels" }),
         showLiveDot: false,
       };
     }
-    return { reading: "offline", label: "Offline", showLiveDot: false };
+    return {
+      reading: "offline",
+      label: i18n.t("Offline", { ns: "panels" }),
+      showLiveDot: false,
+    };
   }
   if (!planAllowsRemote) {
     // `connectable` or `unknown`, the answer is the same: this host will not be
@@ -138,7 +151,11 @@ export function deriveHostPresence(
     // outage — rendering it "Offline" would put a fault where there is none and
     // imply a retry as the fix. Nothing about the machine is claimed either
     // way, which is exactly what makes this safe under a blind liveness read.
-    return { reading: "local-only", label: "Local only", showLiveDot: false };
+    return {
+      reading: "local-only",
+      label: i18n.t("Local only", { ns: "panels" }),
+      showLiveDot: false,
+    };
   }
   switch (status.connectivity) {
     // The host's own leg is up - AS OF THE LAST LEASE REFRESH, which is the
@@ -170,14 +187,14 @@ export function deriveHostPresence(
     case "connectable":
       return {
         reading: "reported-reachable",
-        label: "Reported reachable",
+        label: i18n.t("Reported reachable", { ns: "panels" }),
         showLiveDot: false,
       };
     case "unknown":
       // The cloud could not read liveness. Blind is not the same as absent.
       return {
         reading: "unknown",
-        label: "Status unknown",
+        label: i18n.t("Status unknown", { ns: "panels" }),
         showLiveDot: false,
       };
   }
@@ -200,15 +217,18 @@ export function deriveUpdatePill(
 ): HostUpdatePill | null {
   switch (updateState) {
     case "available":
-      return { label: "Update available", tone: "warn" };
+      return { label: i18n.t("Update available", { ns: "panels" }), tone: "warn" };
     case "pending":
-      return { label: "Update pending", tone: "warn" };
+      return { label: i18n.t("Update pending", { ns: "panels" }), tone: "warn" };
     case "updating":
-      return { label: "Updating…", tone: "info" };
+      return { label: i18n.t("Updating…", { ns: "panels" }), tone: "info" };
     case "failed":
-      return { label: "Update failed", tone: "danger" };
+      return { label: i18n.t("Update failed", { ns: "panels" }), tone: "danger" };
     case "required":
-      return { label: "Update required", tone: "danger" };
+      return {
+        label: i18n.t("Update required", { ns: "panels" }),
+        tone: "danger",
+      };
     case "current":
       return null;
   }
@@ -434,10 +454,6 @@ export interface DeriveUpdateAffordanceOptions {
   readonly liveBusyBreakdown: HostBusyBreakdown | null;
 }
 
-function pluralizeSessions(count: number): string {
-  return count === 1 ? "session" : "sessions";
-}
-
 /**
  * Derives the update affordances (Architecture §13) from two sources with
  * deliberately different reliability, and the split is the whole point.
@@ -484,16 +500,34 @@ export function deriveUpdateAffordance(
     liveBusyBreakdown === null ? null : busyWorkPhrase(liveBusyBreakdown);
   if (named !== null) {
     return {
-      waitingForSessionsLabel: `Waiting for ${named}`,
+      waitingForSessionsLabel: i18n.t("Waiting for {{work}}", {
+        ns: "panels",
+        work: named,
+      }),
       showApplyNowForce: true,
-      applyNowLabel: `Apply now — ends ${named}`,
+      applyNowLabel: i18n.t("Apply now — ends {{work}}", {
+        ns: "panels",
+        work: named,
+      }),
     };
   }
-  const sessionsWord = pluralizeSessions(liveBusySessionCount);
+  const count = liveBusySessionCount;
   return {
-    waitingForSessionsLabel: `Waiting for ${liveBusySessionCount} ${sessionsWord}`,
+    waitingForSessionsLabel:
+      count === 1
+        ? i18n.t("Waiting for 1 session", { ns: "panels" })
+        : i18n.t("Waiting for {{count}} sessions", {
+            ns: "panels",
+            count,
+          }),
     showApplyNowForce: true,
-    applyNowLabel: `Apply now — ends ${liveBusySessionCount} ${sessionsWord}`,
+    applyNowLabel:
+      count === 1
+        ? i18n.t("Apply now — ends 1 session", { ns: "panels" })
+        : i18n.t("Apply now — ends {{count}} sessions", {
+            ns: "panels",
+            count,
+          }),
   };
 }
 
@@ -513,23 +547,26 @@ export function formatLastSeen(
     return null;
   }
   const deltaSeconds = Math.max(0, Math.round((nowMs - then) / 1000));
-  return `last seen ${formatElapsed(deltaSeconds)}`;
+  return i18n.t("last seen {{elapsed}}", {
+    ns: "panels",
+    elapsed: formatElapsed(deltaSeconds),
+  });
 }
 
 function formatElapsed(deltaSeconds: number): string {
   if (deltaSeconds < 45) {
-    return "just now";
+    return i18n.t("just now", { ns: "panels" });
   }
   const minutes = Math.round(deltaSeconds / 60);
   if (minutes < 60) {
-    return `${minutes}m ago`;
+    return i18n.t("{{count}}m ago", { ns: "panels", count: minutes });
   }
   const hours = Math.round(minutes / 60);
   if (hours < 24) {
-    return `${hours}h ago`;
+    return i18n.t("{{count}}h ago", { ns: "panels", count: hours });
   }
   const days = Math.round(hours / 24);
-  return `${days}d ago`;
+  return i18n.t("{{count}}d ago", { ns: "panels", count: days });
 }
 
 // `formatHostMeta` lived here and is gone. It built the identity meta line

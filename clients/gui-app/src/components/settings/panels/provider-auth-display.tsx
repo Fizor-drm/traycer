@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { ProviderCliState } from "@traycer/protocol/host/provider-schemas";
+import { useTranslation } from "react-i18next";
 import { MutedAgentSpinner } from "@/components/ui/agent-spinning-dots";
 import { Badge } from "@/components/ui/badge";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
@@ -33,6 +34,7 @@ export function ProviderAuthLine({
 }: {
   readonly state: ProviderCliState;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (!state.enabled) return null;
   const auth = state.auth;
 
@@ -40,7 +42,7 @@ export function ProviderAuthLine({
     return (
       <p className="mt-0.5 flex items-center gap-1.5 text-ui-xs text-muted-foreground/80">
         <MutedAgentSpinner />
-        Checking account
+        {t("Checking account")}
       </p>
     );
   }
@@ -67,7 +69,7 @@ export function ProviderAuthLine({
   if (auth.status === "configured") {
     return (
       <p className="mt-0.5 text-ui-xs text-muted-foreground/80">
-        Configured, not verified
+        {t("Configured, not verified")}
       </p>
     );
   }
@@ -81,7 +83,7 @@ export function ProviderAuthLine({
         align="start"
       >
         <p className="mt-0.5 text-ui-xs text-muted-foreground/80">
-          Could not check account status
+          {t("Could not check account status")}
         </p>
       </TooltipWrapper>
     );
@@ -90,20 +92,22 @@ export function ProviderAuthLine({
   if (auth.status === "unauthenticated") {
     return (
       <p className="mt-0.5 text-ui-xs text-muted-foreground/80">
-        Not authenticated
+        {t("Not authenticated")}
       </p>
     );
   }
 
   if (state.apiKey.configured) {
     return (
-      <p className="mt-0.5 text-ui-xs text-muted-foreground/80">API key set</p>
+      <p className="mt-0.5 text-ui-xs text-muted-foreground/80">
+        {t("API key set")}
+      </p>
     );
   }
 
   return (
     <p className="mt-0.5 text-ui-xs text-muted-foreground/80">
-      Account status unavailable
+      {t("Account status unavailable")}
     </p>
   );
 }

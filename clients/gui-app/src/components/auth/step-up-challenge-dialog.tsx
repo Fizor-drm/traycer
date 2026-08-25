@@ -1,6 +1,8 @@
 import type { SyntheticEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import type { TFunction } from "i18next";
 import { Mail, RefreshCcw, ShieldCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,28 +29,36 @@ import {
   type StepUpPromptRequest,
 } from "@/lib/auth/step-up-prompt";
 
-function dialogCopy(request: StepUpPromptRequest): {
+function dialogCopy(
+  request: StepUpPromptRequest,
+  t: TFunction<"common">,
+): {
   readonly title: string;
   readonly description: string;
 } {
   if (request.purpose === "global-revoke") {
     return {
-      title: "Verify sign out everywhere",
-      description:
+      title: t("Verify sign out everywhere"),
+      description: t(
         "Enter the code sent to your email before signing out every session.",
+      ),
     };
   }
   if (request.purpose === "host-provision") {
-    const machine = request.subjectLabel ?? "this machine";
+    const machine = request.subjectLabel ?? t("this machine");
     return {
-      title: "Authorize background work",
-      description: `Enter the code sent to your email so ${machine} can keep running your work after you disconnect.`,
+      title: t("Authorize background work"),
+      description: t(
+        "Enter the code sent to your email so {{machine}} can keep running your work after you disconnect.",
+        { machine },
+      ),
     };
   }
   return {
-    title: "Verify session sign-out",
-    description:
+    title: t("Verify session sign-out"),
+    description: t(
       "Enter the code sent to your email to continue signing out sessions.",
+    ),
   };
 }
 
@@ -77,6 +87,7 @@ function StepUpChallengeDialogActive(props: {
 }) {
   const requestChallenge = useAuthRequestStepUpChallenge();
   const verifyChallenge = useAuthVerifyStepUpChallenge();
+  const { t } = useTranslation("common");
   const [code, setCode] = useState("");
   const [challengeSent, setChallengeSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +95,7 @@ function StepUpChallengeDialogActive(props: {
   const requestChallengeMutateAsync = requestChallenge.mutateAsync;
   const mountedRef = useRef(true);
   const autoSentRef = useRef(false);
-  const { title, description } = dialogCopy(props.request);
+  const { title, description } = dialogCopy(props.request, t);
 
   useEffect(() => {
     return () => {
@@ -139,7 +150,7 @@ function StepUpChallengeDialogActive(props: {
     event.preventDefault();
     const normalized = normalizeStepUpCodeInput(code);
     if (!challengeSent || normalized.length !== STEP_UP_CODE_LENGTH || busy) {
-      setError("Enter the 6-digit verification code.");
+      setError(t("Enter the 6-digit verification code."));
       return;
     }
     setError(null);
@@ -182,7 +193,7 @@ function StepUpChallengeDialogActive(props: {
               htmlFor="step-up-code"
               className="text-ui-xs font-medium text-muted-foreground"
             >
-              Email code
+              {t("Email code")}
             </label>
             <div className="flex items-center gap-2">
               <Mail className="size-4 shrink-0 text-muted-foreground" />
@@ -206,12 +217,12 @@ function StepUpChallengeDialogActive(props: {
                   testId={undefined}
                   variant="orbit"
                 />
-                Sending code
+                {t("Sending code")}
               </p>
             ) : null}
             {challengeSent && error === null ? (
               <p className="text-ui-xs text-muted-foreground">
-                Check your email for the verification code.
+                {t("Check your email for the verification code.")}
               </p>
             ) : null}
             {error === null ? null : (
@@ -229,7 +240,7 @@ function StepUpChallengeDialogActive(props: {
               disabled={busy}
               onClick={props.onCancel}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               type="button"
@@ -239,7 +250,7 @@ function StepUpChallengeDialogActive(props: {
               onClick={handleResend}
             >
               <RefreshCcw className="size-3.5" />
-              Resend code
+              {t("Resend code")}
             </Button>
             <Button
               type="submit"
@@ -248,8 +259,8 @@ function StepUpChallengeDialogActive(props: {
                 !challengeSent || code.length !== STEP_UP_CODE_LENGTH || busy
               }
             >
-              <ShieldCheck className="size-3.5" />
-              Verify
+                <ShieldCheck className="size-3.5" />
+                {t("Verify")}
               {verifyChallenge.isPending ? (
                 <AgentSpinningDots
                   className="text-current"

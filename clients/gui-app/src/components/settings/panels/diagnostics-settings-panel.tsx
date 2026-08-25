@@ -1,4 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import type { HostClient } from "@traycer-clients/shared/host-client/host-client";
 import type { DiagnosticsLogTarget } from "@traycer/protocol/host/diagnostics/index";
 import { SettingsPanelShell } from "@/components/settings/settings-panel-shell";
@@ -152,6 +154,7 @@ function DiagnosticsPanelOverRpc(props: {
   readonly logsSupported: boolean | null;
 }) {
   const { scope, levelsSupported, logsSupported } = props;
+  const { t } = useTranslation("panels");
   const compact = useSettingsDensity() === "compact";
   // MOUNTING, not rendering: a query hook mounted under a non-ready scope still
   // fires against the ambient host and caches its answer, however well the gate
@@ -169,8 +172,8 @@ function DiagnosticsPanelOverRpc(props: {
 
   return (
     <SettingsPanelShell
-      title="Diagnostics"
-      description={PANEL_DESCRIPTION}
+      title={t("Diagnostics")}
+      description={t(PANEL_DESCRIPTION)}
       fillHeight
       bodyClassName="overflow-visible rounded-none border-none bg-transparent"
     >
@@ -195,6 +198,7 @@ function DiagnosticsPanelOverRpc(props: {
               hostName: scope.hostLabel,
               levelsSupported,
               logsSupported,
+              t,
             })}
           />
           {logsSupported === false ? (
@@ -233,7 +237,9 @@ function hostLogDetailEmptyReason(props: {
   readonly hostName: string;
   readonly levelsSupported: boolean | null;
   readonly logsSupported: boolean | null;
+  readonly t: TFunction<"panels">;
 }): ReactNode {
+  const { t } = props;
   if (props.levelsSupported === false) {
     if (props.logsSupported === false) return null;
     return (
@@ -245,7 +251,9 @@ function hostLogDetailEmptyReason(props: {
   }
   return (
     <LogInfoLine>
-      Log levels for {props.hostName} aren&apos;t readable right now.
+      {t("Log levels for {{host}} aren't readable right now.", {
+        host: props.hostName,
+      })}
     </LogInfoLine>
   );
 }
@@ -258,12 +266,13 @@ function DiagnosticsPanelOverLocalStore(props: {
   readonly hostName: string;
   readonly reason: LocalConfigFallbackReason;
 }) {
+  const { t } = useTranslation("panels");
   const compact = useSettingsDensity() === "compact";
   const hostControls = useBridgeHostLogLevelControls();
   return (
     <SettingsPanelShell
-      title="Diagnostics"
-      description={PANEL_DESCRIPTION}
+      title={t("Diagnostics")}
+      description={t(PANEL_DESCRIPTION)}
       fillHeight
       bodyClassName="overflow-visible rounded-none border-none bg-transparent"
     >
@@ -286,7 +295,7 @@ function DiagnosticsPanelOverLocalStore(props: {
           controls={hostControls}
           emptyState={
             <LogInfoLine>
-              Log level controls are only available on the desktop app.
+              {t("Log level controls are only available on the desktop app.")}
             </LogInfoLine>
           }
         />
@@ -309,6 +318,7 @@ function HostRecentLogsSection(props: {
   readonly client: HostClient<HostRpcRegistry> | null;
   readonly hostName: string;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const { client } = props;
   const listQuery = useHostQuery<HostRpcRegistry, "diagnostics.logs.list">({
     cacheKeyIdentity: undefined,
@@ -322,8 +332,10 @@ function HostRecentLogsSection(props: {
     return (
       <RecentLogsFrame>
         <LogInfoLine>
-          There&apos;s no connection to {props.hostName}, so its log files
-          can&apos;t be read from here.
+          {t(
+            "There's no connection to {{host}}, so its log files can't be read from here.",
+            { host: props.hostName },
+          )}
         </LogInfoLine>
       </RecentLogsFrame>
     );
@@ -331,7 +343,9 @@ function HostRecentLogsSection(props: {
   const hostLogs = listQuery.data?.logs ?? [];
   return (
     <RecentLogsFrame>
-      {listQuery.isPending ? <LogInfoLine>Loading logs…</LogInfoLine> : null}
+      {listQuery.isPending ? (
+        <LogInfoLine>{t("Loading logs…")}</LogInfoLine>
+      ) : null}
       {/*
         Carries the same report-issue affordance a failed TAIL read offers.
         Without it the panel was harder to report from the worse the failure
@@ -340,13 +354,13 @@ function HostRecentLogsSection(props: {
       */}
       {listQuery.isError ? (
         <div className="flex items-start gap-2">
-          <LogInfoLine>Couldn&apos;t load log details.</LogInfoLine>
+          <LogInfoLine>{t("Couldn't load log details.")}</LogInfoLine>
           <ReportIssueAction
             context={createReportIssueContext({
-              title: "Couldn't load log details",
+              title: t("Couldn't load log details"),
               message: null,
               code: null,
-              source: "Diagnostics",
+              source: t("Diagnostics"),
             })}
             presentation="icon"
             className={undefined}
@@ -354,7 +368,9 @@ function HostRecentLogsSection(props: {
         </div>
       ) : null}
       {listQuery.isSuccess && hostLogs.length === 0 ? (
-        <LogInfoLine>No log files on {props.hostName}.</LogInfoLine>
+        <LogInfoLine>
+          {t("No log files on {{host}}.", { host: props.hostName })}
+        </LogInfoLine>
       ) : null}
       {hostLogs.map((entry) => (
         <HostLogEntry
@@ -371,6 +387,7 @@ function HostRecentLogsSection(props: {
 
 /** Recent logs through the desktop support bridge — the stopped-local path. */
 function BridgeRecentLogsSection(): ReactNode {
+  const { t } = useTranslation("panels");
   const runnerHost = useRunnerHost();
   const support = useMemo(
     () => resolveDesktopSupportBridge(runnerHost),
@@ -381,7 +398,7 @@ function BridgeRecentLogsSection(): ReactNode {
     <RecentLogsFrame>
       {support === null ? (
         <LogInfoLine>
-          Recent logs are only available on the desktop app.
+          {t("Recent logs are only available on the desktop app.")}
         </LogInfoLine>
       ) : (
         <BridgeLogList support={support} />
@@ -393,6 +410,7 @@ function BridgeRecentLogsSection(): ReactNode {
 function BridgeLogList(props: {
   readonly support: DesktopSupportBridge;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const { support } = props;
   const listQuery = useSupportSnapshotQuery(support);
   // The snapshot carries `desktop` as well as `host`, and this page is no
@@ -404,13 +422,13 @@ function BridgeLogList(props: {
   );
 
   if (listQuery.isPending) {
-    return <LogInfoLine>Loading logs…</LogInfoLine>;
+    return <LogInfoLine>{t("Loading logs…")}</LogInfoLine>;
   }
   if (listQuery.isError) {
-    return <LogInfoLine>Couldn&apos;t load log details.</LogInfoLine>;
+    return <LogInfoLine>{t("Couldn't load log details.")}</LogInfoLine>;
   }
   if (logs.length === 0) {
-    return <LogInfoLine>No log files found.</LogInfoLine>;
+    return <LogInfoLine>{t("No log files found.")}</LogInfoLine>;
   }
   return (
     <>
@@ -436,6 +454,7 @@ function HostLogEntry(props: {
   readonly label: string;
   readonly path: string;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const [open, setOpen] = useState(false);
   const tailQuery = useHostQuery<HostRpcRegistry, "diagnostics.logs.tail">({
     cacheKeyIdentity: undefined,
@@ -465,8 +484,8 @@ function HostLogEntry(props: {
       action={
         <CopyTextButton
           value={props.path}
-          label="Copy path"
-          ariaLabel={`Copy ${props.label} path`}
+          label={t("Copy path")}
+          ariaLabel={t("Copy {{label}} path", { label: props.label })}
           disabled={false}
         />
       }

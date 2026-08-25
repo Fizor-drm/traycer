@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import type { HostClient } from "@traycer-clients/shared/host-client/host-client";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { compareHostVersions } from "@traycer-clients/shared/host-version/compare-host-versions";
 import type {
   HostAvailableManifest,
@@ -182,7 +183,10 @@ export function useHostOverviewUpdates(input: {
           });
         },
         onError: (error) =>
-          toastFromHostError(error, "Couldn't start the update."),
+          toastFromHostError(
+            error,
+            i18n.t("Couldn't start the update.", { ns: "panels" }),
+          ),
       },
     );
   };
@@ -393,7 +397,10 @@ function supersededReason(
   if (installedVersion === null) return null;
   const comparison = compareHostVersions(installedVersion, rowVersion);
   if (!comparison.comparable || comparison.ordering === "less") return null;
-  return `Already on v${installedVersion}`;
+  return i18n.t("Already on v{{version}}", {
+    ns: "panels",
+    version: installedVersion,
+  });
 }
 
 /**
@@ -463,11 +470,13 @@ type PlatformAsset =
   HostAvailableManifest["versions"][number]["platforms"][string];
 
 function assetUnavailableReason(asset: PlatformAsset | null): string | null {
-  if (asset === null) return "No asset for this platform.";
+  if (asset === null) {
+    return i18n.t("No asset for this platform.", { ns: "panels" });
+  }
   if (asset.available) return null;
   const reason = asset.unavailableReason?.trim();
   return reason === undefined || reason.length === 0
-    ? "Unavailable on this platform."
+    ? i18n.t("Unavailable on this platform.", { ns: "panels" })
     : reason;
 }
 
@@ -549,7 +558,13 @@ function handleInstallOutcome(input: {
 }): void {
   if (input.outcome === "accepted") {
     input.onAccepted();
-    toast.success(`Updating ${input.hostName} to v${input.version}`);
+    toast.success(
+      i18n.t("Updating {{name}} to v{{version}}", {
+        ns: "panels",
+        name: input.hostName,
+        version: input.version,
+      }),
+    );
     return;
   }
   if (input.outcome === "already-updating") {
@@ -561,7 +576,12 @@ function handleInstallOutcome(input: {
     // This arm is what a second window, a direct CLI caller, or a click inside
     // that blind gap gets told.
     input.onAccepted();
-    toast.info(`${input.hostName} is already installing an update.`);
+    toast.info(
+      i18n.t("{{name}} is already installing an update.", {
+        ns: "panels",
+        name: input.hostName,
+      }),
+    );
     return;
   }
   if (
@@ -591,7 +611,7 @@ function describeCheckState(input: {
   // Ordered so a stale answer never outranks what is happening NOW: a refetch
   // keeps the previous manifest on screen, so "vX is available." would otherwise
   // sit there unchanged while a re-check ran, or failed.
-  if (input.checking) return "Checking for updates…";
+  if (input.checking) return i18n.t("Checking for updates…", { ns: "panels" });
   if (input.failure !== null) {
     return describeCliShellFailure(input.failure, input.hostName);
   }
@@ -600,18 +620,32 @@ function describeCheckState(input: {
     // raised. This read now fires on its own, and an automatic request that
     // toasts on failure turns an unreachable host into a notification nobody
     // asked for, once per visit to this page.
-    return `Couldn't ask ${input.hostName} which versions it can install.`;
+    return i18n.t("Couldn't ask {{name}} which versions it can install.", {
+      ns: "panels",
+      name: input.hostName,
+    });
   }
   // No answer yet and nothing wrong: the first load, which now starts by itself.
-  if (input.manifest === null) return "Checking for updates…";
-  if (input.upToDate) return "This host is running the latest version.";
+  if (input.manifest === null) {
+    return i18n.t("Checking for updates…", { ns: "panels" });
+  }
+  if (input.upToDate) {
+    return i18n.t("This host is running the latest version.", { ns: "panels" });
+  }
   // A latest this host cannot act on — yanked, or no asset for its platform.
   // Claiming plain availability here would put the sentence at odds with the
   // absent button; the version list carries the specific reason.
   if (!input.offerable) {
-    return `v${input.manifest.latest} is available, but ${input.hostName} can't install it.`;
+    return i18n.t("v{{version}} is available, but {{name}} can't install it.", {
+      ns: "panels",
+      version: input.manifest.latest,
+      name: input.hostName,
+    });
   }
-  return `v${input.manifest.latest} is available.`;
+  return i18n.t("v{{version}} is available.", {
+    ns: "panels",
+    version: input.manifest.latest,
+  });
 }
 
 /**

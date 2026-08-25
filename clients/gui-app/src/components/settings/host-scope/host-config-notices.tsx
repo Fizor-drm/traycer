@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Info, Laptop } from "lucide-react";
 import type { LocalConfigFallbackReason } from "@/components/settings/host-scope/host-scope-model";
 
@@ -23,6 +24,7 @@ export function HostConfigUnsupportedNotice(props: {
   /** What is unavailable, lower-case: "shell configuration". */
   readonly subject: string;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div
       role="status"
@@ -30,12 +32,15 @@ export function HostConfigUnsupportedNotice(props: {
       data-testid="host-config-unsupported-notice"
     >
       <div className="font-medium text-ui-sm text-foreground">
-        {props.hostName} is running an older version
+        {t("{{name}} is running an older version", {
+          name: props.hostName,
+        })}
       </div>
       <p className="max-w-[68ch] text-ui-sm text-muted-foreground">
-        This host&apos;s version doesn&apos;t support remote configuration, so
-        its {props.subject} can&apos;t be changed from here. Update the host and
-        this page fills in on its own.
+        {t(
+          "This host's version doesn't support remote configuration, so its {{subject}} can't be changed from here. Update the host and this page fills in on its own.",
+          { subject: props.subject },
+        )}
       </p>
     </div>
   );
@@ -54,6 +59,7 @@ export function LocalConfigFallbackNotice(props: {
   readonly hostName: string;
   readonly reason: LocalConfigFallbackReason;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div
       role="status"
@@ -63,18 +69,15 @@ export function LocalConfigFallbackNotice(props: {
     >
       <Info className="mt-px size-3.5 shrink-0" aria-hidden />
       <span className="max-w-[68ch]">
-        {props.reason === "host-stopped" ? (
-          <>
-            {props.hostName} isn&apos;t running — showing this computer&apos;s
-            on-disk configuration. Changes apply when it starts.
-          </>
-        ) : (
-          <>
-            {props.hostName}&apos;s version predates remote configuration —
-            showing this computer&apos;s on-disk configuration. Update the host
-            to configure it over the connection.
-          </>
-        )}
+        {props.reason === "host-stopped"
+          ? t(
+              "{{name}} isn't running — showing this computer's on-disk configuration. Changes apply when it starts.",
+              { name: props.hostName },
+            )
+          : t(
+              "{{name}}'s version predates remote configuration — showing this computer's on-disk configuration. Update the host to configure it over the connection.",
+              { name: props.hostName },
+            )}
       </span>
     </div>
   );
@@ -89,6 +92,7 @@ export function LocalConfigFallbackNotice(props: {
 export function NoConfigSourceNotice(props: {
   readonly hostName: string;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div
       role="status"
@@ -100,11 +104,14 @@ export function NoConfigSourceNotice(props: {
       </span>
       <div className="max-w-[60ch] space-y-1">
         <div className="font-medium text-foreground">
-          Can&apos;t configure {props.hostName} from here
+          {t("Can't configure {{name}} from here", {
+            name: props.hostName,
+          })}
         </div>
         <p className="text-muted-foreground">
-          It can&apos;t answer for its own configuration right now, and this
-          shell has no local Traycer CLI to read that configuration from disk.
+          {t(
+            "It can't answer for its own configuration right now, and this shell has no local Traycer CLI to read that configuration from disk.",
+          )}
         </p>
       </div>
     </div>

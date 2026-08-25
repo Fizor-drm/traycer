@@ -2,6 +2,7 @@ import type {
   ProviderNativeScope,
   ProviderSkillSourceBadge,
 } from "@traycer/protocol/host/provider-native-schemas";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 /**
  * Whether the Remove affordance appears for one skill, and if not, whether
@@ -41,6 +42,10 @@ const BLOCKED_REASON: Record<ProviderSkillSourceBadge, string> = {
     "Built-in skills ship with the provider and can't be removed from here.",
 };
 
+function blockedReason(source: ProviderSkillSourceBadge): string {
+  return i18n.t(BLOCKED_REASON[source], { ns: "panels" });
+}
+
 /**
  * `actionScopes.remove` advertising a scope is NOT on its own a licence to
  * offer removal: it says the provider supports the verb, while the source
@@ -71,12 +76,14 @@ export function skillRemovability(args: {
   if (args.conflict) {
     return {
       kind: "blocked",
-      reason:
+      reason: i18n.t(
         "This row is a conflict. A folder already occupies the provider link, so it cannot be removed from here.",
+        { ns: "panels" },
+      ),
     };
   }
   if (!isWritableSkillSource(args.source)) {
-    return { kind: "blocked", reason: BLOCKED_REASON[args.source] };
+    return { kind: "blocked", reason: blockedReason(args.source) };
   }
   return { kind: "removable" };
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Check, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { cn } from "@/lib/utils";
 
 /**
@@ -52,9 +54,13 @@ function isEnvMode(value: string): value is EnvMode {
 
 function draftError(key: string, otherKeys: readonly string[]): string | null {
   if (!ENV_KEY_PATTERN.test(key)) {
-    return "Name must match /^[A-Za-z_][A-Za-z0-9_]*$/.";
+    return i18n.t("Name must match /^[A-Za-z_][A-Za-z0-9_]*$/.", {
+      ns: "panels",
+    });
   }
-  if (otherKeys.includes(key)) return `${key} already exists.`;
+  if (otherKeys.includes(key)) {
+    return i18n.t("{{key}} already exists.", { ns: "panels", key });
+  }
   return null;
 }
 
@@ -80,6 +86,7 @@ export function EnvOverrideEditor(props: {
   } = props;
   const keys = overrides.map((entry) => entry.key);
   const [adding, setAdding] = useState(false);
+  const { t } = useTranslation("panels");
 
   return (
     <div className="overflow-hidden rounded-lg border border-border/60">
@@ -91,14 +98,14 @@ export function EnvOverrideEditor(props: {
           "border-b border-border/40 bg-muted/30 px-3 py-2 text-ui-xs font-medium text-muted-foreground",
         )}
       >
-        <span>Name</span>
+        <span>{t("Name")}</span>
         <div className="flex items-center gap-2">
           {/* Spacer mirrors the Set/Unset select width (+ gap) so the "Value"
               label sits above the value input, not the action dropdown. */}
           <span className="w-[5.25rem] shrink-0" aria-hidden="true" />
-          <span>Value</span>
+          <span>{t("Value")}</span>
         </div>
-        <span className="sr-only">Actions</span>
+        <span className="sr-only">{t("Actions")}</span>
       </div>
       {overrides.length === 0 && !adding ? (
         <div className="px-3 py-5 text-center text-ui-sm text-muted-foreground">
@@ -140,7 +147,7 @@ export function EnvOverrideEditor(props: {
             onClick={() => setAdding(true)}
           >
             <Plus className="size-3.5" />
-            Add environment variable
+            {t("Add environment variable")}
           </Button>
         </div>
       )}
@@ -182,6 +189,7 @@ function EnvOverrideRow(props: {
   useEffect(() => {
     onCommitRef.current = onCommit;
   }, [onCommit]);
+  const { t } = useTranslation("panels");
 
   const commit = (): void => {
     const nextKey = draft.key.trim();
@@ -218,7 +226,7 @@ function EnvOverrideRow(props: {
           value={draft.key}
           disabled={disabled}
           spellCheck={false}
-          aria-label={`Name for ${entry.key}`}
+          aria-label={t("Name for {{key}}", { key: entry.key })}
           className="h-8 font-mono text-code-xs"
           onChange={(event) =>
             setDraft((current) => ({ ...current, key: event.target.value }))
@@ -232,7 +240,7 @@ function EnvOverrideRow(props: {
           value={draft.value}
           mode={draft.mode}
           disabled={disabled}
-          ariaLabel={`Value for ${entry.key}`}
+          ariaLabel={t("Value for {{key}}", { key: entry.key })}
           onModeChange={(mode) => setDraft((current) => ({ ...current, mode }))}
           onValueChange={(value) =>
             setDraft((current) => ({ ...current, value }))
@@ -243,7 +251,7 @@ function EnvOverrideRow(props: {
           type="button"
           disabled={disabled}
           onClick={() => onDelete(entry.key)}
-          aria-label={`Remove ${entry.key}`}
+          aria-label={t("Remove {{key}}", { key: entry.key })}
           // muted-fill-ok: hover also swings the icon to text-destructive, so
           // the state keeps a channel that no theme can collapse
           className="flex size-8 items-center justify-center justify-self-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-destructive disabled:opacity-50"
@@ -266,6 +274,7 @@ function EnvOverrideAddRow(props: {
   readonly onCancel: () => void;
 }) {
   const { existingKeys, disabled, namePlaceholder, onAdd, onCancel } = props;
+  const { t } = useTranslation("panels");
   const [draft, setDraft] = useState<Draft>(() => ({
     key: "",
     value: "",
@@ -291,7 +300,7 @@ function EnvOverrideAddRow(props: {
           disabled={disabled}
           spellCheck={false}
           placeholder={namePlaceholder}
-          aria-label="New environment variable name"
+          aria-label={t("New environment variable name")}
           className="h-8 font-mono text-code-xs"
           onChange={(event) =>
             setDraft((current) => ({ ...current, key: event.target.value }))
@@ -301,7 +310,7 @@ function EnvOverrideAddRow(props: {
           value={draft.value}
           mode={draft.mode}
           disabled={disabled}
-          ariaLabel="New environment variable value"
+          ariaLabel={t("New environment variable value")}
           onModeChange={(mode) => setDraft((current) => ({ ...current, mode }))}
           onValueChange={(value) =>
             setDraft((current) => ({ ...current, value }))
@@ -314,7 +323,7 @@ function EnvOverrideAddRow(props: {
             size="icon-sm"
             variant="ghost"
             disabled={disabled || draft.key.trim().length === 0}
-            aria-label="Apply environment variable"
+            aria-label={t("Apply environment variable")}
             onClick={add}
           >
             <Check className="size-4 text-[var(--term-ansi-green)]" />
@@ -324,7 +333,7 @@ function EnvOverrideAddRow(props: {
             size="icon-sm"
             variant="ghost"
             disabled={disabled}
-            aria-label="Discard environment variable"
+            aria-label={t("Discard environment variable")}
             onClick={onCancel}
           >
             <X className="size-4" />
@@ -356,6 +365,7 @@ function EnvValueField(props: {
     onValueChange,
     onBlur,
   } = props;
+  const { t } = useTranslation("panels");
   return (
     <div className="flex min-w-0 items-center gap-2">
       <Select
@@ -367,15 +377,15 @@ function EnvValueField(props: {
       >
         <SelectTrigger
           size="sm"
-          aria-label={`${ariaLabel} action`}
+          aria-label={t("{{label}} action", { label: ariaLabel })}
           className="h-8 w-[5.25rem] shrink-0"
           onBlur={onBlur}
         >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="set">Set</SelectItem>
-          <SelectItem value="unset">Unset</SelectItem>
+          <SelectItem value="set">{t("Set")}</SelectItem>
+          <SelectItem value="unset">{t("Unset")}</SelectItem>
         </SelectContent>
       </Select>
       <Input
@@ -383,7 +393,9 @@ function EnvValueField(props: {
         disabled={disabled || mode === "unset"}
         spellCheck={false}
         aria-label={ariaLabel}
-        placeholder={mode === "unset" ? "removed from environment" : "value"}
+        placeholder={
+          mode === "unset" ? t("removed from environment") : t("value")
+        }
         className="h-8 min-w-0 flex-1 font-mono text-code-xs"
         onChange={(event) => onValueChange(event.target.value)}
         onKeyDown={(event) => {

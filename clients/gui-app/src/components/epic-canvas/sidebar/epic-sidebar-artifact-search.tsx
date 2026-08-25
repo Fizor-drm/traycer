@@ -33,6 +33,8 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { FileText, Search, SearchX, X } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import type {
@@ -232,6 +234,7 @@ interface ArtifactSearchBoxProps {
 // eslint-disable-next-line complexity
 export function ArtifactSearchBox(props: ArtifactSearchBoxProps) {
   const { epicId, tabId, searchQuery, debouncedQuery } = props;
+  const { t } = useTranslation("canvas");
   // BOTH from the Epic session, and that is the point - these two were read
   // from two different sources (the ambient client, and the app-wide
   // addressable id beside it) and then used together: the id keys the scope
@@ -451,14 +454,17 @@ export function ArtifactSearchBox(props: ArtifactSearchBoxProps) {
     response.outcome === "ready" &&
     results.length > 0;
 
-  const statusMessage = deriveStatusMessage({
-    searchActive,
-    isUnsupported,
-    isError,
-    response,
-    resultCount,
-    staleActive: staleArtifactId !== null,
-  });
+  const statusMessage = deriveStatusMessage(
+    {
+      searchActive,
+      isUnsupported,
+      isError,
+      response,
+      resultCount,
+      staleActive: staleArtifactId !== null,
+    },
+    t,
+  );
 
   const inputRow = (
     <InputGroup className="h-7 w-full">
@@ -472,8 +478,8 @@ export function ArtifactSearchBox(props: ArtifactSearchBoxProps) {
         value={searchQuery}
         onChange={(event) => onSearchQueryChange(event.target.value)}
         onKeyDown={handleInputKeyDown}
-        placeholder="Search artifacts…"
-        aria-label="Search artifacts"
+        placeholder={t("Search artifacts…")}
+        aria-label={t("Search artifacts")}
         aria-autocomplete="list"
         aria-expanded={listboxRendered}
         aria-controls={listboxRendered ? listboxId : undefined}
@@ -488,7 +494,7 @@ export function ArtifactSearchBox(props: ArtifactSearchBoxProps) {
           <InputGroupButton
             type="button"
             size="icon-xs"
-            aria-label="Clear artifact search"
+            aria-label={t("Clear artifact search")}
             onClick={clearSearch}
             data-testid="epic-artifact-search-clear"
           >
@@ -498,7 +504,7 @@ export function ArtifactSearchBox(props: ArtifactSearchBoxProps) {
         <InputGroupButton
           type="button"
           size="icon-xs"
-          aria-label="Close artifact search"
+          aria-label={t("Close artifact search")}
           onClick={exitSearch}
           data-testid="epic-artifact-search-close"
         >
@@ -547,33 +553,36 @@ export function ArtifactSearchBox(props: ArtifactSearchBoxProps) {
   );
 }
 
-function deriveStatusMessage(args: {
-  readonly searchActive: boolean;
-  readonly isUnsupported: boolean;
-  readonly isError: boolean;
-  readonly response: SearchArtifactsResponse | null;
-  readonly resultCount: number;
-  readonly staleActive: boolean;
-}): string {
+function deriveStatusMessage(
+  args: {
+    readonly searchActive: boolean;
+    readonly isUnsupported: boolean;
+    readonly isError: boolean;
+    readonly response: SearchArtifactsResponse | null;
+    readonly resultCount: number;
+    readonly staleActive: boolean;
+  },
+  t: TFunction<"canvas">,
+): string {
   if (!args.searchActive) return "";
-  if (args.isUnsupported)
-    return "Artifact search isn't available on this host.";
-  if (args.isError) return "Artifact search failed.";
-  if (args.staleActive) return "That artifact no longer exists.";
-  if (args.response === null) return "Searching artifacts…";
+  if (args.isUnsupported) return t("Artifact search isn't available on this host.");
+  if (args.isError) return t("Artifact search failed.");
+  if (args.staleActive) return t("That artifact no longer exists.");
+  if (args.response === null) return t("Searching artifacts…");
   if (args.response.outcome === "mirror-unavailable") {
-    return "Artifact search isn't ready yet.";
+    return t("Artifact search isn't ready yet.");
   }
   if (args.resultCount === 0) {
     return args.response.truncated
-      ? "No matches shown; more results exist beyond the search limit."
-      : "No artifacts match your search.";
+      ? t("No matches shown; more results exist beyond the search limit.")
+      : t("No artifacts match your search.");
   }
-  const base = `${args.resultCount} artifact ${
-    args.resultCount === 1 ? "result" : "results"
-  }.`;
+  const base =
+    args.resultCount === 1
+      ? t("{{count}} artifact result.", { count: args.resultCount })
+      : t("{{count}} artifact results.", { count: args.resultCount });
   return args.response.truncated
-    ? `${base} More are available; refine your search.`
+    ? `${base} ${t("More are available; refine your search.")}`
     : base;
 }
 
@@ -594,12 +603,15 @@ interface ArtifactSearchResultsRegionProps {
 }
 
 function ArtifactSearchResultsRegion(props: ArtifactSearchResultsRegionProps) {
+  const { t } = useTranslation("canvas");
   if (props.isUnsupported) {
     return (
       <SidebarPanelEmptyState
         icon={SearchX}
-        title="Search isn't available on this host."
-        description="Update this device's Traycer host to search artifacts."
+        title={t("Search isn't available on this host.")}
+        description={t(
+          "Update this device's Traycer host to search artifacts.",
+        )}
         testId="epic-artifact-search-unsupported"
       />
     );
@@ -612,7 +624,7 @@ function ArtifactSearchResultsRegion(props: ArtifactSearchResultsRegionProps) {
       >
         <SearchX className="size-8 text-muted-foreground/45" aria-hidden />
         <p className="text-ui-sm text-muted-foreground/70">
-          Artifact search failed.
+          {t("Artifact search failed.")}
         </p>
         <Button
           type="button"
@@ -621,7 +633,7 @@ function ArtifactSearchResultsRegion(props: ArtifactSearchResultsRegionProps) {
           onClick={props.onRetry}
           data-testid="epic-artifact-search-retry"
         >
-          Retry
+          {t("Retry")}
         </Button>
       </div>
     );
@@ -650,8 +662,8 @@ function ArtifactSearchResultsRegion(props: ArtifactSearchResultsRegionProps) {
     return (
       <SidebarPanelEmptyState
         icon={Search}
-        title="Artifact search isn't ready yet."
-        description="This Epic's artifacts are still syncing to this device."
+        title={t("Artifact search isn't ready yet.")}
+        description={t("This Epic's artifacts are still syncing to this device.")}
         testId="epic-artifact-search-mirror-unavailable"
       />
     );
@@ -663,10 +675,10 @@ function ArtifactSearchResultsRegion(props: ArtifactSearchResultsRegionProps) {
     return (
       <SidebarPanelEmptyState
         icon={FileText}
-        title="No artifacts match your search."
+        title={t("No artifacts match your search.")}
         description={
           truncated
-            ? "More results exist beyond the search limit - refine your query."
+            ? t("More results exist beyond the search limit - refine your query.")
             : null
         }
         testId="epic-artifact-search-empty"
@@ -679,7 +691,7 @@ function ArtifactSearchResultsRegion(props: ArtifactSearchResultsRegionProps) {
       <ul
         id={props.listboxId}
         role="listbox"
-        aria-label="Artifact search results"
+        aria-label={t("Artifact search results")}
         aria-busy={props.isFetching}
         className="no-scrollbar min-h-0 flex-1 space-y-0.5 overflow-auto px-2 pb-2"
         data-testid="epic-artifact-search-results"
@@ -700,7 +712,7 @@ function ArtifactSearchResultsRegion(props: ArtifactSearchResultsRegionProps) {
         // Count-free so it stays truthful after the renderer-only read filter,
         // which can drop hits from the host's already-truncated page.
         <p className="shrink-0 px-3 pb-1 pt-1 text-ui-xs text-muted-foreground">
-          More matches exist - refine your search to narrow results.
+          {t("More matches exist - refine your search to narrow results.")}
         </p>
       ) : null}
     </div>
@@ -719,6 +731,7 @@ interface ArtifactSearchResultRowProps {
 const ArtifactSearchResultRow = memo(function ArtifactSearchResultRow(
   props: ArtifactSearchResultRowProps,
 ) {
+  const { t } = useTranslation("canvas");
   const { hit, active, stale, onActivate, onHover } = props;
   const Icon = isEpicArtifactKind(hit.kind)
     ? EPIC_NODE_ICONS[hit.kind]
@@ -761,7 +774,7 @@ const ArtifactSearchResultRow = memo(function ArtifactSearchResultRow(
               "size-2 shrink-0 rounded-full",
               STATUS_DOT_CLASSES[hit.status],
             )}
-            aria-label={STATUS_LABELS[hit.status]}
+            aria-label={t(STATUS_LABELS[hit.status])}
           />
         ) : null}
         <Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
@@ -776,7 +789,7 @@ const ArtifactSearchResultRow = memo(function ArtifactSearchResultRow(
       ) : null}
       {stale ? (
         <p className="pl-5 text-ui-xs text-destructive">
-          This artifact no longer exists.
+          {t("This artifact no longer exists.")}
         </p>
       ) : (
         <ArtifactSnippetList hit={hit} />

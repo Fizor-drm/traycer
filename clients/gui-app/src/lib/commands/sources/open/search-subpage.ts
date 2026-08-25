@@ -15,6 +15,7 @@ import { useHostClientForHostId } from "@/hooks/host/use-host-client-for-host-id
 import { useWorktreeListBindingsForEpicForClient } from "@/hooks/worktree/use-worktree-list-bindings-for-epic-query";
 import { useActiveEpicHostId } from "@/lib/commands/sources/open/use-active-epic-projection";
 import { isBrowsable } from "@/lib/worktree/worktree-row-browsable";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { openerSubpageLeaf } from "@/lib/commands/sources/open/open-leaf";
 import {
   searchRunSubpageId,
@@ -56,9 +57,12 @@ export function useSearchOpenerItems(
   return useMemo<ReadonlyArray<CommandItem>>(() => {
     const artifactLeaf = openerSubpageLeaf({
       id: "open:search:target:artifact",
-      label: "Artifacts",
+      label: i18n.t("Artifacts", { ns: "palette" }),
       keywords: ["artifact", "artifacts", "spec", "ticket", "story", "review"],
-      subpage: makeRunSubpage({ kind: "artifact" }, "Artifacts"),
+      subpage: makeRunSubpage(
+        { kind: "artifact" },
+        i18n.t("Artifacts", { ns: "palette" }),
+      ),
     });
     const codeLeaves = workspaceRoots.map((row) =>
       openerSubpageLeaf({

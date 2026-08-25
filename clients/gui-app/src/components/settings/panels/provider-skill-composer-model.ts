@@ -5,6 +5,7 @@ import type {
   ProviderSkillsCapabilities,
 } from "@traycer/protocol/host/provider-native-schemas";
 import { isProviderNativeRpcError } from "@/hooks/providers/native-response-map";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { parseSkillMarkdown } from "./provider-skill-markdown";
 
 /**
@@ -159,7 +160,10 @@ export function skillDestination(args: {
   }
   if (args.providerRoot === null) {
     return {
-      display: `${args.providerLabel}'s own skills folder`,
+      display: i18n.t("{{provider}}'s own skills folder", {
+        provider: args.providerLabel,
+        ns: "panels",
+      }),
       exact: false,
     };
   }
@@ -242,7 +246,10 @@ export function skillNameError(name: string): string | null {
   const trimmed = name.trim();
   if (trimmed.length === 0) return null;
   if (!SKILL_NAME_PATTERN.test(trimmed)) {
-    return "Use lowercase letters, digits and hyphens only — for example review-pr.";
+    return i18n.t(
+      "Use lowercase letters, digits and hyphens only — for example review-pr.",
+      { ns: "panels" },
+    );
   }
   return null;
 }
@@ -263,21 +270,26 @@ export function skillSubmitBlocker(args: {
 }): string | null {
   if (args.step === "import") {
     if (args.source.trim().length === 0) {
-      return "Enter a source to import from.";
+      return i18n.t("Enter a source to import from.", { ns: "panels" });
     }
     return null;
   }
   if (args.step === "picker") {
     if (args.selectedNames.length === 0) {
-      return "Select at least one skill to install.";
+      return i18n.t("Select at least one skill to install.", { ns: "panels" });
     }
     return null;
   }
-  if (args.name.trim().length === 0) return "Give the skill a name.";
+  if (args.name.trim().length === 0) {
+    return i18n.t("Give the skill a name.", { ns: "panels" });
+  }
   const nameError = skillNameError(args.name);
   if (nameError !== null) return nameError;
   if (args.description.trim().length === 0) {
-    return "Add a description — the agent reads it to decide when to use this skill.";
+    return i18n.t(
+      "Add a description — the agent reads it to decide when to use this skill.",
+      { ns: "panels" },
+    );
   }
   return null;
 }
@@ -365,7 +377,7 @@ export function composerErrorMessage(error: unknown): string {
     const trimmed = error.message.trim();
     if (trimmed.length > 0) return trimmed;
   }
-  return "Couldn't add this skill.";
+  return i18n.t("Couldn't add this skill.", { ns: "panels" });
 }
 
 /**

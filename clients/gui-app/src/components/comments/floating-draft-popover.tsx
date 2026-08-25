@@ -6,6 +6,7 @@ import {
   useRef,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import {
   autoUpdate,
   computePosition,
@@ -66,6 +67,7 @@ export interface FloatingDraftPopoverProps {
  * if the composer has content).
  */
 export function FloatingDraftPopover(props: FloatingDraftPopoverProps) {
+  const { t } = useTranslation("canvas");
   const {
     epicId,
     hostClient,
@@ -99,14 +101,14 @@ export function FloatingDraftPopover(props: FloatingDraftPopoverProps) {
     (force: boolean) => {
       if (!force && isDirtyRef.current) {
         const confirmed = window.confirm(
-          "Discard this comment draft? Unsaved text will be lost.",
+          t("Discard this comment draft? Unsaved text will be lost."),
         );
         if (!confirmed) return;
       }
       isDirtyRef.current = false;
       setDraft(epicId, null);
     },
-    [epicId, setDraft],
+    [epicId, setDraft, t],
   );
   const draftActive = ownedDraft !== null;
   const handleDocumentKeyDown = useEffectEvent((event: KeyboardEvent) => {
@@ -230,7 +232,7 @@ export function FloatingDraftPopover(props: FloatingDraftPopoverProps) {
     <dialog
       ref={floatingRef}
       open
-      aria-label="New comment"
+      aria-label={t("New comment")}
       data-slot="floating-draft-popover"
       className={cn(
         "absolute top-0 left-0 z-50 m-0 w-[min(90vw,22rem)] rounded-md border border-border bg-popover p-2 text-popover-foreground shadow-lg outline-none",
@@ -240,9 +242,9 @@ export function FloatingDraftPopover(props: FloatingDraftPopoverProps) {
         epicId={epicId}
         hostClient={hostClient}
         initialContent={null}
-        placeholder="Start a thread…"
+        placeholder={t("Start a thread…")}
         focusOnMount
-        submitLabel="Comment"
+        submitLabel={t("Comment")}
         onSubmit={handleSubmit}
         onCancel={(isDirty) => {
           isDirtyRef.current = isDirty;

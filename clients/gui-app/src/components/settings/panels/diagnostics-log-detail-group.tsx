@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { SettingsGroup } from "@/components/settings/settings-group";
@@ -41,6 +42,7 @@ export function LogDetailGroup(props: {
   readonly emptyState: ReactNode;
 }): ReactNode {
   const { controls } = props;
+  const { t } = useTranslation("panels");
   const [resetPending, setResetPending] = useState(false);
   // Focus-restoration target for when the reminder row (and the "Reset all to
   // Info" button a keyboard/screen-reader user just activated) unmounts -
@@ -97,7 +99,10 @@ export function LogDetailGroup(props: {
     // because this branch cannot be reached with fewer than two controls.
     if (failedCount > 0 && pending.length > 1) {
       toast.error(
-        `Couldn't reset ${failedCount} of ${pending.length} log levels`,
+        t("Couldn't reset {{failed}} of {{total}} log levels", {
+          failed: failedCount,
+          total: pending.length,
+        }),
       );
     }
   };
@@ -106,7 +111,7 @@ export function LogDetailGroup(props: {
     if (props.emptyState === null) return null;
     return (
       <SettingsGroup
-        title="Log detail"
+        title={t("Log detail")}
         tone="default"
         dataTestId={undefined}
         fill={false}
@@ -118,7 +123,7 @@ export function LogDetailGroup(props: {
 
   return (
     <SettingsGroup
-      title="Log detail"
+      title={t("Log detail")}
       tone="default"
       dataTestId={undefined}
       fill={false}
@@ -157,6 +162,7 @@ function TemporaryDebugReminderRow(props: {
   readonly onReset: () => void;
 }): ReactNode {
   const { pending, onFocusChange, onReset } = props;
+  const { t } = useTranslation("panels");
   return (
     <div
       className="flex flex-wrap items-center justify-between gap-3 bg-foreground/3 px-4 py-2.5 text-ui-xs text-muted-foreground"
@@ -174,8 +180,9 @@ function TemporaryDebugReminderRow(props: {
     >
       <span className="flex min-w-0 flex-1 items-center gap-1.5">
         <Info className="size-3.5 shrink-0" aria-hidden />
-        One or more levels differ from Info for troubleshooting. Reset when
-        you&apos;re done.
+        {t(
+          "One or more levels differ from Info for troubleshooting. Reset when you're done.",
+        )}
       </span>
       <Button
         type="button"
@@ -193,7 +200,7 @@ function TemporaryDebugReminderRow(props: {
             variant={undefined}
           />
         ) : null}
-        Reset all to Info
+        {t("Reset all to Info")}
       </Button>
     </div>
   );

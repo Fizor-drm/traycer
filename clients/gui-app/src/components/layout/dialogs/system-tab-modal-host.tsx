@@ -1,5 +1,6 @@
 import { useEffect, useMemo, type ReactNode } from "react";
 import { Dialog as DialogPrimitive } from "radix-ui";
+import { useTranslation } from "react-i18next";
 import { PromotableModalFrame } from "@/components/layout/dialogs/promotable-modal-frame";
 import {
   useSystemTabModalController,
@@ -66,6 +67,7 @@ interface SystemTabModalSurfaceProps {
 
 function SystemTabModalSurface(props: SystemTabModalSurfaceProps): ReactNode {
   const { active, onClose, onPromote } = props;
+  const { t } = useTranslation("common");
   const meta = useMemo(() => overlayMeta(active), [active]);
   const Icon = meta.Icon;
   return (
@@ -74,7 +76,7 @@ function SystemTabModalSurface(props: SystemTabModalSurfaceProps): ReactNode {
       title={meta.label}
       contentClassName="h-[80vh] w-[80vw] max-w-[min(95vw,80rem)]"
       dataAttributes={{ "data-leader-scope": LEADER_SCOPE_SETTINGS }}
-      promoteAriaLabel={`Open ${meta.label} as a tab`}
+      promoteAriaLabel={t("Open {{label}} as a tab", { label: meta.label })}
       promoteTestId={`system-tab-modal-promote-${active.kind}`}
       closeTestId={`system-tab-modal-close-${active.kind}`}
       onPromote={onPromote}

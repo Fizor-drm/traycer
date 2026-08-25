@@ -13,6 +13,7 @@ import { WorktreeDeleteStreamClient } from "@traycer-clients/shared/host-transpo
 import { WorktreeDeleteBatchStreamClient } from "@traycer-clients/shared/host-transport/worktree-delete-batch-stream-client";
 import type { DurableStreamTransport } from "@/lib/host/durable-stream-transport";
 import { openOwnedDurableStreamClient } from "@/lib/host/owned-durable-stream-client";
+import { i18n } from "@/lib/i18n/init-i18n";
 import {
   Analytics,
   AnalyticsEvent,
@@ -54,14 +55,21 @@ const QUEUED_RUN: WorktreeDeleteRunState = {
 // command method). On a current host the same cap lives on the host, where it
 // can actually bound the machine rather than one window's share of it.
 const MAX_PARALLEL_DELETE_STREAMS = 2;
-const CONNECTION_LOST_MESSAGE =
-  "Lost connection to the host before the delete finished.";
+// Raw English i18n keys (ns "panels"); translated lazily at use so a language
+// switch after startup is honored.
+const connectionLostMessage = (): string =>
+  i18n.t("Lost connection to the host before the delete finished.", {
+    ns: "panels",
+  });
 // A target the host settled while this client was disconnected. The host does
 // not replay per-target frames on re-attach, so its individual outcome is
 // genuinely unknown here - the refreshed list is the authority, and inventing
 // "deleted" or "failed" for it would be a guess presented as a result.
-const REATTACHED_MESSAGE =
-  "Reconnected after this delete finished. Check the refreshed list to see whether this worktree was removed.";
+const reattachedMessage = (): string =>
+  i18n.t(
+    "Reconnected after this delete finished. Check the refreshed list to see whether this worktree was removed.",
+    { ns: "panels" },
+  );
 
 export interface WorktreeDeleteRunRecord {
   readonly key: string;
@@ -726,7 +734,7 @@ function startWorktreeDeleteCommand(
             },
             // Terminal for the command. Anything still open here is a target
             // whose own frames were missed while this client was away.
-            onCommandComplete: () => settleCommand(REATTACHED_MESSAGE),
+            onCommandComplete: () => settleCommand(reattachedMessage()),
             onCommandFailed: (reason) => settleCommand(reason),
             onUnsupported: () => handOffToFallback(),
             onConnectionStatus: (status, reason) => {
@@ -736,7 +744,7 @@ function startWorktreeDeleteCommand(
               // in observe mode - which can re-attach to a live command but
               // can never start this one again.
               if (status !== "closed" || reason === null) return;
-              settleCommand(CONNECTION_LOST_MESSAGE);
+              settleCommand(connectionLostMessage());
             },
           },
         }),
@@ -861,9 +869,17 @@ export function clearSettledWorktreeDeleteSuccessesForHostIfQuiescent(
 export function worktreeDeleteProgressDetail(
   summary: WorktreeDeleteProgressSummary,
 ): string {
-  const base = `${summary.deleted}/${summary.total} deleted`;
+  const base = i18n.t("{{deleted}}/{{total}} deleted", {
+    ns: "panels",
+    deleted: summary.deleted,
+    total: summary.total,
+  });
   if (summary.failed === 0) return base;
-  return `${base}, ${summary.failed} failed`;
+  return i18n.t("{{base}}, {{count}} failed", {
+    ns: "panels",
+    base,
+    count: summary.failed,
+  });
 }
 
 function drainDeleteQueue(): void {
@@ -953,7 +969,7 @@ function startQueuedDelete(item: QueuedWorktreeDelete): void {
               if (status !== "closed" || reason === null) return;
               useWorktreeDeleteRunStore
                 .getState()
-                .failRun(item.key, CONNECTION_LOST_MESSAGE);
+                .failRun(item.key, connectionLostMessage());
               closeDeleteClient(item.key);
               settle();
             },
@@ -970,8 +986,14 @@ function startQueuedDelete(item: QueuedWorktreeDelete): void {
 }
 
 function startStreamErrorMessage(error: unknown): string {
-  const detail = error instanceof Error ? error.message : "Unknown error.";
-  return `Failed to start delete stream. ${detail}`;
+  const detail =
+    error instanceof Error
+      ? error.message
+      : i18n.t("Unknown error.", { ns: "panels" });
+  return i18n.t("Failed to start delete stream. {{detail}}", {
+    ns: "panels",
+    detail,
+  });
 }
 
 function closeDeleteClient(key: string): void {

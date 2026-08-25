@@ -20,6 +20,7 @@
  * that set.
  */
 import type { ModelProviderEntry } from "@traycer/protocol/host/provider-native-schemas";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 export const MODEL_PROVIDER_METHOD_FILTER = {
   All: "all",
@@ -49,9 +50,12 @@ export function modelProviderMethodFilterEmptyDescription(
 ): string {
   switch (filter) {
     case MODEL_PROVIDER_METHOD_FILTER.Oauth:
-      return "No providers on this host advertise a browser sign-in.";
+      return i18n.t(
+        "No providers on this host advertise a browser sign-in.",
+        { ns: "panels" },
+      );
     case MODEL_PROVIDER_METHOD_FILTER.All:
-      return "No providers on this host.";
+      return i18n.t("No providers on this host.", { ns: "panels" });
   }
 }
 

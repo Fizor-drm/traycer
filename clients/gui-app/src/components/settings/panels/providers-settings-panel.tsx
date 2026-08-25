@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import type { UseQueryResult } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   PROVIDER_DISPLAY_NAMES,
   type ProviderCliState,
@@ -45,6 +46,7 @@ import type { HostRpcRegistry } from "@/lib/host";
 import { HostRuntimeContext } from "@/lib/host/runtime";
 import { useScopedHostBinding } from "@/components/settings/host-scope/use-scoped-host-binding";
 import { useRelativeTimestamp } from "@/lib/relative-time";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { cn } from "@/lib/utils";
 import {
   providerIdToGuiHarnessId,
@@ -102,16 +104,18 @@ type ProvidersListQuery = UseQueryResult<
 // never on the id - `general` shows as "CLI & Args" and `usage` as
 // "Profiles & Limits". "General" said nothing about what the tab holds; each
 // label now names its own content.
-const PROVIDER_TAB_LABELS: Record<ProviderTabKey, string> = {
-  general: "CLI & Args",
-  account: "Account",
-  usage: "Profiles & Limits",
-  env: "Env",
-  mcp: "MCP",
-  plugins: "Plugins",
-  skills: "Skills",
-  modelProviders: "Model Providers",
-};
+function providerTabLabels(): Record<ProviderTabKey, string> {
+  return {
+    general: i18n.t("CLI & Args", { ns: "panels" }),
+    account: i18n.t("Account", { ns: "panels" }),
+    usage: i18n.t("Profiles & Limits", { ns: "panels" }),
+    env: i18n.t("Env", { ns: "panels" }),
+    mcp: i18n.t("MCP", { ns: "panels" }),
+    plugins: i18n.t("Plugins", { ns: "panels" }),
+    skills: i18n.t("Skills", { ns: "panels" }),
+    modelProviders: i18n.t("Model Providers", { ns: "panels" }),
+  };
+}
 
 // The provider to select on mount: the deep-link focus target (mapped from its
 // GUI harness id) when one was requested and is present,
@@ -182,6 +186,11 @@ function resolveTabForProvider(
 // warning-toned dot reserved for genuine attention (expired auth, config
 // parse failure). Never one glyph for both.
 
+function providerDescription(providerId: ProviderId): string {
+  const key = PROVIDER_DESCRIPTIONS[providerId];
+  return i18n.t(key, { ns: "panels" });
+}
+
 const PROVIDER_DESCRIPTIONS: Record<ProviderId, string> = {
   "claude-code": "Anthropic's Claude Code CLI.",
   codex: "OpenAI's Codex CLI.",
@@ -243,11 +252,12 @@ function ProviderLastChecked({
   readonly checkedAt: number | null;
   readonly checking: boolean;
 }) {
+  const { t } = useTranslation("panels");
   if (checking) {
     return (
       <span className="flex items-center gap-1.5 text-ui-xs text-muted-foreground">
         <MutedAgentSpinner />
-        Checking providers
+        {t("Checking providers")}
       </span>
     );
   }
@@ -260,10 +270,11 @@ function ProviderCheckedTimestamp({
 }: {
   readonly checkedAt: number;
 }) {
+  const { t } = useTranslation("panels");
   const relative = useRelativeTimestamp(checkedAt);
   return (
     <span className="text-ui-xs text-muted-foreground">
-      Checked {relative.toLocaleLowerCase()}
+      {t("Checked {{time}}", { time: relative.toLocaleLowerCase() })}
     </span>
   );
 }
@@ -359,10 +370,13 @@ function ProvidersSettingsPanelInner({
   readonly hostId: string | null;
   readonly isSelectedHostLocal: boolean;
 }) {
+  const { t } = useTranslation("panels");
   return (
     <SettingsPanelShell
-      title="Providers"
-      description="Choose the CLI binary Traycer runs for each coding agent. Pick the bundled binary, one found on your PATH, or a custom install. Disable a provider to hide it when creating an agent."
+      title={t("Providers")}
+      description={t(
+        "Choose the CLI binary Traycer runs for each coding agent. Pick the bundled binary, one found on your PATH, or a custom install. Disable a provider to hide it when creating an agent.",
+      )}
       fillHeight
       bodyClassName="max-h-[min(85vh,52rem)]"
       // No host readout here — the sidebar states the scoped host one row
@@ -419,6 +433,7 @@ function ProvidersSettingsPanelInner({
  * resolve the ambient host instead of the one the page names.
  */
 function ProvidersGlobalStatus(): ReactNode {
+  const { t } = useTranslation("panels");
   // SUBSCRIBED, like the body's instance. `subscribed: false` was avoiding a
   // duplicate that does not exist - two observers of one key share a fetch -
   // while buying a real defect: an unsubscribed observer renders the cache at
@@ -435,7 +450,7 @@ function ProvidersGlobalStatus(): ReactNode {
       data-testid="providers-global-status"
     >
       <span className="text-ui-xs font-medium text-muted-foreground">
-        All providers
+        {t("All providers")}
       </span>
       <ProviderLastChecked
         checkedAt={latestProviderCheckedAt(providers)}
@@ -443,7 +458,7 @@ function ProvidersGlobalStatus(): ReactNode {
       />
       <RefreshIconButton
         onRefresh={refreshProviders}
-        label="Refresh all providers"
+        label={t("Refresh all providers")}
         refreshing={checking}
       />
     </div>
@@ -484,10 +499,11 @@ function ProvidersPanelBody({
   readonly hostId: string | null;
   readonly isSelectedHostLocal: boolean;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (query.isPending) {
     return (
       <div className="flex items-center gap-2 px-6 py-8 text-ui-sm text-muted-foreground">
-        <MutedAgentSpinner /> Loading providers
+        <MutedAgentSpinner /> {t("Loading providers")}
       </div>
     );
   }
@@ -542,16 +558,16 @@ function ProvidersPanelBody({
       return (
         <div className="flex items-center gap-2 px-6 py-8 text-ui-sm text-muted-foreground">
           <MutedAgentSpinner />
-          Connecting to the remote host…
+          {t("Connecting to the remote host…")}
         </div>
       );
     }
     return (
       <div className="px-6 py-8 text-ui-sm text-destructive">
-        Couldn't load provider state. The host may need to be updated.
+        {t("Couldn't load provider state. The host may need to be updated.")}
         <ReportIssueAction
           context={createReportIssueContext({
-            title: "Couldn't load provider state",
+            title: t("Couldn't load provider state"),
             message: null,
             code: query.error.code,
             source: "Providers",
@@ -565,7 +581,7 @@ function ProvidersPanelBody({
   if (query.data.providers.length === 0) {
     return (
       <div className="px-6 py-8 text-ui-sm text-muted-foreground">
-        No providers reported by the host.
+        {t("No providers reported by the host.")}
       </div>
     );
   }
@@ -587,6 +603,7 @@ function ProvidersRailLayout({
   readonly hostId: string | null;
   readonly isSelectedHostLocal: boolean;
 }) {
+  const { t } = useTranslation("panels");
   const orderedProviders = useMemo(
     () => sortProviderStatesByProviderOrder(providers),
     [providers],
@@ -678,7 +695,7 @@ function ProvidersRailLayout({
           below, and for the same reason: scrolling the list must never carry
           the control that filters it out of reach. */}
       <nav
-        aria-label="Providers"
+        aria-label={t("Providers")}
         className="flex w-[clamp(10rem,22vw,14rem)] shrink-0 flex-col border-r border-border/60"
       >
         <ProviderRailControls
@@ -689,11 +706,11 @@ function ProvidersRailLayout({
         <div className="min-h-0 flex-1 overflow-y-auto px-2 pt-1 pb-2">
           {visibleProviders.length === 0 ? (
             <p className="px-2.5 py-2 text-ui-xs text-muted-foreground">
-              No providers match.
+              {t("No providers match.")}
             </p>
           ) : (
             <ProviderList
-              ariaLabel="Providers"
+              ariaLabel={t("Providers")}
               variant="settings"
               className="gap-1"
               rows={visibleProviders.map((state) => ({
@@ -745,7 +762,9 @@ function TraycerSubscriptionForProvider({
   return <TraycerSubscriptionSection />;
 }
 
-const ENABLEMENT_FLOOR_HINT = "At least one provider must stay enabled.";
+function enablementFloorHint(): string {
+  return i18n.t("At least one provider must stay enabled.", { ns: "panels" });
+}
 
 function ProviderEnableSwitch(props: {
   readonly id: string;
@@ -762,7 +781,7 @@ function ProviderEnableSwitch(props: {
   const disablingLast = enabled && props.enabledProviderCount <= 1;
   return (
     <TooltipWrapper
-      label={disablingLast ? ENABLEMENT_FLOOR_HINT : null}
+      label={disablingLast ? enablementFloorHint() : null}
       side="top"
       sideOffset={undefined}
       align={undefined}
@@ -797,9 +816,11 @@ function ProviderEnableSwitch(props: {
 function autoEnablementDetail(
   source: ProviderEnablementSource | undefined,
 ): string | null {
-  if (source === "auto-detected") return "Auto · enabled — account detected";
+  if (source === "auto-detected") {
+    return i18n.t("Auto · enabled — account detected", { ns: "panels" });
+  }
   if (source === "auto-undetected") {
-    return "Auto · disabled — no account detected";
+    return i18n.t("Auto · disabled — no account detected", { ns: "panels" });
   }
   return null;
 }
@@ -823,13 +844,6 @@ function legacyEnabledForMode(
   if (mode === "off") return false;
   return currentlyEnabled;
 }
-
-const ENABLEMENT_MODE_LABELS: Readonly<Record<ProviderEnablementMode, string>> =
-  {
-    auto: "Auto",
-    on: "On",
-    off: "Off",
-  };
 
 /**
  * The three-way Auto/On/Off control, and the old-host fallback to the binary
@@ -867,11 +881,12 @@ function ProviderEnablementControl(props: {
   ) => void;
 }) {
   const { id, providerId, enabled, mode, isPending, onSetMode } = props;
+  const { t } = useTranslation("panels");
   if (mode === undefined) {
     return (
       <div className="flex shrink-0 items-center gap-2 text-ui-sm">
         <label htmlFor={id} className="text-muted-foreground">
-          {enabled ? "Enabled" : "Disabled"}
+          {enabled ? t("Enabled") : t("Disabled")}
         </label>
         <ProviderEnableSwitch
           id={id}
@@ -890,7 +905,7 @@ function ProviderEnablementControl(props: {
     <div className="flex shrink-0 flex-col items-end gap-1">
       <div className="flex items-center gap-2 text-ui-sm">
         <label htmlFor={id} className="text-muted-foreground">
-          Availability
+          {t("Availability")}
         </label>
         <Select
           value={mode}
@@ -906,13 +921,13 @@ function ProviderEnablementControl(props: {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="auto">{ENABLEMENT_MODE_LABELS.auto}</SelectItem>
-            <SelectItem value="on">{ENABLEMENT_MODE_LABELS.on}</SelectItem>
+            <SelectItem value="auto">{t("Auto")}</SelectItem>
+            <SelectItem value="on">{t("On")}</SelectItem>
             {/* Disabled rather than hidden: the floor is a rule about the
                 whole set, so a vanishing option would read as this provider
                 not supporting Off at all. */}
             <SelectItem value="off" disabled={blockingDisable}>
-              {ENABLEMENT_MODE_LABELS.off}
+              {t("Off")}
             </SelectItem>
           </SelectContent>
         </Select>
@@ -922,7 +937,7 @@ function ProviderEnablementControl(props: {
       )}
       {blockingDisable ? (
         <span className="text-ui-xs text-muted-foreground">
-          {ENABLEMENT_FLOOR_HINT}
+          {enablementFloorHint()}
         </span>
       ) : null}
     </div>
@@ -1052,7 +1067,7 @@ function ProviderDetail({
             ) : null}
           </div>
           <p className="text-ui-sm text-muted-foreground">
-            {PROVIDER_DESCRIPTIONS[providerId]}
+            {providerDescription(providerId)}
           </p>
           {state.profiles.length === 0 ? (
             <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-2">
@@ -1132,7 +1147,7 @@ function ProviderDetail({
           >
             {tabs.map((tab) => (
               <TabsTrigger key={tab} value={tab} className="flex-none px-3">
-                {providerTabLabel(tab, PROVIDER_TAB_LABELS, state.providerId)}
+                {providerTabLabel(tab, providerTabLabels(), state.providerId)}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -1220,6 +1235,7 @@ function ProviderTabBody({
   readonly onApiKeyDraftChange: (draft: string) => void;
   readonly onActiveTabChange: (tab: ProviderTabKey) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   switch (tab) {
     case "general":
       return (
@@ -1294,8 +1310,8 @@ function ProviderTabBody({
       if (mcp === null) {
         return (
           <ProviderTabPlaceholder
-            title="MCP servers"
-            description="This provider does not support MCP servers."
+            title={t("MCP servers")}
+            description={t("This provider does not support MCP servers.")}
           />
         );
       }
@@ -1322,8 +1338,10 @@ function ProviderTabBody({
         // repo's type rules exist to prevent.
         return (
           <ProviderTabPlaceholder
-            title="Model providers"
-            description="This provider does not support upstream model provider sign-in."
+            title={t("Model providers")}
+            description={t(
+              "This provider does not support upstream model provider sign-in.",
+            )}
           />
         );
       }

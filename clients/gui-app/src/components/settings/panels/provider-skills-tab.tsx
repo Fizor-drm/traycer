@@ -12,6 +12,7 @@ import type {
 } from "@traycer/protocol/host/provider-native-schemas";
 import { ChevronRight, ListFilter, Plus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import { ConfirmDestructiveDialog } from "@/components/ui/confirm-destructive-dialog";
@@ -27,6 +28,7 @@ import type { SkillsMutateData } from "@/hooks/providers/native-response-map";
 import { useProvidersSkillsList } from "@/hooks/providers/use-providers-skills-list-query";
 import { useProvidersSkillsMutate } from "@/hooks/providers/use-providers-skills-mutate-mutation";
 import { reportableErrorToast } from "@/lib/reportable-error-toast";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { cn } from "@/lib/utils";
 import { fileContentRevision } from "@/lib/workspace/file-content-revision";
 import { ProviderSkillComposerDialog } from "./provider-skill-composer-dialog";
@@ -70,12 +72,15 @@ export function ProviderSkillsTab({
   readonly state: ProviderCliState;
 }): ReactNode {
   const caps = state.nativeCapabilities.skills;
+  const { t } = useTranslation("panels");
   if (caps === null) {
     return (
       <div className="flex flex-col gap-1 rounded-lg border border-border/60 p-4">
-        <div className="text-ui-sm font-medium text-foreground">Skills</div>
+        <div className="text-ui-sm font-medium text-foreground">
+          {t("Skills")}
+        </div>
         <p className="text-ui-xs text-muted-foreground">
-          This provider does not support skills.
+          {t("This provider does not support skills.")}
         </p>
       </div>
     );
@@ -98,6 +103,7 @@ function ProviderSkillsTabBody({
   readonly providerLabel: string;
   readonly caps: ProviderSkillsCapabilities;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const scopeState = useProviderNativeScope(caps.actionScopes.list);
   const {
     targets,
@@ -220,14 +226,18 @@ function ProviderSkillsTabBody({
         setScope("project");
       })
       .catch(() => {
-        reportableErrorToast("Couldn't open the folder picker.", undefined, {
-          title: "Could not add workspace folders",
-          message: "The folder picker failed to open.",
-          code: null,
-          source: "Workspace folders",
-        });
+        reportableErrorToast(
+          t("Couldn't open the folder picker."),
+          undefined,
+          {
+            title: t("Could not add workspace folders"),
+            message: t("The folder picker failed to open."),
+            code: null,
+            source: "Workspace folders",
+          },
+        );
       });
-  }, [browseForWorkspace, setScope, setWorkspaceRoot]);
+  }, [browseForWorkspace, setScope, setWorkspaceRoot, t]);
 
   function openComposer(): void {
     setComposerOpen(true);
@@ -263,7 +273,9 @@ function ProviderSkillsTabBody({
       })
       .catch((err: unknown) => {
         setDetailError(
-          err instanceof Error ? err.message : "Couldn't edit this skill.",
+          err instanceof Error
+            ? err.message
+            : t("Couldn't edit this skill."),
         );
         return false;
       })
@@ -319,7 +331,7 @@ function ProviderSkillsTabBody({
         suppressToast: true,
       });
       setUpdateConfirm(null);
-      toast.success("Updated from source");
+      toast.success(t("Updated from source"));
       const next = skillAfterUpdate(data, skill);
       if (next === null) {
         setOpenSkill(null);
@@ -334,12 +346,12 @@ function ProviderSkillsTabBody({
       }
       if (isSkillUpdateNoOp(err)) {
         setUpdateConfirm(null);
-        toast.success("Already up to date");
+        toast.success(t("Already up to date"));
         return;
       }
       setUpdateConfirm(null);
       setDetailError(
-        err instanceof Error ? err.message : "Couldn't update this skill.",
+        err instanceof Error ? err.message : t("Couldn't update this skill."),
       );
     } finally {
       setPendingKey(null);
@@ -465,7 +477,7 @@ function ProviderSkillsTabBody({
       <div className="flex flex-wrap items-center justify-between gap-2">
         {globalOnly ? (
           <p className="text-ui-xs text-muted-foreground">
-            Applies to every workspace on this host.
+            {t("Applies to every workspace on this host.")}
           </p>
         ) : (
           <McpScopePicker
@@ -475,7 +487,7 @@ function ProviderSkillsTabBody({
             workspaceRoot={workspaceRoot}
             loading={workspacesLoading}
             browsePending={browsePending}
-            locationLabel="Skills location"
+            locationLabel={t("Skills location")}
             onBrowse={handleBrowse}
             onSelectGlobal={() => {
               setScope("global");
@@ -592,6 +604,7 @@ function SkillEntryButton({
   readonly disabled: boolean;
   readonly onOpen: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (!canAuthor) return null;
   return (
     <Button
@@ -602,7 +615,7 @@ function SkillEntryButton({
       onClick={onOpen}
     >
       <Plus className="size-3.5" />
-      Add skill
+      {t("Add skill")}
     </Button>
   );
 }
@@ -627,11 +640,12 @@ function SkillSourceFilterMenu({
   const present = SKILL_SOURCE_ORDER.filter((source) =>
     skills.some((skill) => skill.source === source),
   );
+  const { t } = useTranslation("panels");
   if (present.length === 0) return null;
   const active = hiddenSources.size > 0;
   const label = active
-    ? "Filter skills by type, some types hidden"
-    : "Filter skills by type";
+    ? t("Filter skills by type, some types hidden")
+    : t("Filter skills by type");
   return (
     <DropdownMenu>
       <TooltipWrapper label={label} side="top" sideOffset={4} align="center">
@@ -659,7 +673,7 @@ function SkillSourceFilterMenu({
         className="w-[min(10rem,calc(100vw-2rem))]"
       >
         <DropdownMenuLabel className="text-overline uppercase tracking-wide">
-          Show
+          {t("Show")}
         </DropdownMenuLabel>
         {present.map((source) => (
           <DropdownMenuCheckboxItem
@@ -678,7 +692,7 @@ function SkillSourceFilterMenu({
               onHiddenSourcesChange(next);
             }}
           >
-            {SKILL_SOURCE_LABEL[source]}
+            {t(SKILL_SOURCE_LABEL[source])}
           </DropdownMenuCheckboxItem>
         ))}
       </DropdownMenuContent>
@@ -697,19 +711,20 @@ function SkillRemoveConfirm({
   readonly onCancel: () => void;
   readonly onConfirm: (skill: ProviderSkill) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <ConfirmDestructiveDialog
       open={target !== null}
       onOpenChange={(open) => {
         if (!open) onCancel();
       }}
-      title="Remove skill"
+      title={t("Remove skill")}
       // Names the PATH, not just the skill: removal deletes a directory, and
       // which of the four skill roots it sits in is the part the name alone
       // cannot tell you.
       description={removeDescription(target)}
       cascadeSummary={null}
-      actionLabel="Remove"
+      actionLabel={t("Remove")}
       isPending={pending}
       onConfirm={() => {
         if (target === null) return;
@@ -722,9 +737,15 @@ function SkillRemoveConfirm({
 function removeDescription(target: ProviderSkill | null): string {
   if (target === null) return "";
   if (target.source === "shared") {
-    return `Delete “${target.name}” from disk? Removing a shared skill removes it for every provider. Its folder and SKILL.md are removed from ${target.path}.`;
+    return i18n.t(
+      "Delete “{{name}}” from disk? Removing a shared skill removes it for every provider. Its folder and SKILL.md are removed from {{path}}.",
+      { name: target.name, path: target.path, ns: "panels" },
+    );
   }
-  return `Delete “${target.name}” from disk? Its folder and SKILL.md are removed from ${target.path}.`;
+  return i18n.t(
+    "Delete “{{name}}” from disk? Its folder and SKILL.md are removed from {{path}}.",
+    { name: target.name, path: target.path, ns: "panels" },
+  );
 }
 
 function SkillUpdateConfirm({
@@ -738,20 +759,24 @@ function SkillUpdateConfirm({
   readonly onCancel: () => void;
   readonly onConfirm: (skill: ProviderSkill) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <ConfirmDestructiveDialog
       open={target !== null}
       onOpenChange={(open) => {
         if (!open) onCancel();
       }}
-      title="Overwrite local edits?"
+      title={t("Overwrite local edits?")}
       description={
         target === null
           ? ""
-          : `“${target.name}” has local edits that will be overwritten by the source.`
+          : t(
+              "“{{name}}” has local edits that will be overwritten by the source.",
+              { name: target.name },
+            )
       }
       cascadeSummary={null}
-      actionLabel="Update"
+      actionLabel={t("Update")}
       isPending={pending}
       onConfirm={() => {
         if (target === null) return;
@@ -792,16 +817,21 @@ function SkillsListBody({
   readonly onOpenComposer: () => void;
   readonly onOpenSkill: (skill: ProviderSkill) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (projectNeedsWorkspace) {
     return (
       <div className="flex flex-col gap-1 rounded-lg border border-border/60 p-4">
         <div className="text-ui-sm font-medium text-foreground">
-          {workspacesLoading ? "Resolving workspaces…" : "Select a workspace"}
+          {workspacesLoading
+            ? t("Resolving workspaces…")
+            : t("Select a workspace")}
         </div>
         <p className="text-ui-xs text-muted-foreground">
           {workspacesLoading
-            ? "Resolving workspaces on this host."
-            : "Choose a project workspace above to manage project-scoped skills on this host."}
+            ? t("Resolving workspaces on this host.")
+            : t(
+                "Choose a project workspace above to manage project-scoped skills on this host.",
+              )}
         </p>
       </div>
     );
@@ -814,7 +844,7 @@ function SkillsListBody({
           testId={undefined}
           variant={undefined}
         />
-        Loading skills…
+        {t("Loading skills…")}
       </div>
     );
   }
@@ -847,7 +877,7 @@ function SkillsListBody({
       <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border/60 px-4 py-8 text-center">
         <ListFilter className="size-5 text-muted-foreground" aria-hidden />
         <p className="text-ui-xs text-muted-foreground">
-          No skills match the current filter.
+          {t("No skills match the current filter.")}
         </p>
       </div>
     );
@@ -885,15 +915,19 @@ function SkillsEmptyState({
   readonly disabled: boolean;
   readonly onOpenComposer: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border/60 px-4 py-8 text-center">
       <Sparkles className="size-5 text-muted-foreground" />
       <div className="flex max-w-prose flex-col gap-1">
-        <p className="text-ui-sm font-medium text-foreground">No skills yet</p>
+        <p className="text-ui-sm font-medium text-foreground">
+          {t("No skills yet")}
+        </p>
         <p className="text-ui-xs text-muted-foreground">
-          A skill is a folder with a <code>SKILL.md</code> in it: a short
-          description that tells the agent when to reach for it, then the
-          instructions it follows.
+          {t(
+            "A skill is a folder with a {{file}} in it: a short description that tells the agent when to reach for it, then the instructions it follows.",
+            { file: "SKILL.md" },
+          )}
         </p>
       </div>
       <pre className="w-full max-w-prose overflow-x-auto rounded-md border border-border/60 bg-foreground/3 px-3 py-2 text-left font-mono text-ui-xs text-muted-foreground">
@@ -908,12 +942,13 @@ function SkillsEmptyState({
           onClick={onOpenComposer}
         >
           <Plus className="size-3.5" />
-          Add skill
+          {t("Add skill")}
         </Button>
       ) : (
         <p className="max-w-prose text-ui-xs text-muted-foreground">
-          This provider reads skills but can&apos;t add them from Traycer. Put a
-          skill folder in its skills directory and it will appear here.
+          {t(
+            "This provider reads skills but can't add them from Traycer. Put a skill folder in its skills directory and it will appear here.",
+          )}
         </p>
       )}
     </div>
@@ -937,11 +972,21 @@ description: Reviews a   # what the agent matches on
 ...instructions the agent follows...`;
 
 function skillOpenLabel(skill: ProviderSkill): string {
-  const badge = SKILL_SOURCE_LABEL[skill.source];
+  const badge = i18n.t(SKILL_SOURCE_LABEL[skill.source], { ns: "panels" });
   if (skill.conflict === true) {
-    return `Open ${skill.name} (${badge}, ${SKILL_CONFLICT_LABEL}: ${SKILL_CONFLICT_TOOLTIP})`;
+    return i18n.t("Open {{name}} ({{badge}}, {{conflict}}: {{detail}})", {
+      name: skill.name,
+      badge,
+      conflict: i18n.t(SKILL_CONFLICT_LABEL, { ns: "panels" }),
+      detail: i18n.t(SKILL_CONFLICT_TOOLTIP, { ns: "panels" }),
+      ns: "panels",
+    });
   }
-  return `Open ${skill.name} (${badge})`;
+  return i18n.t("Open {{name}} ({{badge}})", {
+    name: skill.name,
+    badge,
+    ns: "panels",
+  });
 }
 
 function SkillRow({
@@ -951,6 +996,7 @@ function SkillRow({
   readonly skill: ProviderSkill;
   readonly onOpen: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <li>
       <button
@@ -985,7 +1031,7 @@ function SkillRow({
         <span className="flex shrink-0 items-center gap-1.5">
           {skill.conflict === true ? (
             <TooltipWrapper
-              label={SKILL_CONFLICT_TOOLTIP}
+              label={t(SKILL_CONFLICT_TOOLTIP)}
               side="top"
               sideOffset={4}
               align="center"
@@ -996,7 +1042,7 @@ function SkillRow({
                   SKILL_CONFLICT_TONE,
                 )}
               >
-                {SKILL_CONFLICT_LABEL}
+                {t(SKILL_CONFLICT_LABEL)}
               </span>
             </TooltipWrapper>
           ) : null}
@@ -1006,7 +1052,7 @@ function SkillRow({
               SKILL_SOURCE_TONE[skill.source],
             )}
           >
-            {SKILL_SOURCE_LABEL[skill.source]}
+            {t(SKILL_SOURCE_LABEL[skill.source])}
           </span>
         </span>
         <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />

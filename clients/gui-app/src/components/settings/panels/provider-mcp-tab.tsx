@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { ProviderId } from "@traycer/protocol/host/provider-schemas";
 import type {
   ProviderMcpCapabilities,
@@ -54,6 +55,7 @@ import { nativeErrorMessage } from "@/lib/providers/native-error-copy";
 import { mcpBinaryAbsentNotice } from "./provider-mcp-binary-gate";
 import { redactLogText } from "@/lib/logger";
 import { reportableErrorToast } from "@/lib/reportable-error-toast";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { cn } from "@/lib/utils";
 import type { McpPendingAuthEntry } from "@/stores/settings/mcp-pending-auth-store";
 import { useMcpPendingAuthStore } from "@/stores/settings/mcp-pending-auth-store";
@@ -243,6 +245,7 @@ export function ProviderMcpTab(props: {
   readonly cliBinaryResolved: boolean;
 }): ReactNode {
   const { providerId, capabilities, providerLabel, cliBinaryResolved } = props;
+  const { t } = useTranslation("panels");
   const scopeState = useProviderNativeScope(capabilities.actionScopes.list);
   const {
     hostId,
@@ -613,7 +616,9 @@ export function ProviderMcpTab(props: {
               setAuthInstruction(
                 redactLogText(
                   result.reason ??
-                    "This provider does not support this auth action.",
+                    i18n.t("This provider does not support this auth action.", {
+                      ns: "panels",
+                    }),
                 ),
               );
             }
@@ -687,14 +692,18 @@ export function ProviderMcpTab(props: {
       // unhandled and the user is told nothing at all - the popover simply
       // stays as it was, which reads as the click having missed.
       .catch(() => {
-        reportableErrorToast("Couldn't open the folder picker.", undefined, {
-          title: "Could not add workspace folders",
-          message: "The folder picker failed to open.",
-          code: null,
-          source: "Workspace folders",
-        });
+        reportableErrorToast(
+          t("Couldn't open the folder picker."),
+          undefined,
+          {
+            title: t("Could not add workspace folders"),
+            message: t("The folder picker failed to open."),
+            code: null,
+            source: "Workspace folders",
+          },
+        );
       });
-  }, [browseForWorkspace, setScope, setWorkspaceRoot]);
+  }, [browseForWorkspace, setScope, setWorkspaceRoot, t]);
 
   const handleDialogOpenChange = useCallback((open: boolean) => {
     if (!open) {
@@ -800,14 +809,17 @@ export function ProviderMcpTab(props: {
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
-        title="Remove MCP server"
+        title={t("Remove MCP server")}
         description={
           deleteTarget === null
             ? ""
-            : `Remove “${deleteTarget}” from this provider's ${effectiveScope} config?`
+            : t("Remove “{{name}}” from this provider's {{scope}} config?", {
+                name: deleteTarget,
+                scope: effectiveScope,
+              })
         }
         cascadeSummary={null}
-        actionLabel="Remove"
+        actionLabel={t("Remove")}
         isPending={deleteDialogPending}
         onConfirm={handleDelete}
       />
@@ -847,11 +859,12 @@ function McpScopeHeader(props: {
   // One toolbar row, two controls of the SAME height (`h-7` / `size="sm"`).
   // `items-center` rather than `items-start`: nothing here is taller than one
   // line any more, which is the whole point of the single-line trigger.
+  const { t } = useTranslation("panels");
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
       {globalOnly ? (
         <p className="text-ui-xs text-muted-foreground">
-          Applies to every workspace on this host.
+          {t("Applies to every workspace on this host.")}
         </p>
       ) : (
         <McpScopePicker
@@ -862,7 +875,7 @@ function McpScopeHeader(props: {
           loading={props.workspacesLoading}
           browsePending={props.browsePending}
           onBrowse={props.onBrowse}
-          locationLabel="MCP config location"
+          locationLabel={t("MCP config location")}
           onSelectGlobal={() => {
             props.onScopeChange("global");
           }}
@@ -879,7 +892,7 @@ function McpScopeHeader(props: {
       {props.canAdd && !props.projectNeedsWorkspace ? (
         <Button type="button" size="sm" onClick={props.onAdd}>
           <Plus className="size-3.5" />
-          Add MCP server
+          {t("Add MCP server")}
         </Button>
       ) : null}
     </div>
@@ -891,6 +904,7 @@ function McpCapabilityNotices(props: {
   readonly authInstruction: string | null;
   readonly binaryAbsentNotice: string | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <>
       {/*
@@ -912,8 +926,9 @@ function McpCapabilityNotices(props: {
           // muted-fill-ok: weak tint delimited by its own border-border/60
           className="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-ui-xs text-muted-foreground"
         >
-          Stdio servers are config-only under this provider — live connect is
-          unavailable in-session.
+          {t(
+            "Stdio servers are config-only under this provider — live connect is unavailable in-session.",
+          )}
         </p>
       ) : null}
       {props.authInstruction !== null ? (
@@ -970,20 +985,23 @@ function McpServerList(props: {
   ) => void;
   readonly onDelete: (serverName: string) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (props.projectNeedsWorkspace) {
     if (props.workspacesLoading) {
       return (
         <div className="flex items-center gap-2 py-6 text-ui-sm text-muted-foreground">
           <MutedAgentSpinner />
-          Resolving workspaces on this host
+          {t("Resolving workspaces on this host")}
         </div>
       );
     }
     if (props.multiWorkspace) {
       return (
         <EmptyState
-          title="Select a workspace"
-          description="Choose a project workspace above to manage project-scoped MCP servers on this host."
+          title={t("Select a workspace")}
+          description={t(
+            "Choose a project workspace above to manage project-scoped MCP servers on this host.",
+          )}
           actionLabel={null}
           onAction={null}
         />
@@ -991,8 +1009,10 @@ function McpServerList(props: {
     }
     return (
       <EmptyState
-        title="Open a workspace"
-        description="Open a workspace on this host to manage project-scoped MCP servers."
+        title={t("Open a workspace")}
+        description={t(
+          "Open a workspace on this host to manage project-scoped MCP servers.",
+        )}
         actionLabel={null}
         onAction={null}
       />
@@ -1002,16 +1022,16 @@ function McpServerList(props: {
     return (
       <div className="flex items-center gap-2 py-6 text-ui-sm text-muted-foreground">
         <MutedAgentSpinner />
-        Loading MCP servers
+        {t("Loading MCP servers")}
       </div>
     );
   }
   if (props.listError) {
     return (
       <EmptyState
-        title="Couldn't load MCP servers"
-        description={props.errorMessage ?? "Try refreshing or check the host."}
-        actionLabel="Retry"
+        title={t("Couldn't load MCP servers")}
+        description={props.errorMessage ?? t("Try refreshing or check the host.")}
+        actionLabel={t("Retry")}
         onAction={props.onRetryList}
       />
     );
@@ -1019,8 +1039,11 @@ function McpServerList(props: {
   if (props.unfilteredServerCount === 0) {
     return (
       <EmptyState
-        title="No MCP servers"
-        description={`Add an MCP server so ${props.providerLabel} can use external tools and context.`}
+        title={t("No MCP servers")}
+        description={t(
+          "Add an MCP server so {{provider}} can use external tools and context.",
+          { provider: props.providerLabel },
+        )}
         actionLabel={null}
         onAction={null}
       />
@@ -1190,6 +1213,7 @@ function McpServerRow(props: {
     onForceReauth,
     onDelete,
   } = props;
+  const { t } = useTranslation("panels");
   const [open, setOpen] = useState(false);
   const [subTab, setSubTab] = useState<"tools" | "instructions">("tools");
 
@@ -1206,7 +1230,7 @@ function McpServerRow(props: {
               type="button"
               className="flex min-w-0 flex-1 items-center gap-2 text-left"
               aria-label={
-                open ? `Collapse ${server.name}` : `Expand ${server.name}`
+                open ? t("Collapse {{name}}", { name: server.name }) : t("Expand {{name}}", { name: server.name })
               }
             >
               {open ? (
@@ -1223,8 +1247,9 @@ function McpServerRow(props: {
               </span>
               {server.tools.length > 0 ? (
                 <span className="text-ui-xs text-muted-foreground">
-                  {server.tools.length}{" "}
-                  {server.tools.length === 1 ? "tool" : "tools"}
+                  {server.tools.length === 1
+                    ? t("1 tool")
+                    : t("{{count}} tools", { count: server.tools.length })}
                 </span>
               ) : null}
               <ServerRowBadges server={server} shadowed={shadowed} />
@@ -1293,6 +1318,7 @@ function ServerRowBadges(props: {
   readonly shadowed: boolean;
 }): ReactNode {
   const { server, shadowed } = props;
+  const { t } = useTranslation("panels");
   return (
     <>
       {shadowed ? (
@@ -1300,7 +1326,7 @@ function ServerRowBadges(props: {
           variant="outline"
           className="h-4 rounded-sm border-border/60 px-1.5 text-[10px] font-normal"
         >
-          shadowed by project
+          {t("shadowed by project")}
         </Badge>
       ) : null}
       {server.statusSource === "probe" ? (
@@ -1308,7 +1334,7 @@ function ServerRowBadges(props: {
           variant="outline"
           className="h-4 rounded-sm border-border/60 px-1.5 text-[10px] font-normal text-muted-foreground"
         >
-          connectivity check
+          {t("connectivity check")}
         </Badge>
       ) : null}
       {server.configOnly ? (
@@ -1316,7 +1342,7 @@ function ServerRowBadges(props: {
           variant="outline"
           className="h-4 rounded-sm border-border/60 px-1.5 text-[10px] font-normal"
         >
-          config only
+          {t("config only")}
         </Badge>
       ) : null}
       {server.stdioDegraded ? (
@@ -1324,7 +1350,7 @@ function ServerRowBadges(props: {
           variant="outline"
           className="h-4 rounded-sm border-border/60 px-1.5 text-[10px] font-normal"
         >
-          stdio degraded
+          {t("stdio degraded")}
         </Badge>
       ) : null}
     </>
@@ -1348,6 +1374,7 @@ function ServerRowActions(props: {
   readonly onDelete: () => void;
   readonly onToggleServer: (enabled: boolean) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div className="flex shrink-0 items-center gap-1">
       {props.pending ? <MutedAgentSpinner /> : null}
@@ -1360,7 +1387,7 @@ function ServerRowActions(props: {
           onClick={props.onLogin}
         >
           <LogIn className="size-3.5" />
-          Sign in
+          {t("Sign in")}
         </Button>
       ) : null}
       {props.showForceReauth ? (
@@ -1371,7 +1398,7 @@ function ServerRowActions(props: {
           disabled={props.pending}
           onClick={props.onForceReauth}
         >
-          Re-authenticate
+          {t("Re-authenticate")}
         </Button>
       ) : null}
       {props.showLogout ? (
@@ -1381,7 +1408,7 @@ function ServerRowActions(props: {
           variant="ghost"
           disabled={props.pending}
           onClick={props.onLogout}
-          aria-label={`Log out ${props.serverName}`}
+          aria-label={t("Log out {{name}}", { name: props.serverName })}
         >
           <LogOut className="size-3.5" />
         </Button>
@@ -1393,7 +1420,7 @@ function ServerRowActions(props: {
           variant="ghost"
           disabled={props.pending}
           onClick={props.onRefresh}
-          aria-label={`Refresh ${props.serverName}`}
+          aria-label={t("Refresh {{name}}", { name: props.serverName })}
         >
           <RefreshCw className="size-3.5" />
         </Button>
@@ -1405,7 +1432,7 @@ function ServerRowActions(props: {
           variant="ghost"
           disabled={props.pending}
           onClick={props.onDelete}
-          aria-label={`Delete ${props.serverName}`}
+          aria-label={t("Delete {{name}}", { name: props.serverName })}
         >
           <Trash2 className="size-3.5" />
         </Button>
@@ -1417,8 +1444,8 @@ function ServerRowActions(props: {
           onCheckedChange={props.onToggleServer}
           aria-label={
             props.serverEnabled
-              ? `Disable ${props.serverName}`
-              : `Enable ${props.serverName}`
+              ? t("Disable {{name}}", { name: props.serverName })
+              : t("Enable {{name}}", { name: props.serverName })
           }
         />
       ) : null}
@@ -1446,6 +1473,7 @@ function ServerToolsPanel(props: {
     onToggleTool,
     onToggleAllTools,
   } = props;
+  const { t } = useTranslation("panels");
 
   return (
     <Tabs
@@ -1459,11 +1487,11 @@ function ServerToolsPanel(props: {
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <TabsList className="h-auto">
           <TabsTrigger value="tools" className="text-ui-xs">
-            Tools ({server.tools.length})
+            {t("Tools ({{count}})", { count: server.tools.length })}
           </TabsTrigger>
           {capabilities.instructionsSource !== "none" ? (
             <TabsTrigger value="instructions" className="text-ui-xs">
-              Instructions
+              {t("Instructions")}
             </TabsTrigger>
           ) : null}
         </TabsList>
@@ -1477,7 +1505,7 @@ function ServerToolsPanel(props: {
                 onToggleAllTools(true);
               }}
             >
-              Enable all
+              {t("Enable all")}
             </button>
             <span aria-hidden>·</span>
             <button
@@ -1488,7 +1516,7 @@ function ServerToolsPanel(props: {
                 onToggleAllTools(false);
               }}
             >
-              Disable all
+              {t("Disable all")}
             </button>
             {/*
              * The scope caveat sits on the control it qualifies rather than in
@@ -1508,14 +1536,15 @@ function ServerToolsPanel(props: {
                   <button
                     type="button"
                     className="cursor-help appearance-none bg-transparent p-0 text-muted-foreground hover:text-foreground"
-                    aria-label="Where tool enable/disable applies"
+                    aria-label={t("Where tool enable/disable applies")}
                   >
                     <Info className="size-3.5" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  Tool enable/disable applies to Traycer sessions only for this
-                  provider.
+                  {t(
+                    "Tool enable/disable applies to Traycer sessions only for this provider.",
+                  )}
                 </TooltipContent>
               </Tooltip>
             ) : null}
@@ -1525,7 +1554,7 @@ function ServerToolsPanel(props: {
       <TabsContent value="tools" className="mt-0">
         {server.tools.length === 0 ? (
           <p className="py-3 text-center text-ui-xs text-muted-foreground">
-            No tools discovered yet.
+            {t("No tools discovered yet.")}
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
@@ -1548,7 +1577,7 @@ function ServerToolsPanel(props: {
           {server.instructions === null ||
           server.instructions.trim().length === 0 ? (
             <p className="py-3 text-center text-ui-xs text-muted-foreground">
-              No instructions from this server.
+              {t("No instructions from this server.")}
             </p>
           ) : (
             <pre
@@ -1571,24 +1600,27 @@ function ToolsUnavailableState(props: {
   readonly pending: boolean;
 }): ReactNode {
   const { server, onLogin, onRefresh, pending } = props;
-  let message = "Tools are unavailable until this server is connected.";
+  const { t } = useTranslation("panels");
+  let message = t("Tools are unavailable until this server is connected.");
   if (server.configOnly) {
-    message =
-      "This OAuth-gated server is config-only — manage it in the provider's native surface, or sign in if available.";
+    message = t(
+      "This OAuth-gated server is config-only — manage it in the provider's native surface, or sign in if available.",
+    );
   } else if (server.stdioDegraded) {
-    message =
-      "Stdio is degraded for this provider — config is editable, but live tools are unavailable in-session.";
+    message = t(
+      "Stdio is degraded for this provider — config is editable, but live tools are unavailable in-session.",
+    );
   } else if (server.status === "needs_auth") {
-    message = "Sign in to discover tools for this server.";
+    message = t("Sign in to discover tools for this server.");
   } else if (server.status === "error") {
     message =
       server.statusDetail !== null
         ? redactLogText(server.statusDetail)
-        : "Connection failed. Retry to discover tools.";
+        : t("Connection failed. Retry to discover tools.");
   } else if (server.status === "connecting") {
-    message = "Connecting…";
+    message = t("Connecting…");
   } else if (!server.enabled) {
-    message = "Enable this server to discover tools.";
+    message = t("Enable this server to discover tools.");
   }
 
   const showRetry =
@@ -1607,7 +1639,7 @@ function ToolsUnavailableState(props: {
             disabled={pending}
             onClick={onLogin}
           >
-            Sign in
+            {t("Sign in")}
           </Button>
         ) : null}
         {showRetry ? (
@@ -1618,7 +1650,7 @@ function ToolsUnavailableState(props: {
             disabled={pending}
             onClick={onRefresh}
           >
-            Retry
+            {t("Retry")}
           </Button>
         ) : null}
       </div>
@@ -1627,9 +1659,13 @@ function ToolsUnavailableState(props: {
 }
 
 function denySourceLabel(source: string): string {
-  if (source === "user") return "user settings";
-  if (source === "shared") return "shared project settings";
-  if (source === "local") return "local project settings";
+  if (source === "user") return i18n.t("user settings", { ns: "panels" });
+  if (source === "shared") {
+    return i18n.t("shared project settings", { ns: "panels" });
+  }
+  if (source === "local") {
+    return i18n.t("local project settings", { ns: "panels" });
+  }
   return source;
 }
 
@@ -1642,11 +1678,17 @@ function toolDenySourceSummary(tool: ProviderMcpTool): string | null {
 function toolAriaLabel(tool: ProviderMcpTool, readOnly: boolean): string {
   const denySummary = toolDenySourceSummary(tool);
   if (readOnly && denySummary !== null) {
-    return `${tool.name} (disabled by ${denySummary})`;
+    return i18n.t("{{name}} (disabled by {{source}})", {
+      name: tool.name,
+      source: denySummary,
+      ns: "panels",
+    });
   }
   if (readOnly) return tool.name;
-  if (tool.enabled) return `Disable tool ${tool.name}`;
-  return `Enable tool ${tool.name}`;
+  if (tool.enabled) {
+    return i18n.t("Disable tool {{name}}", { name: tool.name, ns: "panels" });
+  }
+  return i18n.t("Enable tool {{name}}", { name: tool.name, ns: "panels" });
 }
 
 function ToolChip(props: {
@@ -1656,6 +1698,7 @@ function ToolChip(props: {
   readonly onToggle: (enabled: boolean) => void;
 }): ReactNode {
   const { tool, readOnly, disabled, onToggle } = props;
+  const { t } = useTranslation("panels");
   const denySummary = toolDenySourceSummary(tool);
   const chipDisabled = disabled || readOnly;
   const chip = (
@@ -1702,9 +1745,9 @@ function ToolChip(props: {
         </div>
         {denySummary !== null ? (
           <p className="mt-1 text-ui-xs text-muted-foreground">
-            Disabled by {denySummary}
-            {readOnly && denySummary !== "local project settings"
-              ? " (locked — clear the deny in that source to re-enable)"
+            {t("Disabled by {{source}}", { source: denySummary })}
+            {readOnly && denySummary !== t("local project settings")
+              ? ` ${t("(locked — clear the deny in that source to re-enable)")}`
               : null}
           </p>
         ) : null}
@@ -1714,11 +1757,11 @@ function ToolChip(props: {
           </p>
         ) : (
           <p className="mt-1 text-ui-xs text-muted-foreground">
-            No description.
+            {t("No description.")}
           </p>
         )}
         <div className="mt-2 text-ui-xs font-medium text-foreground">
-          Input Schema
+          {t("Input Schema")}
         </div>
         <ToolSchemaBody schema={tool.inputSchema} />
       </HoverCardContent>
@@ -1729,10 +1772,11 @@ function ToolChip(props: {
 function ToolSchemaBody(props: {
   readonly schema: Record<string, unknown> | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (props.schema === null) {
     return (
       <p className="mt-1 text-ui-xs text-muted-foreground">
-        Schema not available.
+        {t("Schema not available.")}
       </p>
     );
   }
@@ -1750,7 +1794,9 @@ function ToolSchemaBody(props: {
     const entries = Object.entries(properties as Record<string, unknown>);
     if (entries.length === 0) {
       return (
-        <p className="mt-1 text-ui-xs text-muted-foreground">No properties.</p>
+        <p className="mt-1 text-ui-xs text-muted-foreground">
+          {t("No properties.")}
+        </p>
       );
     }
     return (
@@ -1810,21 +1856,23 @@ function StatusDot(props: {
 
 function statusLabelFor(server: ProviderMcpServer): string {
   if (server.discoveryPending || server.status === "connecting") {
-    return "Connecting…";
+    return i18n.t("Connecting…", { ns: "panels" });
   }
-  if (!server.enabled) return "Disabled";
+  if (!server.enabled) return i18n.t("Disabled", { ns: "panels" });
   switch (server.status) {
     case "connected":
-      return server.statusSource === "probe" ? "Reachable" : "Connected";
+      return server.statusSource === "probe"
+        ? i18n.t("Reachable", { ns: "panels" })
+        : i18n.t("Connected", { ns: "panels" });
     case "needs_auth":
-      return "Needs auth";
+      return i18n.t("Needs auth", { ns: "panels" });
     case "error":
-      return "Error";
+      return i18n.t("Error", { ns: "panels" });
     case "disconnected":
-      return "Disconnected";
+      return i18n.t("Disconnected", { ns: "panels" });
     case "config_only":
-      return "Config only";
+      return i18n.t("Config only", { ns: "panels" });
     case "unknown":
-      return "Unknown";
+      return i18n.t("Unknown", { ns: "panels" });
   }
 }

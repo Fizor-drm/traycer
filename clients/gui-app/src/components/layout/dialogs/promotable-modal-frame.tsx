@@ -1,5 +1,6 @@
 import { useRef, type ReactNode } from "react";
 import { Dialog as DialogPrimitive } from "radix-ui";
+import { useTranslation } from "react-i18next";
 import { SquareArrowOutUpRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ const FRAME_CONTENT_CLASS =
 export function PromotableModalFrame(
   props: PromotableModalFrameProps,
 ): ReactNode {
+  const { t } = useTranslation("common");
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   // Sampled in the overlay's onPointerDown: while a nested layer (the
@@ -110,7 +112,7 @@ export function PromotableModalFrame(
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Close"
+                aria-label={t("Close")}
                 data-testid={props.closeTestId}
                 onClick={props.onClose}
               >

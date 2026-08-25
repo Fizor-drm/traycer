@@ -1,4 +1,5 @@
 import type { BootstrapMarkerEntry } from "@traycer-clients/shared/platform/runner-host";
+import { i18n } from "@/lib/i18n/init-i18n";
 
 /**
  * Pure reduction of the bootstrap marker file, kept out of
@@ -45,21 +46,38 @@ export function describeOutcome(marker: BootstrapMarkerEntry): string {
   switch (marker.phase) {
     case "exited": {
       const code = fields.code ?? "?";
-      return `Host exited with code ${code}.`;
+      return i18n.t("Host exited with code {{code}}.", {
+        ns: "common",
+        code,
+      });
     }
     case "crashed": {
       const code = fields.code ?? "?";
-      const signal =
-        fields.signal !== undefined ? ` (signal ${fields.signal})` : "";
-      return `Host crashed with code ${code}${signal}.`;
+      if (fields.signal === undefined) {
+        return i18n.t("Host crashed with code {{code}}.", {
+          ns: "common",
+          code,
+        });
+      }
+      return i18n.t("Host crashed with code {{code}} (signal {{signal}}).", {
+        ns: "common",
+        code,
+        signal: fields.signal,
+      });
     }
     case "killed": {
       const signal = fields.signal ?? "unknown";
-      return `Host was killed with signal ${signal}.`;
+      return i18n.t("Host was killed with signal {{signal}}.", {
+        ns: "common",
+        signal,
+      });
     }
     case "failed-to-spawn": {
       const error = fields.error ?? "spawn failed";
-      return `Failed to spawn shell: ${error}`;
+      return i18n.t("Failed to spawn shell: {{error}}", {
+        ns: "common",
+        error,
+      });
     }
     case "starting":
       return "";

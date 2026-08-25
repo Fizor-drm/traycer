@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { HostTransportFailureError } from "@traycer-clients/shared/host-transport/host-messenger";
 import type { HostClient } from "@traycer-clients/shared/host-client/host-client";
+import { i18n } from "@/lib/i18n/init-i18n";
 import type {
   HostServiceDeregisterResponse,
   HostServiceRegisterResponse,
@@ -106,7 +107,12 @@ export function useOverviewOsService(input: {
       register.mutate(undefined, {
         onSuccess: (response) => {
           if (response.outcome === "ok") {
-            toast.success(`Re-registered ${hostName}'s service`);
+            toast.success(
+              i18n.t("Re-registered {{name}}'s service", {
+                ns: "panels",
+                name: hostName,
+              }),
+            );
             return;
           }
           toast.error(describeServiceRegisterFailure(response, hostName));
@@ -127,13 +133,19 @@ export function useOverviewOsService(input: {
             // does not release it - the page stays locked until the scope
             // reflects the restart or the bounded window expires.
             toast.info(
-              `Lost contact with ${hostName} while re-registering — it is probably restarting.`,
+              i18n.t(
+                "Lost contact with {{name}} while re-registering — it is probably restarting.",
+                { ns: "panels", name: hostName },
+              ),
             );
             return;
           }
           toastFromHostError(
             error,
-            `Couldn't re-register ${hostName}'s service.`,
+            i18n.t("Couldn't re-register {{name}}'s service.", {
+              ns: "panels",
+              name: hostName,
+            }),
           );
         },
       });
@@ -146,7 +158,12 @@ export function useOverviewOsService(input: {
             // because it kills this host mid-command; nobody here ever learns
             // whether it finished, and claiming otherwise is the one thing that
             // response shape exists to prevent.
-            toast.success(`Stopping ${hostName} and deregistering it`);
+            toast.success(
+              i18n.t("Stopping {{name}} and deregistering it", {
+                ns: "panels",
+                name: hostName,
+              }),
+            );
             return;
           }
           toast.error(describeServiceDeregisterFailure(response, hostName));
@@ -157,11 +174,17 @@ export function useOverviewOsService(input: {
         onError: (error) => {
           if (error instanceof HostTransportFailureError) {
             toast.info(
-              `Lost contact with ${hostName} while deregistering — it is probably shutting down.`,
+              i18n.t(
+                "Lost contact with {{name}} while deregistering — it is probably shutting down.",
+                { ns: "panels", name: hostName },
+              ),
             );
             return;
           }
-          toastFromHostError(error, "Couldn't deregister the service.");
+          toastFromHostError(
+            error,
+            i18n.t("Couldn't deregister the service.", { ns: "panels" }),
+          );
         },
       });
     },
@@ -324,33 +347,57 @@ function describeServiceState(input: {
 }): string {
   if (input.status === undefined) {
     return input.loading
-      ? "Checking service registration…"
-      : `Couldn't read ${input.hostName}'s service registration.`;
+      ? i18n.t("Checking service registration…", { ns: "panels" })
+      : i18n.t("Couldn't read {{name}}'s service registration.", {
+          ns: "panels",
+          name: input.hostName,
+        });
   }
   switch (input.status.outcome) {
     case "ok":
       if (input.status.state === "not-installed") {
-        return "Not registered. The OS service manifest is required for the host to survive logout.";
+        return i18n.t(
+          "Not registered. The OS service manifest is required for the host to survive logout.",
+          { ns: "panels" },
+        );
       }
       if (input.status.state === "externally-managed") {
         // The registration EXISTS — this is the normal state of a
         // Desktop-managed machine — it just is not the CLI's to change, so the
         // verbs below are withheld rather than offered-and-refused.
-        return "Registered and managed by Traycer Desktop, which owns this host's service registration.";
+        return i18n.t(
+          "Registered and managed by Traycer Desktop, which owns this host's service registration.",
+          { ns: "panels" },
+        );
       }
       return input.status.state === "running"
-        ? "Registered and running. The OS service manifest starts the host at user login."
-        : "Registered but not running. The OS service manifest starts the host at user login.";
+        ? i18n.t(
+            "Registered and running. The OS service manifest starts the host at user login.",
+            { ns: "panels" },
+          )
+        : i18n.t(
+            "Registered but not running. The OS service manifest starts the host at user login.",
+            { ns: "panels" },
+          );
     case "externally-managed":
       // The host did not consult the CLI: an external supervisor owns its
       // service lifecycle, and the canonical label the CLI would inspect is
       // not the unit actually running this host. No label or manifest line to
       // show — the supervising unit is outside the CLI's sight.
-      return `${input.hostName}'s service is managed by an external supervisor, which owns its registration.`;
+      return i18n.t(
+        "{{name}}'s service is managed by an external supervisor, which owns its registration.",
+        { ns: "panels", name: input.hostName },
+      );
     case "cli-unavailable":
-      return `${input.hostName} has no Traycer CLI, so its service registration can't be read from here.`;
+      return i18n.t(
+        "{{name}} has no Traycer CLI, so its service registration can't be read from here.",
+        { ns: "panels", name: input.hostName },
+      );
     default:
-      return `${input.hostName} couldn't read its own service registration.`;
+      return i18n.t("{{name}} couldn't read its own service registration.", {
+        ns: "panels",
+        name: input.hostName,
+      });
   }
 }
 
@@ -362,19 +409,34 @@ function describeServiceRegisterFailure(
     // The host refused before running the CLI: an external supervisor owns its
     // service lifecycle. Reachable only when the status read that hides the
     // buttons is stale, so this is a correction rather than an error report.
-    return `${hostName}'s service is managed by an external supervisor, so it can't be re-registered from here.`;
+    return i18n.t(
+      "{{name}}'s service is managed by an external supervisor, so it can't be re-registered from here.",
+      { ns: "panels", name: hostName },
+    );
   }
   if (response.outcome === "cli-unavailable") {
-    return `${hostName} has no Traycer CLI to register its service with.`;
+    return i18n.t("{{name}} has no Traycer CLI to register its service with.", {
+      ns: "panels",
+      name: hostName,
+    });
   }
   if (response.outcome === "invalid-output") {
-    return `${hostName}'s CLI returned something unreadable while registering.`;
+    return i18n.t(
+      "{{name}}'s CLI returned something unreadable while registering.",
+      { ns: "panels", name: hostName },
+    );
   }
   // The CLI's own message, when it left one. This is the whole reason the
   // response carries a string: the refusal that matters most here — a label
   // owned by Traycer Desktop's SMAppService registration — names its own
   // remedy, and "couldn't register" would throw that away.
-  return response.message ?? `${hostName} couldn't register its OS service.`;
+  return (
+    response.message ??
+    i18n.t("{{name}} couldn't register its OS service.", {
+      ns: "panels",
+      name: hostName,
+    })
+  );
 }
 
 function describeServiceDeregisterFailure(
@@ -386,10 +448,19 @@ function describeServiceDeregisterFailure(
 ): string {
   switch (response.outcome) {
     case "externally-managed":
-      return `${hostName}'s service is managed by an external supervisor, so it can't be deregistered from here.`;
+      return i18n.t(
+        "{{name}}'s service is managed by an external supervisor, so it can't be deregistered from here.",
+        { ns: "panels", name: hostName },
+      );
     case "cli-unavailable":
-      return `${hostName} has no Traycer CLI to deregister its service with.`;
+      return i18n.t(
+        "{{name}} has no Traycer CLI to deregister its service with.",
+        { ns: "panels", name: hostName },
+      );
     case "cli-failed":
-      return `${hostName} couldn't run the deregister command.`;
+      return i18n.t("{{name}} couldn't run the deregister command.", {
+        ns: "panels",
+        name: hostName,
+      });
   }
 }

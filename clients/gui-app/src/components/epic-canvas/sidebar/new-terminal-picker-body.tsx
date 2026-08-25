@@ -14,6 +14,7 @@
  * `launchTarget` unifies both paths so callers only ever handle one shape.
  */
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { WorktreeBindingSelectorRowV12 } from "@traycer/protocol/host";
 import { Button } from "@/components/ui/button";
 import { ReportIssueAction } from "@/components/report-issue/report-issue-action";
@@ -40,6 +41,7 @@ export interface NewTerminalPickerBodyProps {
 
 export function NewTerminalPickerBody(props: NewTerminalPickerBodyProps) {
   const { epicId, onLaunch, surfaceKey } = props;
+  const { t } = useTranslation("canvas");
   const [explicitRow, setExplicitRow] =
     useState<WorktreeBindingSelectorRowV12 | null>(null);
   const pin = useSurfaceHostPin(surfaceKey);
@@ -104,7 +106,7 @@ export function NewTerminalPickerBody(props: NewTerminalPickerBodyProps) {
         className="flex items-center gap-2 text-destructive"
         data-testid="new-terminal-folderless-cwd-error"
       >
-        Couldn't resolve terminal directory.
+        {t("Couldn't resolve terminal directory.")}
         <ReportIssueAction
           context={createReportIssueContext({
             title: "Couldn't resolve terminal directory",
@@ -137,7 +139,9 @@ export function NewTerminalPickerBody(props: NewTerminalPickerBodyProps) {
         secondaryLabel={(row) => row.runningDir}
         onSelect={setExplicitRow}
         autoFocusSearch
-        emptyMessage="No directories available. Open a workspace in the epic first."
+        emptyMessage={t(
+          "No directories available. Open a workspace in the epic first.",
+        )}
       />
       <div className="flex items-center justify-between gap-3 border-t border-border/60 bg-muted/20 px-2.5 py-2.5">
         <div className="min-w-0 text-xs text-muted-foreground">
@@ -146,12 +150,12 @@ export function NewTerminalPickerBody(props: NewTerminalPickerBodyProps) {
         <Button
           type="button"
           size="sm"
-          aria-label="Launch"
+          aria-label={t("Launch")}
           aria-keyshortcuts="Meta+Enter Control+Enter"
           disabled={launchTarget === null}
           onClick={handleLaunch}
         >
-          Launch
+          {t("Launch")}
           <PrimaryActionShortcutHint />
         </Button>
       </div>

@@ -31,6 +31,7 @@ import {
 import { useWorktreeListBindingsForEpicForClient } from "@/hooks/worktree/use-worktree-list-bindings-for-epic-query";
 import { workspaceFileRefFromTreePath } from "@/components/epic-canvas/workspace-file/workspace-file-ref";
 import { openTileIntoTargetGroup } from "@/lib/commands/actions";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { usePaletteLiveQuery } from "@/lib/commands/palette-query-context";
 import { isBrowsable } from "@/lib/worktree/worktree-row-browsable";
 import {
@@ -103,7 +104,7 @@ function codeFileLeaves(args: CodeFileLeavesArgs): ReadonlyArray<CommandItem> {
     return [
       openerNotice(
         `open:files:ws:${workspacePath}:unsupported`,
-        "File search is unavailable on this host",
+        i18n.t("File search is unavailable on this host", { ns: "palette" }),
       ),
     ];
   }
@@ -113,7 +114,7 @@ function codeFileLeaves(args: CodeFileLeavesArgs): ReadonlyArray<CommandItem> {
     return [
       openerNotice(
         `open:files:ws:${workspacePath}:unavailable`,
-        "This workspace is unavailable",
+        i18n.t("This workspace is unavailable", { ns: "palette" }),
       ),
     ];
   }
@@ -212,7 +213,9 @@ function artifactLeaves(args: ArtifactLeavesArgs): ReadonlyArray<CommandItem> {
     return [
       openerNotice(
         "open:files:artifacts:unsupported",
-        "Artifact search is unavailable on this host",
+        i18n.t("Artifact search is unavailable on this host", {
+          ns: "palette",
+        }),
       ),
     ];
   }
@@ -221,7 +224,7 @@ function artifactLeaves(args: ArtifactLeavesArgs): ReadonlyArray<CommandItem> {
     return [
       openerNotice(
         "open:files:artifacts:unavailable",
-        "Artifacts are unavailable",
+        i18n.t("Artifacts are unavailable", { ns: "palette" }),
       ),
     ];
   }
@@ -301,11 +304,13 @@ function useArtifactsStepItems(
   );
 }
 
-const ARTIFACTS_STEP_SUBPAGE: CommandSubpage = {
-  id: filesArtifactsResultSubpageId(),
-  title: "Artifacts",
-  useItems: useArtifactsStepItems,
-};
+function makeArtifactsStepSubpage(): CommandSubpage {
+  return {
+    id: filesArtifactsResultSubpageId(),
+    title: i18n.t("Artifacts", { ns: "palette" }),
+    useItems: useArtifactsStepItems,
+  };
+}
 
 // --- Step 1: source list ----------------------------------------------------
 
@@ -332,9 +337,9 @@ export function useFilesOpenerItems(
     return [
       openerSubpageLeaf({
         id: filesArtifactsResultSubpageId(),
-        label: "Artifacts",
+        label: i18n.t("Artifacts", { ns: "palette" }),
         keywords: ["artifact", "spec", "ticket", "story", "review"],
-        subpage: ARTIFACTS_STEP_SUBPAGE,
+        subpage: makeArtifactsStepSubpage(),
       }),
       ...workspaceRoots.map((row) =>
         openerSubpageLeaf({

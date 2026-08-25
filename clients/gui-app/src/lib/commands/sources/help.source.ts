@@ -3,6 +3,7 @@
  * over `runnerHost` for commands that open external links.
  */
 import type { CommandItem, ReactCommandSource } from "@/lib/commands/types";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { useDesktopDialogStore } from "@/stores/dialogs/desktop-dialog-store";
 
 export const helpSource: ReactCommandSource = {
@@ -13,9 +14,11 @@ export const helpSource: ReactCommandSource = {
     );
     const keybindings: CommandItem = {
       id: "help:keybindings",
-      label: "Open keybindings reference",
-      description:
+      label: i18n.t("Open keybindings reference", { ns: "palette" }),
+      description: i18n.t(
         "Jump to the keybindings settings panel to see and edit every shortcut.",
+        { ns: "palette" },
+      ),
       keywords: ["help", "keybindings", "shortcuts", "hotkeys"],
       group: "help",
       scope: "help",
@@ -29,9 +32,11 @@ export const helpSource: ReactCommandSource = {
       keybindings,
       {
         id: "help:report-issue",
-        label: "Report issue",
-        description:
+        label: i18n.t("Report issue", { ns: "palette" }),
+        description: i18n.t(
           "Open a pre-filled GitHub issue with your system information.",
+          { ns: "palette" },
+        ),
         keywords: ["help", "bug", "report", "feedback", "issue", "github"],
         group: "help",
         scope: "help",

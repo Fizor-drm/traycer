@@ -4,6 +4,7 @@ import type {
   ProvidersSkillsMutateAction,
 } from "@traycer/protocol/host/provider-native-schemas";
 import type { SkillsMutateData } from "@/hooks/providers/native-response-map";
+import { i18n } from "@/lib/i18n/init-i18n";
 import {
   composerErrorMessage,
   isExternalDriftError,
@@ -161,7 +162,9 @@ async function applyInspect(
   if (data.candidates.length === 0) {
     sink.setInspectSession(null);
     sink.setSelectedNames([]);
-    sink.setError("No SKILL.md found in that source.");
+    sink.setError(
+      i18n.t("No SKILL.md found in that source.", { ns: "panels" }),
+    );
     return;
   }
   const only = data.candidates[0];
@@ -206,7 +209,7 @@ async function handleInstallError(
     sink.setError(composerErrorMessage(err));
     return;
   }
-  sink.setPickerNote(SHA_MISMATCH_NOTE);
+  sink.setPickerNote(i18n.t(SHA_MISMATCH_NOTE, { ns: "panels" }));
   try {
     const data = await sink.onMutate({
       action: "inspect",

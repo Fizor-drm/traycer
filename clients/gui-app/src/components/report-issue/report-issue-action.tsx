@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Bug } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -41,6 +42,7 @@ interface ReportIssueActionProps {
 }
 
 export function ReportIssueAction(props: ReportIssueActionProps): ReactNode {
+  const { t } = useTranslation("common");
   const reportIssueAvailable = useDesktopDialogStore(
     (state) => state.reportIssueAvailable,
   );
@@ -82,7 +84,7 @@ export function ReportIssueAction(props: ReportIssueActionProps): ReactNode {
         onClick={handleClick}
       >
         <Bug aria-hidden />
-        Report issue
+        {t("Report issue")}
       </Button>
     );
   }
@@ -96,7 +98,7 @@ export function ReportIssueAction(props: ReportIssueActionProps): ReactNode {
         className={props.className}
         onClick={handleClick}
       >
-        Report issue
+        {t("Report issue")}
       </Button>
     );
   }
@@ -109,13 +111,13 @@ export function ReportIssueAction(props: ReportIssueActionProps): ReactNode {
           size="icon-xs"
           variant="ghost"
           className={cn("text-muted-foreground", props.className)}
-          aria-label="Report issue"
+          aria-label={t("Report issue")}
           onClick={handleClick}
         >
           <Bug aria-hidden />
         </Button>
       </TooltipTrigger>
-      <TooltipContent>Report issue</TooltipContent>
+      <TooltipContent>{t("Report issue")}</TooltipContent>
     </Tooltip>
   );
 }

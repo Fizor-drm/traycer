@@ -5,6 +5,7 @@
  * data, so the data-to-UI mapping lives in exactly one place.
  */
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type {
   ProviderRateLimits,
   ProviderRateLimitWindow,
@@ -34,6 +35,7 @@ import {
 } from "@/components/settings/panels/opencode-go-actions";
 import { contextUsageTone } from "@/components/chat/context-usage";
 import { creditUsageSeverity } from "@/lib/rate-limits/window-severity";
+import { i18n } from "@/lib/i18n/init-i18n";
 import {
   formatUnavailableReason,
   resolveProviderRateLimitViewState,
@@ -147,9 +149,11 @@ const RESET_TIMESTAMP_PLAUSIBLE_WINDOW_MS = 365 * 24 * 60 * 60 * 1000;
  * the generic "6h" form, since that isn't the same known quota.
  */
 function formatWindowDuration(minutes: number | null): string {
-  if (minutes === null || minutes <= 0) return "Usage";
-  if (minutes === MINUTES_PER_WEEK) return "Weekly";
-  if (minutes === MINUTES_PER_SESSION) return "Current session";
+  if (minutes === null || minutes <= 0) return i18n.t("Usage", { ns: "panels" });
+  if (minutes === MINUTES_PER_WEEK) return i18n.t("Weekly", { ns: "panels" });
+  if (minutes === MINUTES_PER_SESSION) {
+    return i18n.t("Current session", { ns: "panels" });
+  }
   if (minutes % MINUTES_PER_DAY === 0) return `${minutes / MINUTES_PER_DAY}d`;
   if (minutes % MINUTES_PER_HOUR === 0) return `${minutes / MINUTES_PER_HOUR}h`;
   return `${minutes}m`;
@@ -173,9 +177,14 @@ function RelativeResetLine({
   readonly resetsAt: number;
   readonly tone: string;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const countdown = useResetCountdown(resetsAt);
   if (countdown === null) return null;
-  return <span className={cn("text-ui-xs", tone)}>Resets in {countdown}</span>;
+  return (
+    <span className={cn("text-ui-xs", tone)}>
+      {t("Resets in {{countdown}}", { countdown })}
+    </span>
+  );
 }
 
 /**
@@ -190,9 +199,12 @@ function ExactResetLine({
   readonly resetsAt: number;
   readonly tone: string;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <span className={cn("text-ui-xs", tone)}>
-      Resets {formatResetFullDateTime(resetsAt)}
+      {t("Resets {{datetime}}", {
+        datetime: formatResetFullDateTime(resetsAt),
+      })}
     </span>
   );
 }
@@ -250,10 +262,11 @@ function WindowMeterDetail({
   readonly resetsAt: number | null;
   readonly usedPercent: number;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const percent = Math.round(Math.min(100, Math.max(0, usedPercent)));
   return (
     <span className="flex items-center gap-1">
-      <span>{percent}% used</span>
+      <span>{t("{{percent}}% used", { percent })}</span>
       {resetsAt !== null ? (
         <>
           <span aria-hidden="true">·</span>
@@ -394,7 +407,10 @@ const CODEX_RATE_LIMIT_REACHED_LABELS: Record<string, string> = {
 };
 
 function formatRateLimitReachedType(value: string): string {
-  return CODEX_RATE_LIMIT_REACHED_LABELS[value] ?? titleCaseFromToken(value);
+  if (value in CODEX_RATE_LIMIT_REACHED_LABELS) {
+    return i18n.t(CODEX_RATE_LIMIT_REACHED_LABELS[value], { ns: "panels" });
+  }
+  return titleCaseFromToken(value);
 }
 
 /**
@@ -556,21 +572,26 @@ function CodexResetCreditExpiry({
   readonly credit: CodexResetCredit;
   readonly tone: CodexResetCreditTone;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const now = useSampledNow();
   const countdown = useResetCountdown(credit.expiresAt);
   const farExpiry = useIsFarReset(credit.expiresAt);
-  if (credit.expiresAt === null) return <span>No expiry</span>;
+  if (credit.expiresAt === null) return <span>{t("No expiry")}</span>;
   if (!plausibleResetTimestamp(credit.expiresAt, now)) {
-    return <span>Expiry unavailable</span>;
+    return <span>{t("Expiry unavailable")}</span>;
   }
-  if (credit.expiresAt <= now) return <span>Expired</span>;
+  if (credit.expiresAt <= now) return <span>{t("Expired")}</span>;
   const warning =
     tone === "panel" && credit.expiresAt - now <= RESET_CREDIT_WARNING_MS;
   return (
     <span className={cn(warning && "text-destructive")}>
       {farExpiry
-        ? `Expires ${formatResetFullDateTime(credit.expiresAt)}`
-        : `Expires in ${countdown ?? "less than a minute"}`}
+        ? t("Expires {{datetime}}", {
+            datetime: formatResetFullDateTime(credit.expiresAt),
+          })
+        : t("Expires in {{countdown}}", {
+            countdown: countdown ?? t("less than a minute"),
+          })}
     </span>
   );
 }
@@ -582,6 +603,7 @@ function CodexResetCreditDetail({
   readonly credit: CodexResetCredit;
   readonly tone: CodexResetCreditTone;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (credit.status === "redeeming") {
     return (
       <span
@@ -595,7 +617,7 @@ function CodexResetCreditDetail({
           testId={undefined}
           variant={undefined}
         />
-        Redeeming
+        {t("Redeeming")}
       </span>
     );
   }
@@ -618,6 +640,7 @@ function CodexResetCreditLines({
   readonly omittedCount: number;
   readonly tone: CodexResetCreditTone;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const panel = tone === "panel";
   return (
     <div className={cn("flex flex-col text-ui-xs", panel ? "gap-2" : "gap-1")}>
@@ -629,7 +652,7 @@ function CodexResetCreditLines({
           <span
             className={cn("min-w-0 truncate", panel && "text-muted-foreground")}
           >
-            {credit.title ?? "Manual reset"}
+            {credit.title ?? t("Manual reset")}
           </span>
           <span
             className={cn("shrink-0 font-mono", panel && "text-foreground")}
@@ -640,7 +663,7 @@ function CodexResetCreditLines({
       ))}
       {omittedCount > 0 ? (
         <span className={cn(panel && "text-muted-foreground")}>
-          +{omittedCount} more not shown
+          {t("+{{count}} more not shown", { count: omittedCount })}
         </span>
       ) : null}
     </div>
@@ -687,11 +710,14 @@ function CodexResetCreditsRow({
   const hasDetail = visibleCredits.length > 0;
   const listed = variant === "settings" && hasDetail;
   const hoverable = !listed && hasDetail;
-  const countText = `${resetCredits.availableCount} available`;
+  const { t } = useTranslation("panels");
+  const countText = t("{{count}} available", {
+    count: resetCredits.availableCount,
+  });
   return (
     <div className="flex flex-col gap-2 text-ui-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-muted-foreground">Manual resets</span>
+        <span className="text-muted-foreground">{t("Manual resets")}</span>
         <span className="flex items-center gap-2">
           {hoverable ? (
             <Tooltip>
@@ -755,12 +781,14 @@ function CodexCreditsRow({
 }: {
   readonly credits: NonNullable<CodexRateLimits["credits"]>;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const label = credits.unlimited
-    ? "Unlimited"
-    : (credits.balance ?? (credits.hasCredits ? "Available" : "None"));
+    ? t("Unlimited")
+    : (credits.balance ??
+      (credits.hasCredits ? t("Available") : t("None")));
   return (
     <div className="flex items-center justify-between text-ui-sm">
-      <span className="text-muted-foreground">Credits</span>
+      <span className="text-muted-foreground">{t("Credits")}</span>
       <span className="font-mono text-ui-xs text-foreground">{label}</span>
     </div>
   );
@@ -771,10 +799,11 @@ function CodexSpendControlRow({
 }: {
   readonly limit: NonNullable<CodexRateLimits["individualLimit"]>;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between text-ui-sm">
-        <span className="text-muted-foreground">Spend limit</span>
+        <span className="text-muted-foreground">{t("Spend limit")}</span>
         <span className="font-mono text-ui-xs text-foreground">
           {limit.used} / {limit.limit}
         </span>
@@ -878,6 +907,7 @@ function ClaudeExtraUsageRow({
   // the ambiguous 0-1-vs-0-100 scale of `utilization` (open item on the wire
   // contract - see the tech plan). `utilization` is only ever shown as raw
   // supplementary text.
+  const { t } = useTranslation("panels");
   if (extraUsage.monthlyLimit !== null && extraUsage.usedCredits !== null) {
     const usedPercent =
       extraUsage.monthlyLimit > 0
@@ -885,7 +915,7 @@ function ClaudeExtraUsageRow({
         : 0;
     return (
       <MeterRow
-        label="Extra usage"
+        label={t("Extra usage")}
         usedPercent={usedPercent}
         severity={creditUsageSeverity(usedPercent)}
         detail={`${formatClaudeExtraUsageCents(extraUsage.usedCredits)} / ${formatClaudeExtraUsageCents(extraUsage.monthlyLimit)}`}
@@ -895,7 +925,7 @@ function ClaudeExtraUsageRow({
   if (extraUsage.utilization !== null) {
     return (
       <div className="flex items-center justify-between text-ui-sm">
-        <span className="text-muted-foreground">Extra usage</span>
+        <span className="text-muted-foreground">{t("Extra usage")}</span>
         <span className="font-mono text-ui-xs text-foreground">
           {extraUsage.utilization}
         </span>
@@ -920,6 +950,7 @@ export function OpenRouterRateLimitView({
 }): ReactNode {
   // Overview keeps only the Credits bar and Balance; the total-credit/usage and
   // per-period spend figures are single-provider-tab detail.
+  const { t } = useTranslation("panels");
   const overview = isOverviewVariant(variant);
   return (
     <div className="flex flex-col gap-3">
@@ -928,34 +959,34 @@ export function OpenRouterRateLimitView({
         limitRemaining={data.limitRemaining}
       />
       <ProviderNumberRow
-        label="Balance"
+        label={t("Balance")}
         value={data.balance}
         format={formatProviderCurrency}
       />
       {!overview ? (
         <>
           <ProviderNumberRow
-            label="Total credits"
+            label={t("Total credits")}
             value={data.totalCredits}
             format={formatProviderCurrency}
           />
           <ProviderNumberRow
-            label="Total usage"
+            label={t("Total usage")}
             value={data.totalUsage}
             format={formatProviderCurrency}
           />
           <ProviderNumberRow
-            label="Spent today"
+            label={t("Spent today")}
             value={data.dailySpend}
             format={formatProviderCurrency}
           />
           <ProviderNumberRow
-            label="Spent this week"
+            label={t("Spent this week")}
             value={data.weeklySpend}
             format={formatProviderCurrency}
           />
           <ProviderNumberRow
-            label="Spent this month"
+            label={t("Spent this month")}
             value={data.monthlySpend}
             format={formatProviderCurrency}
           />
@@ -977,12 +1008,13 @@ function OpenRouterCreditBar({
   readonly limit: number | null;
   readonly limitRemaining: number | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (limit === null || limitRemaining === null || limit <= 0) return null;
   const consumed = Math.max(0, limit - limitRemaining);
   const usedPercent = (consumed / limit) * 100;
   return (
     <MeterRow
-      label="Credits"
+      label={t("Credits")}
       usedPercent={usedPercent}
       severity={creditUsageSeverity(usedPercent)}
       detail={`${formatProviderCurrency(consumed)} / ${formatProviderCurrency(limit)}`}
@@ -1012,6 +1044,7 @@ export function HuggingFaceRateLimitView({
   // Overview keeps the credits bar and the headline remaining/spent figure;
   // the spend limit, request count and billing period are single-provider-tab
   // detail.
+  const { t } = useTranslation("panels");
   const overview = isOverviewVariant(variant);
   return (
     <div className="flex flex-col gap-3">
@@ -1021,13 +1054,13 @@ export function HuggingFaceRateLimitView({
       />
       {data.includedUsd === null ? (
         <ProviderNumberRow
-          label="Spent this period"
+          label={t("Spent this period")}
           value={data.usedUsd}
           format={formatProviderCurrency}
         />
       ) : (
         <ProviderNumberRow
-          label="Included credits left"
+          label={t("Included credits left")}
           value={data.remainingIncludedUsd}
           format={formatProviderCurrency}
         />
@@ -1036,30 +1069,30 @@ export function HuggingFaceRateLimitView({
         <>
           {data.includedUsd === null ? null : (
             <ProviderNumberRow
-              label="Included credits"
+              label={t("Included credits")}
               value={data.includedUsd}
               format={formatProviderCurrency}
             />
           )}
           {data.includedUsd === null ? null : (
             <ProviderNumberRow
-              label="Used this period"
+              label={t("Used this period")}
               value={data.usedUsd}
               format={formatProviderCurrency}
             />
           )}
           <ProviderNumberRow
-            label="Spend limit"
+            label={t("Spend limit")}
             value={data.limitUsd}
             format={formatProviderCurrency}
           />
           <ProviderNumberRow
-            label="Spend limit left"
+            label={t("Spend limit left")}
             value={data.remainingLimitUsd}
             format={formatProviderCurrency}
           />
           <ProviderNumberRow
-            label="Requests"
+            label={t("Requests")}
             value={data.numRequests}
             format={(value) => value.toLocaleString()}
           />
@@ -1086,6 +1119,7 @@ function HuggingFacePeriodRow({
   readonly periodStart: string | null;
   readonly periodEnd: string | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (periodStart === null || periodEnd === null) return null;
   const start = new Date(periodStart);
   const end = new Date(periodEnd);
@@ -1098,7 +1132,7 @@ function HuggingFacePeriodRow({
     });
   return (
     <div className="flex items-center justify-between text-ui-sm">
-      <span className="text-muted-foreground">Billing period</span>
+      <span className="text-muted-foreground">{t("Billing period")}</span>
       <span className="font-medium text-foreground">{`${format(start)} - ${format(end)}`}</span>
     </div>
   );
@@ -1117,12 +1151,13 @@ function HuggingFaceCreditBar({
   readonly includedUsd: number | null;
   readonly usedUsd: number;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (includedUsd === null || includedUsd <= 0) return null;
   const consumed = Math.min(Math.max(0, usedUsd), includedUsd);
   const usedPercent = (consumed / includedUsd) * 100;
   return (
     <MeterRow
-      label="Included credits"
+      label={t("Included credits")}
       usedPercent={usedPercent}
       severity={creditUsageSeverity(usedPercent)}
       detail={`${formatProviderCurrency(consumed)} / ${formatProviderCurrency(includedUsd)}`}
@@ -1144,17 +1179,18 @@ export function KiloCodeRateLimitView({
 }): ReactNode {
   // Overview keeps only the credit balance; Kilo Pass state is
   // single-provider-tab detail.
+  const { t } = useTranslation("panels");
   const overview = isOverviewVariant(variant);
   return (
     <div className="flex flex-col gap-3">
       <ProviderNumberRow
-        label="Credit balance"
+        label={t("Credit balance")}
         value={data.creditBalance}
         format={formatProviderCurrency}
       />
       {!overview && data.passState !== null ? (
         <div className="flex items-center justify-between text-ui-sm">
-          <span className="text-muted-foreground">Kilo Pass</span>
+          <span className="text-muted-foreground">{t("Kilo Pass")}</span>
           <span className="font-mono text-ui-xs text-foreground">
             {titleCaseFromToken(data.passState)}
           </span>
@@ -1197,6 +1233,7 @@ export function OpenCodeRateLimitView({
 }: {
   readonly data: OpenCodeRateLimits;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const now = useSampledNow();
   const limited = [data.fiveHour, data.weekly, data.monthly].some((window) =>
     isOpenCodeGoRateLimitWindowLimited(window, now),
@@ -1205,15 +1242,15 @@ export function OpenCodeRateLimitView({
     <div className="flex flex-col gap-3">
       {limited ? (
         <div className="flex flex-col items-start gap-1.5">
-          <Badge variant="destructive">Go limit reached</Badge>
+          <Badge variant="destructive">{t("Go limit reached")}</Badge>
           <p className="text-ui-xs text-muted-foreground">
-            Go quota is exhausted. Free models or Zen balance may still work.
+            {t("Go quota is exhausted. Free models or Zen balance may still work.")}
           </p>
         </div>
       ) : null}
-      <OpenCodeGoWindowRow label="5-hour" window={data.fiveHour} now={now} />
-      <OpenCodeGoWindowRow label="Weekly" window={data.weekly} now={now} />
-      <OpenCodeGoWindowRow label="Monthly" window={data.monthly} now={now} />
+      <OpenCodeGoWindowRow label={t("5-hour")} window={data.fiveHour} now={now} />
+      <OpenCodeGoWindowRow label={t("Weekly")} window={data.weekly} now={now} />
+      <OpenCodeGoWindowRow label={t("Monthly")} window={data.monthly} now={now} />
       <OpenCodeGoManageLink />
     </div>
   );
@@ -1286,13 +1323,14 @@ function GrokPeriodFallback({
   readonly periodEnd: number | null;
   readonly variant: RateLimitViewVariant;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <>
       {variant !== "popover-detail" ? (
-        <ProviderTextRow label="Plan" value={subscriptionTier} />
+        <ProviderTextRow label={t("Plan")} value={subscriptionTier} />
       ) : null}
       <ProviderTextRow
-        label="Billing period"
+        label={t("Billing period")}
         value={formatBillingRange(periodStart, periodEnd)}
       />
     </>
@@ -1323,6 +1361,7 @@ export function GrokRateLimitView({
   // Overview keeps only the period usage (bar or fallback) and the prepaid
   // balance; the monthly limit and on-demand figures are single-provider-tab
   // detail, matching how OpenRouter/Kilo Code trim their Overview.
+  const { t } = useTranslation("panels");
   const overview = isOverviewVariant(variant);
   return (
     <div className="flex flex-col gap-3">
@@ -1343,24 +1382,24 @@ export function GrokRateLimitView({
         />
       )}
       <ProviderNumberRow
-        label="Prepaid balance"
+        label={t("Prepaid balance")}
         value={data.prepaidBalance}
         format={formatProviderCurrency}
       />
       {!overview ? (
         <>
           <ProviderNumberRow
-            label="Monthly limit"
+            label={t("Monthly limit")}
             value={data.monthlyLimit}
             format={formatProviderCurrency}
           />
           <ProviderNumberRow
-            label="On-demand used"
+            label={t("On-demand used")}
             value={data.onDemandUsed}
             format={formatProviderCurrency}
           />
           <ProviderNumberRow
-            label="On-demand limit"
+            label={t("On-demand limit")}
             value={data.onDemandCap}
             format={formatProviderCurrency}
           />
@@ -1401,25 +1440,26 @@ export function CursorRateLimitView({
   readonly data: CursorRateLimits;
   readonly variant: RateLimitViewVariant;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const overview = isOverviewVariant(variant);
   return (
     <div className="flex flex-col gap-3">
       {data.cursorModels === null && data.otherModels === null ? (
         <ProviderTextRow
-          label="Billing cycle"
+          label={t("Billing cycle")}
           value={formatBillingRange(data.cycleStart, data.cycleEnd)}
         />
       ) : (
         <>
           {data.cursorModels !== null ? (
             <RateLimitWindowRow
-              label="Cursor Models"
+              label={t("Cursor Models")}
               window={data.cursorModels}
             />
           ) : null}
           {data.otherModels !== null ? (
             <RateLimitWindowRow
-              label="Other Models"
+              label={t("Other Models")}
               window={data.otherModels}
             />
           ) : null}
@@ -1430,7 +1470,7 @@ export function CursorRateLimitView({
         usedUsd={data.usedUsd}
       />
       <ProviderNumberRow
-        label="Included usage left"
+        label={t("Included usage left")}
         // Once spend crosses the purchased allowance the wire's remaining may
         // run negative; "-$12 left" is meaningless to a reader, and the
         // overflow already shows in the meter's detail and the bonus row.
@@ -1440,7 +1480,7 @@ export function CursorRateLimitView({
         format={formatProviderCurrency}
       />
       <ProviderNumberRow
-        label="Bonus usage"
+        label={t("Bonus usage")}
         value={data.bonusUsedUsd}
         format={formatProviderCurrency}
       />
@@ -1452,12 +1492,12 @@ export function CursorRateLimitView({
             </p>
           ) : null}
           <ProviderNumberRow
-            label="On-demand limit"
+            label={t("On-demand limit")}
             value={data.onDemandLimitUsd}
             format={formatProviderCurrency}
           />
           <ProviderNumberRow
-            label="On-demand used"
+            label={t("On-demand used")}
             value={data.onDemandUsedUsd}
             format={formatProviderCurrency}
           />
@@ -1487,13 +1527,14 @@ function CursorIncludedUsageBar({
   readonly includedLimitUsd: number | null;
   readonly usedUsd: number | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (includedLimitUsd === null || includedLimitUsd <= 0 || usedUsd === null) {
     return null;
   }
   const usedPercent = (Math.max(0, usedUsd) / includedLimitUsd) * 100;
   return (
     <MeterRow
-      label="Included usage"
+      label={t("Included usage")}
       usedPercent={usedPercent}
       severity={usedPercent > 85 ? "running_low" : "healthy"}
       detail={`${formatProviderCurrency(Math.max(0, usedUsd))} / ${formatProviderCurrency(includedLimitUsd)}`}
@@ -1508,6 +1549,7 @@ export function ProviderRateLimitBody(
   },
 ): ReactNode {
   const state = resolveProviderRateLimitViewState(props);
+  const { t } = useTranslation("panels");
   // `isPending` alone stays `true` forever for a disabled query (e.g. a chat
   // tab bound to an unreachable host, where `useHostQuery` never enables) -
   // `resolveProviderRateLimitViewState` also gates on `isFetching` so that
@@ -1516,20 +1558,20 @@ export function ProviderRateLimitBody(
   if (state.kind === "loading") {
     return (
       <div className="flex items-center gap-2 text-ui-sm text-muted-foreground">
-        <MutedAgentSpinner /> Loading usage limits
+        <MutedAgentSpinner /> {t("Loading usage limits")}
       </div>
     );
   }
   if (state.kind === "error") {
     return (
       <div className="text-ui-sm text-destructive">
-        Couldn't load usage limits. Try refreshing.
+        {t("Couldn't load usage limits. Try refreshing.")}
         <ReportIssueAction
           context={createReportIssueContext({
-            title: "Couldn't load usage limits",
+            title: t("Couldn't load usage limits"),
             message: null,
             code: null,
-            source: "Provider usage limits",
+            source: t("Provider usage limits"),
           })}
           presentation="link"
           className="ml-1 h-auto p-0 text-current"
@@ -1543,7 +1585,9 @@ export function ProviderRateLimitBody(
     return (
       <div className="flex flex-col items-start gap-1.5">
         <p className="text-ui-xs text-muted-foreground">
-          Usage limits unavailable - {formatUnavailableReason(data.reason)}
+          {t("Usage limits unavailable - {{reason}}", {
+            reason: formatUnavailableReason(data.reason),
+          })}
         </p>
         {data.provider === "opencode" &&
         data.reason === "insufficient_permissions" &&
@@ -1601,13 +1645,14 @@ function StaleUsageRefreshNote({
   readonly degradedReason: RateLimitUnavailableReason | null;
 }): ReactNode {
   const ago = useRelativeTimestamp(lastGoodAt ?? 0);
+  const { t } = useTranslation("panels");
   const note =
     degradedReason !== null
       ? formatUnavailableReason(degradedReason)
-      : "refresh failed";
+      : t("refresh failed");
   return (
     <p className="text-ui-xs text-muted-foreground">
-      {lastGoodAt !== null ? `Updated ${ago} · ${note}` : note}
+      {lastGoodAt !== null ? t("Updated {{ago}} · {{note}}", { ago, note }) : note}
     </p>
   );
 }

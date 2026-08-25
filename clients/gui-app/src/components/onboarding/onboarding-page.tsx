@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { AnimatePresence, m } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { traycerInfo } from "@traycer-clients/shared/platform/traycer-info";
 import geistPixelSquareUrl from "@/assets/fonts/GeistPixel-Square.woff2?url";
 import onboardingBackdropUrl from "@/assets/brand/gradient-bg.jpg?url";
@@ -295,6 +296,7 @@ const ONBOARDING_STYLE = `
 
 function ActCopy(props: { act: OnboardingAct }) {
   const { act } = props;
+  const { t } = useTranslation("common");
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const isAgentsAct = act.addon === "agents";
 
@@ -314,7 +316,7 @@ function ActCopy(props: { act: OnboardingAct }) {
       )}
     >
       <p className="onboarding-copy-kicker hidden font-mono leading-normal font-medium tracking-[0.07em] text-white/55 uppercase lg:block">
-        {act.eyebrow}
+        {t(act.eyebrow)}
       </p>
       <div className="onboarding-copy-inner flex w-full flex-col items-center lg:items-start">
         <h1
@@ -322,10 +324,10 @@ function ActCopy(props: { act: OnboardingAct }) {
           tabIndex={-1}
           className="onboarding-title w-full min-w-0 max-w-full whitespace-pre-line break-words font-pixel font-normal tracking-normal text-white outline-none"
         >
-          {act.title}
+          {t(act.title)}
         </h1>
         <p className="onboarding-body w-full font-heading font-light text-white/70">
-          {act.body}
+          {t(act.body)}
         </p>
       </div>
       {isAgentsAct ? (
@@ -393,6 +395,7 @@ function OnboardingWordmark() {
 }
 
 export function OnboardingPage(props: { readonly replay: boolean }) {
+  const { t } = useTranslation("common");
   // Draft + provider-derived default live in one state object so the
   // query-sync effect mirrors them through a single trailing setState call
   // (React's effect-sync rule only permits the final statement to set state).
@@ -662,7 +665,7 @@ export function OnboardingPage(props: { readonly replay: boolean }) {
               disabled={agentGuideSaving}
               className="absolute right-10 flex h-9 items-center justify-center gap-2 rounded px-2 font-heading text-[0.875rem] leading-[1.125rem] font-normal tracking-normal text-white transition-colors hover:bg-white/10 disabled:pointer-events-none disabled:opacity-55 [@media(min-height:920px)]:h-10 [@media(min-height:920px)]:text-[0.9375rem] max-sm:right-5"
             >
-              <span>Skip intro</span>
+              <span>{t("Skip intro")}</span>
               <Kbd tone="light">Esc</Kbd>
             </button>
           </div>
@@ -733,7 +736,7 @@ export function OnboardingPage(props: { readonly replay: boolean }) {
             <div className="onboarding-actions absolute z-10 flex items-center justify-end gap-3">
               <div className="mr-auto flex min-w-0 max-w-[14rem] flex-1 flex-col gap-1.5 lg:hidden">
                 <p className="truncate font-mono text-[0.6875rem] leading-none font-medium tracking-[0.07em] text-white/55 uppercase">
-                  {act.eyebrow}
+                  {t(act.eyebrow)}
                 </p>
                 <ProgressRail activeIndex={step} />
               </div>
@@ -744,7 +747,7 @@ export function OnboardingPage(props: { readonly replay: boolean }) {
                   className="flex h-9 items-center justify-center gap-2 rounded px-3 font-heading text-[0.875rem] leading-[1.125rem] font-medium text-white transition-colors hover:bg-white/10 [@media(min-height:920px)]:h-10 [@media(min-height:920px)]:px-4 [@media(min-height:920px)]:text-[0.9375rem]"
                 >
                   <Kbd tone="light">←</Kbd>
-                  <span>Back</span>
+                  <span>{t("Back")}</span>
                 </button>
               ) : null}
               <button
@@ -756,7 +759,7 @@ export function OnboardingPage(props: { readonly replay: boolean }) {
                   "flex h-9 items-center justify-center gap-2 rounded bg-white px-3 font-heading text-[0.875rem] leading-[1.125rem] font-medium text-black transition-opacity hover:opacity-85 disabled:pointer-events-none disabled:opacity-55 [@media(min-height:920px)]:h-10 [@media(min-height:920px)]:px-4 [@media(min-height:920px)]:text-[0.9375rem]",
                 )}
               >
-                <span>{isLastAct ? "Start building" : "Continue"}</span>
+                <span>{isLastAct ? t("Start building") : t("Continue")}</span>
                 <Kbd tone="dark">→</Kbd>
               </button>
             </div>
@@ -773,6 +776,7 @@ export function OnboardingPage(props: { readonly replay: boolean }) {
 }
 
 function OnboardingFooterLinks() {
+  const { t } = useTranslation("common");
   const runnerHost = use(RunnerHostContext);
 
   const openInBrowser = useCallback((url: string) => {
@@ -794,7 +798,7 @@ function OnboardingFooterLinks() {
   );
 
   return (
-    <nav aria-label="Traycer footer links" className="hidden sm:block">
+    <nav aria-label={t("Traycer footer links")} className="hidden sm:block">
       <ul className="flex items-center gap-8">
         {ONBOARDING_FOOTER_LINKS.map((link) => (
           <li key={link.label}>
@@ -805,7 +809,7 @@ function OnboardingFooterLinks() {
               onClick={(event) => openFooterLink(event, link.url)}
               className="transition-colors hover:text-white/80"
             >
-              {link.label}
+              {t(link.label)}
             </a>
           </li>
         ))}

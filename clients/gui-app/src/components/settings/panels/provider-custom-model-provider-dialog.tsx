@@ -10,6 +10,7 @@ import {
   type SetStateAction,
 } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { MutedAgentSpinner } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import {
@@ -132,6 +133,7 @@ export function ProviderCustomModelProviderDialog(props: {
 
   const openExternalLink = useRunnerOpenExternalLink();
   const fieldId = useId();
+  const { t } = useTranslation("panels");
   const propTakenIds = props.takenIds;
   const initialId = initialValues?.modelProviderId ?? null;
   const takenIds = useMemo(
@@ -193,10 +195,10 @@ export function ProviderCustomModelProviderDialog(props: {
              * brand of its own, and borrowing one would put a real company's
              * logo on someone's private gateway. */}
             <GenericModelProviderIcon aria-hidden className="size-4 shrink-0" />
-            {editing ? "Edit custom provider" : "Custom provider"}
+            {editing ? t("Edit custom provider") : t("Custom provider")}
           </DialogTitle>
           <DialogDescription>
-            Configure an OpenAI-compatible provider. See the{" "}
+            {t("Configure an OpenAI-compatible provider. See the")}{" "}
             <button
               type="button"
               // The shell owns external navigation - the renderer has no
@@ -207,7 +209,7 @@ export function ProviderCustomModelProviderDialog(props: {
                 openExternalLink.mutate(CUSTOM_PROVIDER_DOCS_URL);
               }}
             >
-              provider config docs
+              {t("provider config docs")}
             </button>
             .
           </DialogDescription>
@@ -223,8 +225,8 @@ export function ProviderCustomModelProviderDialog(props: {
           <div className="flex w-full flex-col gap-4">
             <Field
               id={`${fieldId}-provider-id`}
-              label="Provider ID"
-              hint="Lowercase letters, numbers, hyphens, or underscores"
+              label={t("Provider ID")}
+              hint={t("Lowercase letters, numbers, hyphens, or underscores")}
               error={shown?.providerId ?? null}
             >
               <Input
@@ -249,7 +251,7 @@ export function ProviderCustomModelProviderDialog(props: {
 
             <Field
               id={`${fieldId}-name`}
-              label="Display name"
+              label={t("Display name")}
               hint={null}
               error={shown?.name ?? null}
             >
@@ -266,7 +268,7 @@ export function ProviderCustomModelProviderDialog(props: {
 
             <Field
               id={`${fieldId}-base-url`}
-              label="Base URL"
+              label={t("Base URL")}
               hint={null}
               error={shown?.baseUrl ?? null}
             >
@@ -287,7 +289,7 @@ export function ProviderCustomModelProviderDialog(props: {
 
             <Field
               id={`${fieldId}-api-key`}
-              label="API key"
+              label={t("API key")}
               hint={
                 editing
                   ? // The stored secret is never read back, so an edit cannot
@@ -297,15 +299,17 @@ export function ProviderCustomModelProviderDialog(props: {
                     // now, so the copy has to name it rather than promise that
                     // an empty field is always harmless: a restored
                     // `{env:VAR}` the user deletes is a deletion.
-                    "Optional. Untouched keeps the saved key and env fallbacks; clearing a restored {env:VAR} removes it."
-                  : "Optional. Leave empty if you manage auth via headers."
+                    t(
+                      "Optional. Untouched keeps the saved key and env fallbacks; clearing a restored {env:VAR} removes it.",
+                    )
+                  : t("Optional. Leave empty if you manage auth via headers.")
               }
               error={null}
             >
               <Input
                 id={`${fieldId}-api-key`}
                 value={draft.apiKey}
-                placeholder="API key"
+                placeholder={t("API key")}
                 type="password"
                 autoComplete="off"
                 spellCheck={false}
@@ -323,13 +327,15 @@ export function ProviderCustomModelProviderDialog(props: {
           </div>
 
           <RowSection
-            label="Models"
+            label={t("Models")}
             note={
               draft.models.some((model) => model.locked)
-                ? "Saved models can be renamed but not removed - their IDs are fixed. To drop one, disable this provider and declare it again under a new ID."
+                ? t(
+                    "Saved models can be renamed but not removed - their IDs are fixed. To drop one, disable this provider and declare it again under a new ID.",
+                  )
                 : null
             }
-            addLabel="Add model"
+            addLabel={t("Add model")}
             onAdd={() => {
               setDraft((current) => ({
                 ...current,
@@ -341,15 +347,17 @@ export function ProviderCustomModelProviderDialog(props: {
               <EditorRow
                 key={model.row}
                 rowId={`${fieldId}-model-${model.row}`}
-                firstLabel="ID"
+                firstLabel={t("ID")}
                 firstPlaceholder="model-id"
                 firstValue={model.id}
-                secondLabel="Name"
+                secondLabel={t("Name")}
                 secondPlaceholder="Display Name"
                 secondValue={model.name}
                 errors={shown?.models[index]}
                 locked={model.locked}
-                removeLabel={`Remove model ${String(index + 1)}`}
+                removeLabel={t("Remove model {{index}}", {
+                  index: index + 1,
+                })}
                 // Upstream keeps the last row: the section is required, and a
                 // list you can empty is one whose Add button is its only
                 // content.
@@ -381,13 +389,15 @@ export function ProviderCustomModelProviderDialog(props: {
           </RowSection>
 
           <RowSection
-            label="Headers (optional)"
+            label={t("Headers (optional)")}
             note={
               draft.headers.some((header) => header.locked)
-                ? "Saved headers can have their value changed but not be removed - their names are fixed. Dropping one takes the same route: disable this provider and declare it again."
+                ? t(
+                    "Saved headers can have their value changed but not be removed - their names are fixed. Dropping one takes the same route: disable this provider and declare it again.",
+                  )
                 : null
             }
-            addLabel="Add header"
+            addLabel={t("Add header")}
             onAdd={() => {
               setDraft((current) => ({
                 ...current,
@@ -399,15 +409,17 @@ export function ProviderCustomModelProviderDialog(props: {
               <EditorRow
                 key={header.row}
                 rowId={`${fieldId}-header-${header.row}`}
-                firstLabel="Header"
+                firstLabel={t("Header")}
                 firstPlaceholder="Header-Name"
                 firstValue={header.key}
-                secondLabel="Value"
+                secondLabel={t("Value")}
                 secondPlaceholder="value"
                 secondValue={header.value}
                 errors={shown?.headers[index]}
                 locked={header.locked}
-                removeLabel={`Remove header ${String(index + 1)}`}
+                removeLabel={t("Remove header {{index}}", {
+                  index: index + 1,
+                })}
                 removeDisabled={draft.headers.length <= 1}
                 onFirstChange={(value) => {
                   setDraft((current) => ({
@@ -450,11 +462,11 @@ export function ProviderCustomModelProviderDialog(props: {
                 props.onOpenChange(false);
               }}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={props.isPending}>
               {props.isPending ? <MutedAgentSpinner /> : null}
-              Submit
+              {t("Submit")}
             </Button>
           </div>
         </form>

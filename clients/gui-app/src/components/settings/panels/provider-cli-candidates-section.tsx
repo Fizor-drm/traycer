@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { ChevronDown, Info, Plus, TriangleAlert, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   PROVIDER_DISPLAY_NAMES,
   type ProviderCliCandidate,
@@ -40,6 +41,7 @@ import {
 import { useRunnerOpenExternalLink } from "@/hooks/runner/use-open-external-link-mutation";
 import { RunnerHostContext } from "@/providers/runner-host-context";
 import { useDebouncedValue } from "@/hooks/ui/use-debounced-value";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { cn } from "@/lib/utils";
 import { ProviderPackVersionManagerPanel } from "./provider-pack-version-manager-panel";
 import { useProviderPackVersionManagerSupport } from "./provider-pack-version-manager-capability";
@@ -330,10 +332,11 @@ function CliBinaryProbePendingNotice({
 }: {
   readonly providerLabel: string;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-foreground/2 p-3 text-ui-sm text-muted-foreground">
       <MutedAgentSpinner />
-      Looking for the {providerLabel} CLI…
+      {t("Looking for the {{provider}} CLI…", { provider: providerLabel })}
     </div>
   );
 }
@@ -347,11 +350,14 @@ function CliBinaryMissingNotice({
 }): ReactNode {
   const openExternalLink = useRunnerOpenExternalLink();
   const runnerHost = use(RunnerHostContext);
+  const { t } = useTranslation("panels");
   return (
     <div className="rounded-lg border border-border/60 bg-foreground/2 p-3 text-ui-sm text-muted-foreground">
       <p>
-        No {providerLabel} CLI was found on this machine, and Traycer ships no
-        bundled copy of it. Install it, or add its path below.
+        {t(
+          "No {{provider}} CLI was found on this machine, and Traycer ships no bundled copy of it. Install it, or add its path below.",
+          { provider: providerLabel },
+        )}
       </p>
       {installGuideUrl === null ? null : (
         <a
@@ -369,7 +375,7 @@ function CliBinaryMissingNotice({
           }}
           className="mt-1 inline-flex text-ui-xs font-medium text-primary transition-colors hover:text-primary/80 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 rounded"
         >
-          {providerLabel} installation guide
+          {t("{{provider}} installation guide", { provider: providerLabel })}
         </a>
       )}
     </div>
@@ -593,6 +599,7 @@ function CandidateTable({
   probeExecutable,
   probeVersion,
 }: CandidateTableProps): ReactNode {
+  const { t } = useTranslation("panels");
   return (
     <div
       className={cn(
@@ -607,10 +614,10 @@ function CandidateTable({
         )}
       >
         <span />
-        <span className={cn("min-w-0", TABLE_CELL_X)}>Path</span>
+        <span className={cn("min-w-0", TABLE_CELL_X)}>{t("Path")}</span>
         {/* Right-aligned to match the cell below it, which now holds nothing
             but the version, so every row's version lands on this edge. */}
-        <span className={cn("text-right", TABLE_CELL_X)}>Version</span>
+        <span className={cn("text-right", TABLE_CELL_X)}>{t("Version")}</span>
         <span />
       </div>
       {candidates.map((candidate) => (
@@ -673,6 +680,7 @@ function CustomPathForm({
   readonly executable: boolean | null;
   readonly version: string | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (!open) return null;
   return (
     // `col-span-4`: the table container is the shared grid the header and rows
@@ -699,10 +707,10 @@ function CustomPathForm({
           disabled={saving || draftPath.trim().length === 0}
         >
           {saving ? <MutedAgentSpinner /> : null}
-          Save
+          {t("Save")}
         </Button>
         <Button size="sm" variant="ghost" onClick={onCancel} disabled={saving}>
-          Cancel
+          {t("Cancel")}
         </Button>
       </div>
       <ProbeLine probing={probing} executable={executable} version={version} />
@@ -717,6 +725,7 @@ function AddCustomPathButton({
   readonly hidden: boolean;
   readonly onClick: () => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (hidden) return null;
   return (
     <button
@@ -724,7 +733,7 @@ function AddCustomPathButton({
       onClick={onClick}
       className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-md px-2 py-1 text-ui-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
     >
-      <Plus className="size-4" /> Add custom path
+      <Plus className="size-4" /> {t("Add custom path")}
     </button>
   );
 }
@@ -888,10 +897,11 @@ function CandidateSelectionControl({
   readonly busy: boolean;
   readonly onSelect: (selection: ProviderSelection) => void;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const label =
     candidate.kind === "bundled"
-      ? "Select bundled binary"
-      : `Select ${candidate.path}`;
+      ? t("Select bundled binary")
+      : t("Select {{path}}", { path: candidate.path });
   return (
     // `min-h-6` sets the row's content floor. Vertical padding lives on the row
     // wrapper now (so the status line sits INSIDE the row's box), which means
@@ -955,6 +965,7 @@ function ExternalCandidatePathCell({
   const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(
     null,
   );
+  const { t } = useTranslation("panels");
   return (
     <div className={cn("flex min-w-0 items-center gap-1", TABLE_CELL_X)}>
       <FilePathTooltip content={candidate.path} side="bottom">
@@ -982,7 +993,7 @@ function ExternalCandidatePathCell({
           <button
             ref={advisoryRef}
             type="button"
-            aria-label="Why this PATH binary is not used automatically"
+            aria-label={t("Why this PATH binary is not used automatically")}
             className="shrink-0 rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
           >
             <Info className="size-3.5" aria-hidden="true" />
@@ -1046,6 +1057,7 @@ function VersionMenuTrigger({
   const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(
     null,
   );
+  const { t } = useTranslation("panels");
   return (
     <Popover
       onOpenChange={(next) => {
@@ -1061,7 +1073,7 @@ function VersionMenuTrigger({
         <button
           ref={triggerRef}
           type="button"
-          aria-label={`${data.packDisplayName} version`}
+          aria-label={t("{{pack}} version", { pack: data.packDisplayName })}
           className="flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
         >
           <ChevronDown className="size-3.5" aria-hidden="true" />
@@ -1086,7 +1098,9 @@ function VersionMenuTrigger({
         {data.kind === "unavailable" ? (
           <div className="px-4 py-3" data-testid="version-manager-unavailable">
             <p className="text-ui-sm font-medium text-foreground">
-              {data.packDisplayName} versions are unavailable
+              {t("{{pack}} versions are unavailable", {
+                pack: data.packDisplayName,
+              })}
             </p>
             <p className="mt-1 text-ui-xs text-muted-foreground">
               {data.message}
@@ -1124,12 +1138,13 @@ function CandidateRowActions({
   readonly versionMenu: VersionManagerPanelData | null;
   readonly versionMenuHostId: string | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (candidate.kind === "custom") {
     return (
       <span className="flex items-center justify-center">
         <button
           type="button"
-          aria-label="Remove custom path"
+          aria-label={t("Remove custom path")}
           disabled={busy}
           onClick={() => onRemove(candidate.path)}
           className="flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
@@ -1152,19 +1167,24 @@ function CandidateRowActions({
 function versionLabel(candidate: ProviderCliCandidate): string {
   // Pending resolves INSIDE the column rather than replacing it with a spinner
   // and a label, so a probing row keeps the same shape as every other row.
-  if (candidate.versionPending) return "Checking…";
+  if (candidate.versionPending) {
+    return i18n.t("Checking…", { ns: "panels" });
+  }
   if (candidate.version !== null) return `v${candidate.version}`;
   if (candidate.kind === "bundled" && !candidate.available) {
-    return "Not installed";
+    return i18n.t("Not installed", { ns: "panels" });
   }
-  if (!candidate.available) return "Not found";
+  if (!candidate.available) return i18n.t("Not found", { ns: "panels" });
   return "-";
 }
 
 function differentVersionSessionsLabel(differingSessionCount: number): string {
   return differingSessionCount === 1
-    ? "1 running session uses a different version."
-    : `${differingSessionCount} running sessions use a different version.`;
+    ? i18n.t("1 running session uses a different version.", { ns: "panels" })
+    : i18n.t("{{count}} running sessions use a different version.", {
+        count: differingSessionCount,
+        ns: "panels",
+      });
 }
 
 /**
@@ -1251,7 +1271,11 @@ function rowStatusFor(args: {
       text:
         runningInstead === null
           ? detail
-          : `Running ${runningInstead}. ${detail}`,
+          : i18n.t("Running {{source}}. {{detail}}", {
+              source: runningInstead,
+              detail,
+              ns: "panels",
+            }),
       retryable:
         args.preparing !== null && providerPackRetryable(args.preparing),
     };
@@ -1264,13 +1288,19 @@ function rowStatusFor(args: {
       note:
         runningInstead === null
           ? null
-          : `Running ${runningInstead} until it's ready.`,
+          : i18n.t("Running {{source}} until it's ready.", {
+              source: runningInstead,
+              ns: "panels",
+            }),
     };
   }
   if (runningInstead !== null) {
     return {
       kind: "substituted",
-      text: `Not used right now — Traycer will start ${runningInstead} instead. Sessions already running keep the binary they started with.`,
+      text: i18n.t(
+        "Not used right now — Traycer will start {{source}} instead. Sessions already running keep the binary they started with.",
+        { source: runningInstead, ns: "panels" },
+      ),
     };
   }
   if (args.differingSessionCount > 0) {
@@ -1285,13 +1315,13 @@ function rowStatusFor(args: {
 function nextRunSourceLabel(nextRunBinary: ProviderNextRunBinary): string {
   switch (nextRunBinary.kind) {
     case "managed":
-      return "the managed copy";
+      return i18n.t("the managed copy", { ns: "panels" });
     case "bundled":
-      return "the bundled build";
+      return i18n.t("the bundled build", { ns: "panels" });
     case "path":
-      return "the copy on your PATH";
+      return i18n.t("the copy on your PATH", { ns: "panels" });
     case "custom":
-      return "your custom binary";
+      return i18n.t("your custom binary", { ns: "panels" });
   }
 }
 
@@ -1326,7 +1356,9 @@ function nextRunMatchesSelection(
 function bundledPathLabel(
   managedInstallState: ProviderManagedInstallState | null,
 ): string {
-  return managedInstallState === null ? "Bundled" : "Managed";
+  return managedInstallState === null
+    ? i18n.t("Bundled", { ns: "panels" })
+    : i18n.t("Managed", { ns: "panels" });
 }
 
 /**
@@ -1351,6 +1383,7 @@ function RowStatusLine({
   readonly onRetry: () => void;
   readonly retrying: boolean;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (status === null) return null;
   if (status.kind === "installing") {
     // Clamp before the value reaches a width or an accessible name. `percent`
@@ -1426,7 +1459,7 @@ function RowStatusLine({
           onClick={onRetry}
           className="shrink-0 rounded-md px-1.5 text-ui-xs font-medium text-primary underline-offset-2 transition-colors hover:underline disabled:opacity-50"
         >
-          Retry
+          {t("Retry")}
         </button>
       ) : null}
     </span>
@@ -1437,11 +1470,20 @@ function installProgressLabel(
   version: string | null,
   percent: number | null,
 ): string {
-  const versionLabel =
-    version === null ? "Installing" : `Installing v${version}`;
+  const base =
+    version === null
+      ? i18n.t("Installing", { ns: "panels" })
+      : i18n.t("Installing v{{version}}", {
+          version,
+          ns: "panels",
+        });
   return percent === null
-    ? `${versionLabel}…`
-    : `${versionLabel} · ${percent}%`;
+    ? i18n.t("{{label}}…", { label: base, ns: "panels" })
+    : i18n.t("{{label}} · {{percent}}%", {
+        label: base,
+        percent,
+        ns: "panels",
+      });
 }
 
 function candidateKey(candidate: ProviderCliCandidate): string {
@@ -1477,22 +1519,23 @@ function ProbeLine({
   readonly executable: boolean | null;
   readonly version: string | null;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   if (probing) {
     return (
       <div className="flex items-center gap-2 text-ui-xs text-muted-foreground">
-        <MutedAgentSpinner /> Checking
+        <MutedAgentSpinner /> {t("Checking")}
       </div>
     );
   }
   if (executable === null) return null;
   if (!executable) {
-    return <div className="text-ui-xs text-destructive">Not executable.</div>;
+    return <div className="text-ui-xs text-destructive">{t("Not executable.")}</div>;
   }
   return (
     <div className="text-ui-xs text-muted-foreground">
       {version === null
-        ? "Detected (no version reported)"
-        : `Detected v${version}`}
+        ? t("Detected (no version reported)")
+        : t("Detected v{{version}}", { version })}
     </div>
   );
 }

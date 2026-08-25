@@ -17,6 +17,7 @@ import { useTitleBarDragSuppression } from "@/stores/layout/title-bar-drag-store
 import { getSystemTabModalApi } from "@/stores/tabs/system-tab-modal-bridge";
 import { ExternalLink, LogOut, Settings } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Analytics, AnalyticsEvent } from "@/lib/analytics";
 import { formatChordForDisplay } from "@/lib/keybindings/chord";
 import { useBindingForAction } from "@/stores/settings/keybinding-store";
@@ -37,6 +38,7 @@ export interface UserMenuProps {
 export function UserMenu(props: UserMenuProps) {
   const auth = useAuthService();
   const runnerHost = useRunnerHost();
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState<boolean>(false);
   const settingsChord = useBindingForAction("app.settings.open");
   useTitleBarDragSuppression("user-menu", open);
@@ -56,7 +58,7 @@ export function UserMenu(props: UserMenuProps) {
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Open user menu"
+            aria-label={t("Open user menu")}
             data-testid="user-menu-trigger"
             className="rounded-full"
             onClick={() => {
@@ -106,7 +108,7 @@ export function UserMenu(props: UserMenuProps) {
             }}
           >
             <Settings className="size-3.5" />
-            App settings
+            {t("App settings")}
             {settingsChord === null ? null : (
               <DropdownMenuShortcut>
                 {formatChordForDisplay(settingsChord)}
@@ -127,7 +129,7 @@ export function UserMenu(props: UserMenuProps) {
           }}
         >
           <ExternalLink className="size-3.5" />
-          Manage subscription
+          {t("Manage subscription")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -142,7 +144,7 @@ export function UserMenu(props: UserMenuProps) {
           }}
         >
           <LogOut className="size-3.5" />
-          Sign out
+          {t("Sign out")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
-  HOST_PROGRESS_IDLE_HEADING,
+  hostProgressIdleHeading,
   type HostProgressView,
 } from "@/lib/host/host-progress-copy";
 import { Button } from "@/components/ui/button";
@@ -200,7 +201,7 @@ export function LocalHostLoadingContent(
           large-and-foreground-on-its-own-line as it did. The COPY still comes
           from D10's shared table. */}
       <HostBootHeadline
-        message={progressView?.heading ?? HOST_PROGRESS_IDLE_HEADING}
+        message={progressView?.heading ?? hostProgressIdleHeading()}
         spinnerVariant="sparkle"
         spinnerTestId="local-host-loading-spinner"
         messageTestId="local-host-loading-stage"
@@ -338,6 +339,7 @@ interface DetailsDisclosureProps {
  * shell-settings shortcut when they explicitly ask.
  */
 function DetailsDisclosure(props: DetailsDisclosureProps) {
+  const { t } = useTranslation("common");
   const Icon = props.open ? ChevronUp : ChevronDown;
   // The toggle names the region it expands. Kept in the DOM with `hidden`
   // rather than unmounted so the id `aria-controls` points at always resolves -
@@ -364,7 +366,9 @@ function DetailsDisclosure(props: DetailsDisclosureProps) {
           // left-aligned, and there is no longer a left edge for it to violate.
           className="inline-flex items-center gap-1 text-ui-xs text-muted-foreground hover:text-foreground"
         >
-          <span>{props.open ? "Hide details" : "Show details"}</span>
+          <span>
+            {props.open ? t("Hide details") : t("Show details")}
+          </span>
           <Icon className="size-3" />
         </button>
         {props.trailing}
@@ -386,7 +390,7 @@ function DetailsDisclosure(props: DetailsDisclosureProps) {
                 onClick={props.onConfigureShell}
                 data-testid="local-host-open-shell-settings"
               >
-                Configure shell…
+                {t("Configure shell…")}
               </Button>
             </div>
           </>
@@ -406,6 +410,7 @@ interface BootstrapLogTailProps {
  * `tail -f` in a terminal pane.
  */
 function BootstrapLogTail(props: BootstrapLogTailProps) {
+  const { t } = useTranslation("common");
   const ref = useRef<HTMLPreElement | null>(null);
 
   useEffect(() => {
@@ -452,7 +457,7 @@ function BootstrapLogTail(props: BootstrapLogTailProps) {
         // muted-fill-ok: weak tint delimited by its own border-border/60
         className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-left text-ui-xs text-muted-foreground"
       >
-        Waiting for bootstrap output…
+        {t("Waiting for bootstrap output…")}
       </p>
     );
   }

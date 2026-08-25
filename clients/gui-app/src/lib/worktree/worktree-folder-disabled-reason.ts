@@ -1,4 +1,5 @@
 import type { WorktreeBindingSelectorRowV12 } from "@traycer/protocol/host";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { isWorkspaceResolvePending } from "@/lib/worktree/worktree-row-resolve-pending";
 
 /**
@@ -66,52 +67,66 @@ export function worktreeFolderRowBadge(
   if (hasBlockingWorktreeSelectorReason(row)) {
     if (isWorkspaceResolvePending(row)) {
       return {
-        label: "checking",
+        label: i18n.t("checking", { ns: "common" }),
         pending: true,
         disabled: true,
         tone: "neutral",
-        detail: "Checking whether the worktree is available.",
+        detail: i18n.t("Checking whether the worktree is available.", {
+          ns: "common",
+        }),
       };
     }
     const label = formatWorktreeFolderDisabledReason(row);
     return label === null
       ? null
       : {
-          label,
+          label: i18n.t(label, { ns: "common" }),
           pending: false,
           disabled: true,
           tone: "error",
           detail:
             label === "missing"
-              ? "This worktree is unavailable because its directory could not be found."
-              : "This workspace is unavailable.",
+              ? i18n.t(
+                  "This worktree is unavailable because its directory could not be found.",
+                  { ns: "common" },
+                )
+              : i18n.t("This workspace is unavailable.", { ns: "common" }),
         };
   }
   if (row.setupState === "pending" || row.disabledReason === "setup_pending") {
     return {
-      label: "setup pending",
+      label: i18n.t("setup pending", { ns: "common" }),
       pending: false,
       disabled: false,
       tone: "neutral",
-      detail: "The worktree is ready to use. Setup is waiting to start.",
+      detail: i18n.t(
+        "The worktree is ready to use. Setup is waiting to start.",
+        { ns: "common" },
+      ),
     };
   }
   if (row.setupState === "running" || row.disabledReason === "setup_running") {
     return {
-      label: "setting up",
+      label: i18n.t("setting up", { ns: "common" }),
       pending: true,
       disabled: false,
       tone: "neutral",
-      detail: "The worktree is ready to use while setup continues.",
+      detail: i18n.t(
+        "The worktree is ready to use while setup continues.",
+        { ns: "common" },
+      ),
     };
   }
   if (row.setupState === "failed" || row.disabledReason === "setup_failed") {
     return {
-      label: "setup failed",
+      label: i18n.t("setup failed", { ns: "common" }),
       pending: false,
       disabled: false,
       tone: "warning",
-      detail: "Setup did not complete, but the worktree is still usable.",
+      detail: i18n.t(
+        "Setup did not complete, but the worktree is still usable.",
+        { ns: "common" },
+      ),
     };
   }
   if (
@@ -119,11 +134,14 @@ export function worktreeFolderRowBadge(
     row.disabledReason === "setup_cancelled"
   ) {
     return {
-      label: "setup cancelled",
+      label: i18n.t("setup cancelled", { ns: "common" }),
       pending: false,
       disabled: false,
       tone: "warning",
-      detail: "Setup was cancelled, but the worktree is still usable.",
+      detail: i18n.t(
+        "Setup was cancelled, but the worktree is still usable.",
+        { ns: "common" },
+      ),
     };
   }
   return null;

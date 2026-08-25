@@ -1,4 +1,5 @@
 import { useCallback, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { RefreshIcon } from "@/components/refresh-icon";
 import { Button } from "@/components/ui/button";
 import { ConfirmDestructiveDialog } from "@/components/ui/confirm-destructive-dialog";
@@ -26,6 +27,7 @@ function SharingPanelContent(props: {
   readonly epicId: string;
   readonly controller: SharingPanelController;
 }) {
+  const { t } = useTranslation("canvas");
   const {
     canInvitePeople,
     showTeams,
@@ -49,7 +51,7 @@ function SharingPanelContent(props: {
       ) : null}
 
       <PanelSection
-        title="People with access"
+        title={t("People with access")}
         hint={peopleHint}
         className={undefined}
       >
@@ -57,7 +59,7 @@ function SharingPanelContent(props: {
       </PanelSection>
 
       {showTeams ? (
-        <PanelSection title="Teams" hint={teamHint} className={undefined}>
+        <PanelSection title={t("Teams")} hint={teamHint} className={undefined}>
           <TeamsAccess {...teamsProps} />
         </PanelSection>
       ) : null}
@@ -72,7 +74,7 @@ function SharingPanelContent(props: {
         title={revokeDialogProps.title}
         description={revokeDialogProps.description}
         cascadeSummary={null}
-        actionLabel="Remove"
+        actionLabel={t("Remove")}
         isPending={revokeDialogProps.isPending}
         onConfirm={revokeDialogProps.onConfirm}
       />
@@ -81,6 +83,7 @@ function SharingPanelContent(props: {
 }
 
 function SharingPanelHeader(props: SharingRefreshProps) {
+  const { t } = useTranslation("canvas");
   const { isRefreshing, lastFetchedAt, onRefresh } = props;
   const refreshCollaborators = useCallback(async () => {
     await onRefresh();
@@ -97,11 +100,11 @@ function SharingPanelHeader(props: SharingRefreshProps) {
         {lastFetchedAt !== null ? (
           <LastFetchedLabel timestamp={lastFetchedAt} />
         ) : (
-          "Loading…"
+          t("Loading…")
         )}
       </span>
       <TooltipWrapper
-        label="Refresh"
+        label={t("Refresh")}
         side="top"
         sideOffset={undefined}
         align={undefined}
@@ -112,7 +115,7 @@ function SharingPanelHeader(props: SharingRefreshProps) {
           size="icon-sm"
           onClick={refresh.trigger}
           disabled={refresh.refreshing}
-          aria-label="Refresh collaborators"
+          aria-label={t("Refresh collaborators")}
           data-testid="epic-sharing-refresh-button"
         >
           <RefreshIcon
@@ -128,8 +131,9 @@ function SharingPanelHeader(props: SharingRefreshProps) {
 }
 
 function LastFetchedLabel(props: { readonly timestamp: number }) {
+  const { t } = useTranslation("canvas");
   const relative = useRelativeTimestamp(props.timestamp);
-  return <>Updated {relative}</>;
+  return <>{t("Updated {{relative}}", { relative })}</>;
 }
 
 function PanelSection(props: {

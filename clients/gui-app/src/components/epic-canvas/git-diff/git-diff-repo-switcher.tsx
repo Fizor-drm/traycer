@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import { Check, FileText, FolderGit2, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import type { WorktreeBindingSelectorRowV12 } from "@traycer/protocol/host";
 import { Badge } from "@/components/ui/badge";
 import { WorktreeRowStatusBadge } from "@/components/worktree/worktree-row-status-badge";
@@ -54,6 +56,7 @@ export interface GitDiffRepoSwitcherProps {
 export function GitDiffRepoSwitcher(
   props: GitDiffRepoSwitcherProps,
 ): ReactNode {
+  const { t } = useTranslation("canvas");
   const [searchQuery, setSearchQuery] = useState("");
   const contentId = useId();
   const model = useMemo(
@@ -75,7 +78,7 @@ export function GitDiffRepoSwitcher(
   return (
     <Popover open={props.open} onOpenChange={props.onOpenChange}>
       <TooltipWrapper
-        label={triggerTooltip(model)}
+        label={triggerTooltip(model, t)}
         side="top"
         sideOffset={undefined}
         align={undefined}
@@ -93,7 +96,7 @@ export function GitDiffRepoSwitcher(
             }
             testId={props.triggerTestId}
             className={props.triggerClassName}
-            aria-label={triggerAccessibleName(model)}
+            aria-label={triggerAccessibleName(model, t)}
             aria-haspopup="dialog"
             aria-expanded={props.open}
             aria-controls={props.open ? contentId : undefined}
@@ -104,7 +107,7 @@ export function GitDiffRepoSwitcher(
       <PopoverContent
         id={contentId}
         role="dialog"
-        aria-label="Git workspace selector"
+        aria-label={t("Git workspace selector")}
         align="start"
         className={cn("w-[min(90vw,30rem)] gap-0 p-0", props.contentClassName)}
         data-testid={props.contentTestId}
@@ -131,26 +134,32 @@ export function GitDiffRepoSwitcher(
   );
 }
 
-function triggerAccessibleName(model: GitDiffRepoSwitcherModel): string {
-  const moduleLabel = changedSubmoduleLabel(model.trigger.moduleChangeCount);
-  const fileLabel = changedFileLabel(model.trigger.fileChangeCount);
-  const stateLabel = model.trigger.unavailable ? "unavailable" : null;
-  return ["Git workspace", model.trigger.label, model.trigger.secondaryLabel]
+function triggerAccessibleName(
+  model: GitDiffRepoSwitcherModel,
+  t: TFunction<"canvas">,
+): string {
+  const moduleLabel = changedSubmoduleLabel(model.trigger.moduleChangeCount, t);
+  const fileLabel = changedFileLabel(model.trigger.fileChangeCount, t);
+  const stateLabel = model.trigger.unavailable ? t("unavailable") : null;
+  return [t("Git workspace"), model.trigger.label, model.trigger.secondaryLabel]
     .concat(moduleLabel === null ? [] : [moduleLabel])
     .concat(fileLabel === null ? [] : [fileLabel])
     .concat(stateLabel === null ? [] : [stateLabel])
     .join(", ");
 }
 
-function triggerTooltip(model: GitDiffRepoSwitcherModel): string {
-  const moduleLabel = changedSubmoduleLabel(model.trigger.moduleChangeCount);
-  const fileLabel = changedFileLabel(model.trigger.fileChangeCount);
+function triggerTooltip(
+  model: GitDiffRepoSwitcherModel,
+  t: TFunction<"canvas">,
+): string {
+  const moduleLabel = changedSubmoduleLabel(model.trigger.moduleChangeCount, t);
+  const fileLabel = changedFileLabel(model.trigger.fileChangeCount, t);
   return [
-    `Workspace: ${model.trigger.label}`,
-    `Path: ${model.trigger.secondaryLabel}`,
+    t("Workspace: {{name}}", { name: model.trigger.label }),
+    t("Path: {{path}}", { path: model.trigger.secondaryLabel }),
     moduleLabel === null ? null : moduleLabel,
     fileLabel === null ? null : fileLabel,
-    model.trigger.unavailable ? "Status: unavailable" : null,
+    model.trigger.unavailable ? t("Status: unavailable") : null,
   ]
     .filter((line): line is string => line !== null)
     .join("\n");
@@ -167,6 +176,7 @@ export interface GitDiffRepoSwitcherDropdownProps {
 export function GitDiffRepoSwitcherDropdown(
   props: GitDiffRepoSwitcherDropdownProps,
 ): ReactNode {
+  const { t } = useTranslation("canvas");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const { autoFocusSearch } = props;
 
@@ -181,12 +191,12 @@ export function GitDiffRepoSwitcherDropdown(
 
   return (
     <section
-      aria-label="Workspaces"
+      aria-label={t("Workspaces")}
       className="p-2.5"
       data-testid="git-diff-repo-switcher-dropdown"
     >
       <div className="px-1 text-ui-xs font-medium tracking-wide text-muted-foreground/70 uppercase">
-        Workspaces
+        {t("Workspaces")}
       </div>
       <div className="pt-2 pb-2">
         <InputGroup className="h-8! rounded-lg border-input/40 bg-input/25 shadow-none! *:data-[slot=input-group-addon]:pl-2!">
@@ -194,8 +204,10 @@ export function GitDiffRepoSwitcherDropdown(
             ref={searchInputRef}
             value={props.searchQuery}
             onChange={handleSearchChange}
-            placeholder="Search branch, workspace, submodule, or path..."
-            aria-label="Search workspaces"
+            placeholder={t(
+              "Search branch, workspace, submodule, or path...",
+            )}
+            aria-label={t("Search workspaces")}
           />
           <InputGroupAddon>
             <Search className="size-4" aria-hidden />
@@ -204,12 +216,12 @@ export function GitDiffRepoSwitcherDropdown(
       </div>
       <div
         role="listbox"
-        aria-label="Workspaces"
+        aria-label={t("Workspaces")}
         className="no-scrollbar max-h-[min(45vh,20rem)] overflow-y-auto"
       >
         {props.model.visibleRows.length === 0 ? (
           <div className="px-2 py-6 text-center text-ui-sm text-muted-foreground">
-            No workspaces found.
+            {t("No workspaces found.")}
           </div>
         ) : (
           props.model.visibleRows.map((row) => (
@@ -343,6 +355,7 @@ function RepoSwitcherRowIcon(): ReactNode {
 function RepoSwitcherRowMarker(props: {
   readonly row: GitDiffRepoSwitcherRow;
 }): ReactNode {
+  const { t } = useTranslation("canvas");
   const { row } = props;
   if (row.disabledLabel !== null) {
     const status = row.statusBadge;
@@ -351,7 +364,7 @@ function RepoSwitcherRowMarker(props: {
         label={row.disabledLabel}
         pending={row.pending}
         tone={status?.tone ?? "error"}
-        detail={status?.detail ?? "This workspace is unavailable."}
+        detail={status?.detail ?? t("This workspace is unavailable.")}
       />
     );
   }
@@ -377,8 +390,9 @@ function GitDiffCountBadges(props: {
   readonly fileChangeCount: number | null;
   readonly moduleChangeCount: number | null;
 }): ReactNode {
-  const moduleLabel = changedSubmoduleLabel(props.moduleChangeCount);
-  const fileLabel = changedFileLabel(props.fileChangeCount);
+  const { t } = useTranslation("canvas");
+  const moduleLabel = changedSubmoduleLabel(props.moduleChangeCount, t);
+  const fileLabel = changedFileLabel(props.fileChangeCount, t);
   if (moduleLabel === null && fileLabel === null) return null;
   return (
     <span className="flex shrink-0 items-center gap-1">
@@ -420,12 +434,22 @@ function GitDiffCountBadges(props: {
   );
 }
 
-function changedSubmoduleLabel(count: number | null): string | null {
+function changedSubmoduleLabel(
+  count: number | null,
+  t: TFunction<"canvas">,
+): string | null {
   if (count === null || count === 0) return null;
-  return count === 1 ? "1 changed submodule" : `${count} changed submodules`;
+  return count === 1
+    ? t("1 changed submodule")
+    : t("{{count}} changed submodules", { count });
 }
 
-function changedFileLabel(count: number | null): string | null {
+function changedFileLabel(
+  count: number | null,
+  t: TFunction<"canvas">,
+): string | null {
   if (count === null || count === 0) return null;
-  return count === 1 ? "1 changed file" : `${count} changed files`;
+  return count === 1
+    ? t("1 changed file")
+    : t("{{count}} changed files", { count });
 }

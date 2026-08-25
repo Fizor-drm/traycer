@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import type { UserSessionListItem } from "@traycer/protocol/auth/devices-sessions";
 import {
   Clock,
@@ -49,70 +51,93 @@ interface SessionMutation {
   readonly mutateAsync: (input: RevokeUserSessionInput) => Promise<unknown>;
 }
 
-function sessionClientLabel(session: UserSessionListItem): string {
+function sessionClientLabel(
+  session: UserSessionListItem,
+  t: TFunction<"panels">,
+): string {
   switch (session.clientKind) {
     case "web":
-      return "Web";
+      return t("Web");
     case "desktop":
-      return "Desktop";
+      return t("Desktop");
     case "cli":
-      return "CLI";
+      return t("CLI");
     case "extension":
-      return "Extension";
+      return t("Extension");
     case "host":
-      return "Host";
+      return t("Host");
     default:
-      return "Unknown client";
+      return t("Unknown client");
   }
 }
 
-function sessionDisplayLine(session: UserSessionListItem): string {
+function sessionDisplayLine(
+  session: UserSessionListItem,
+  t: TFunction<"panels">,
+): string {
   const parts = [
     session.displayLabel,
     session.platform,
-    session.appVersion === null ? null : `App ${session.appVersion}`,
+    session.appVersion === null ? null : t("App {{version}}", { version: session.appVersion }),
     // Coarse (city/region-level) and the strongest "is this me?" signal on the
     // row - a session in the wrong place is what a user actually scans for.
     session.location,
   ].filter((part): part is string => part !== null && part.trim().length > 0);
-  return parts.length === 0 ? "Session details unavailable" : parts.join(" / ");
+  return parts.length === 0
+    ? t("Session details unavailable")
+    : parts.join(" / ");
 }
 
-function formatRelativeTime(value: string): string {
+function formatRelativeTime(value: string, t: TFunction<"panels">): string {
   const timestamp = Date.parse(value);
   if (Number.isNaN(timestamp)) {
-    return "unknown";
+    return t("unknown");
   }
   const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1_000));
   if (seconds < 60) {
-    return "just now";
+    return t("just now");
   }
   const minutes = Math.round(seconds / 60);
   if (minutes < 60) {
-    return minutes === 1 ? "1 minute ago" : `${minutes} minutes ago`;
+    return minutes === 1
+      ? t("1 minute ago")
+      : t("{{count}} minutes ago", { count: minutes });
   }
   const hours = Math.round(minutes / 60);
   if (hours < 24) {
-    return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
+    return hours === 1 ? t("1 hour ago") : t("{{count}} hours ago", { count: hours });
   }
   const days = Math.round(hours / 24);
   if (days < 30) {
-    return days === 1 ? "1 day ago" : `${days} days ago`;
+    return days === 1 ? t("1 day ago") : t("{{count}} days ago", { count: days });
   }
   return SESSION_ABSOLUTE_TIME_FORMATTER.format(new Date(timestamp));
 }
 
-function sessionStatusLine(session: UserSessionListItem): string {
+function sessionStatusLine(
+  session: UserSessionListItem,
+  t: TFunction<"panels">,
+): string {
   if (session.revoked) {
     return session.revokedAt === null
-      ? "Signed out"
-      : `Signed out ${formatRelativeTime(session.revokedAt)}`;
+      ? t("Signed out")
+      : t("Signed out {{time}}", {
+          time: formatRelativeTime(session.revokedAt, t),
+        });
   }
-  return `Last seen ${formatRelativeTime(session.lastSeenAt)}`;
+  return t("Last seen {{time}}", {
+    time: formatRelativeTime(session.lastSeenAt, t),
+  });
 }
 
-function sessionTimelineLine(session: UserSessionListItem): string {
-  return `Created ${formatRelativeTime(session.createdAt)} · ${sessionStatusLine(session)}`;
+function sessionTimelineLine(
+  session: UserSessionListItem,
+  t: TFunction<"panels">,
+): string {
+  return t("Created {{created}} · {{status}}", {
+    created: formatRelativeTime(session.createdAt, t),
+    status: sessionStatusLine(session, t),
+  });
 }
 
 function sortSessions(
@@ -145,6 +170,7 @@ function sessionIcon(session: UserSessionListItem): ReactNode {
 }
 
 export function DevicesSessionsPanel() {
+  const { t } = useTranslation("panels");
   const signedIn = useAuthStore((s) => s.status === "signed-in");
   const binding = useHostBinding();
   const query = useAuthFetchUserSessions();
@@ -259,16 +285,19 @@ export function DevicesSessionsPanel() {
   return (
     <>
       <SettingsPanelShell
-        title="Sessions"
-        description="Review where your account is signed in and remove access you no longer recognize."
+        title={t("Sessions")}
+        description={t(
+          "Review where your account is signed in and remove access you no longer recognize.",
+        )}
       >
         <div className="flex flex-col">
           <div className="flex flex-col gap-3 border-b border-border/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 space-y-1">
-              <h2 className="text-ui font-medium">Signed-in sessions</h2>
+              <h2 className="text-ui font-medium">{t("Signed-in sessions")}</h2>
               <p className="text-ui-xs text-muted-foreground">
-                Browser, desktop, CLI, extension, and host access for this
-                account.
+                {t(
+                  "Browser, desktop, CLI, extension, and host access for this account.",
+                )}
               </p>
             </div>
             <Button
@@ -279,7 +308,7 @@ export function DevicesSessionsPanel() {
               onClick={() => void handleRevokeAll()}
             >
               <LogOut className="size-3.5" />
-              Sign out everywhere
+              {t("Sign out everywhere")}
               {revokeAllSessions.isPending ? (
                 <AgentSpinningDots
                   className="text-current"
@@ -324,10 +353,11 @@ function DevicesSessionsBody(props: {
     mutation: SessionMutation,
   ) => Promise<void>;
 }) {
+  const { t } = useTranslation("panels");
   if (!props.signedIn) {
     return (
       <div className="px-5 py-6 text-ui-sm text-muted-foreground">
-        Sign in to see your sessions.
+        {t("Sign in to see your sessions.")}
       </div>
     );
   }
@@ -338,7 +368,7 @@ function DevicesSessionsBody(props: {
     return (
       <div className="flex items-start gap-3 px-5 py-6 text-ui-sm text-destructive">
         <ShieldAlert className="mt-0.5 size-4 shrink-0" />
-        <span>Couldn&apos;t load your sessions. Retrying...</span>
+        <span>{t("Couldn't load your sessions. Retrying...")}</span>
       </div>
     );
   }
@@ -355,7 +385,7 @@ function DevicesSessionsBody(props: {
       )}
       {props.sessions.length === 0 ? (
         <div className="px-5 py-6 text-ui-sm text-muted-foreground">
-          No signed-in sessions found.
+          {t("No signed-in sessions found.")}
         </div>
       ) : (
         <ul className="divide-y divide-border/60">
@@ -394,6 +424,7 @@ function SessionRow(props: {
   ) => Promise<void>;
 }) {
   const { session } = props;
+  const { t } = useTranslation("panels");
   const mutation = useAuthRevokeUserSession(session.familyId);
   const pending =
     mutation.isPending || props.activeSessionFamilyId === session.familyId;
@@ -412,21 +443,23 @@ function SessionRow(props: {
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-ui-sm font-medium text-foreground">
-              {session.current ? "This session" : "Session"}
+              {session.current ? t("This session") : t("Session")}
             </span>
-            <Badge variant="outline">{sessionClientLabel(session)}</Badge>
+            <Badge variant="outline">{sessionClientLabel(session, t)}</Badge>
             {session.revoked ? (
               <Badge variant="outline" className="text-muted-foreground">
-                Signed out
+                {t("Signed out")}
               </Badge>
             ) : null}
           </div>
           <p className="text-ui-sm text-muted-foreground wrap-anywhere">
-            {sessionDisplayLine(session)}
+            {sessionDisplayLine(session, t)}
           </p>
           <p className="flex items-center gap-1.5 text-ui-xs text-muted-foreground">
             <Clock className="size-3.5" />
-            {pending ? "Signing out" : sessionTimelineLine(session)}
+            {pending
+              ? t("Signing out")
+              : sessionTimelineLine(session, t)}
           </p>
         </div>
       </div>
@@ -438,7 +471,7 @@ function SessionRow(props: {
         onClick={() => void props.onRevokeSession(session, mutation)}
       >
         <LogOut className="size-3.5" />
-        Sign out
+        {t("Sign out")}
         {pending ? (
           <AgentSpinningDots
             className="text-current"

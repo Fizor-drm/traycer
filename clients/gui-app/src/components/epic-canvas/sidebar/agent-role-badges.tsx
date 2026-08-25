@@ -1,5 +1,6 @@
 import type { RoleClaim } from "@traycer/protocol/persistence/epic/role-claims";
 import { Tag } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 
@@ -11,13 +12,14 @@ export function AgentRoleHoverContent(props: {
   readonly agentName: string;
   readonly claims: readonly RoleClaim[];
 }) {
+  const { t } = useTranslation("canvas");
   return (
     <div
       className="flex max-w-[min(80vw,20rem)] flex-col gap-1.5"
       data-testid="agent-role-hover-content"
     >
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-ui-xs font-medium">Agent roles</span>
+        <span className="text-ui-xs font-medium">{t("Agent roles")}</span>
         <span className="break-words text-ui-xs text-muted-foreground">
           {props.agentName}
         </span>
@@ -29,7 +31,7 @@ export function AgentRoleHoverContent(props: {
               {claim.role}
             </span>
             <span className="break-words text-ui-xs text-muted-foreground">
-              Scope · {claim.scope}
+              {t("Scope · {{scope}}", { scope: claim.scope })}
             </span>
           </div>
         ))}
@@ -40,12 +42,16 @@ export function AgentRoleHoverContent(props: {
 
 export function AgentRoleBadges(props: AgentRoleBadgesProps) {
   const { claims } = props;
+  const { t } = useTranslation("canvas");
   if (claims.length === 0) return null;
   const singleRole = claims.length === 1 ? claims[0] : null;
   const roleCountLabel =
     singleRole === null
-      ? `${claims.length} roles`
-      : `Role ${singleRole.role}, scope ${singleRole.scope}`;
+      ? t("{{count}} roles", { count: claims.length })
+      : t("Role {{role}}, scope {{scope}}", {
+          role: singleRole.role,
+          scope: singleRole.scope,
+        });
   return (
     <TooltipWrapper
       label={roleCountLabel}

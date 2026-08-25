@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { NotificationHookConfig } from "@traycer/protocol/host/notifications/host-notifications";
 import {
   draftProblem,
@@ -37,6 +38,7 @@ export function NotificationHookEditorDialog(props: {
 }) {
   const [draft, setDraft] = useState(props.initialDraft);
   const problem = draftProblem(draft);
+  const { t } = useTranslation("panels");
   return (
     <Dialog
       open
@@ -48,19 +50,20 @@ export function NotificationHookEditorDialog(props: {
         <DialogHeader>
           <DialogTitle>{props.title}</DialogTitle>
           <DialogDescription>
-            Runs on notifications of the selected severities. The payload names
-            the exact event, so a script or endpoint can branch further.
+            {t(
+              "Runs on notifications of the selected severities. The payload names the exact event, so a script or endpoint can branch further.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="hook-name">Name</Label>
+              <Label htmlFor="hook-name">{t("Name")}</Label>
               <Input
                 id="hook-name"
                 value={draft.name}
-                placeholder="Slack alerts"
+                placeholder={t("Slack alerts")}
                 onChange={(event) => {
                   const name = event.target.value;
                   setDraft((previous) => ({ ...previous, name }));
@@ -68,7 +71,7 @@ export function NotificationHookEditorDialog(props: {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="hook-type">Action</Label>
+              <Label htmlFor="hook-type">{t("Action")}</Label>
               <Select
                 value={draft.actionType}
                 onValueChange={(value) => {
@@ -82,8 +85,8 @@ export function NotificationHookEditorDialog(props: {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="command">Run a script</SelectItem>
-                  <SelectItem value="http">POST to a URL</SelectItem>
+                  <SelectItem value="command">{t("Run a script")}</SelectItem>
+                  <SelectItem value="http">{t("POST to a URL")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -92,7 +95,7 @@ export function NotificationHookEditorDialog(props: {
           {draft.actionType === "http" ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="hook-url">URL</Label>
+                <Label htmlFor="hook-url">{t("URL")}</Label>
                 <Input
                   id="hook-url"
                   value={draft.url}
@@ -104,7 +107,7 @@ export function NotificationHookEditorDialog(props: {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="hook-headers">Headers</Label>
+                <Label htmlFor="hook-headers">{t("Headers")}</Label>
                 <Textarea
                   id="hook-headers"
                   value={draft.headersText}
@@ -117,16 +120,18 @@ export function NotificationHookEditorDialog(props: {
                   }}
                 />
                 <p className="text-ui-xs text-muted-foreground">
-                  One <code>name: value</code> per line. <code>$VAR</code> and{" "}
-                  <code>{"${VAR}"}</code> read the host&apos;s shell environment
-                  at send time — the value is never stored or shown here.
+                  {t("One")} <code>name: value</code> {t("per line.")}{" "}
+                  <code>$VAR</code> {t("and")} <code>{"${VAR}"}</code>{" "}
+                  {t(
+                    "read the host's shell environment at send time — the value is never stored or shown here.",
+                  )}
                 </p>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="hook-command">Executable</Label>
+                <Label htmlFor="hook-command">{t("Executable")}</Label>
                 <Input
                   id="hook-command"
                   value={draft.command}
@@ -139,7 +144,7 @@ export function NotificationHookEditorDialog(props: {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="hook-args">Arguments</Label>
+                <Label htmlFor="hook-args">{t("Arguments")}</Label>
                 <Textarea
                   id="hook-args"
                   value={draft.argsText}
@@ -152,8 +157,9 @@ export function NotificationHookEditorDialog(props: {
                   }}
                 />
                 <p className="text-ui-xs text-muted-foreground">
-                  One argument per line. Run directly (no shell); the event JSON
-                  arrives on stdin.
+                  {t(
+                    "One argument per line. Run directly (no shell); the event JSON arrives on stdin.",
+                  )}
                 </p>
               </div>
             </div>
@@ -161,7 +167,7 @@ export function NotificationHookEditorDialog(props: {
 
           <fieldset className="space-y-2">
             <legend className="text-ui-sm font-medium text-foreground">
-              Severities
+              {t("Severities")}
             </legend>
             <div className="overflow-hidden rounded-md border border-border/60">
               {HOOK_SEVERITIES.map((severity) => (
@@ -171,15 +177,17 @@ export function NotificationHookEditorDialog(props: {
                 >
                   <div className="min-w-0">
                     <div className="text-ui-sm font-medium text-foreground">
-                      {severity.label}
+                      {t(severity.label)}
                     </div>
                     <p className="mt-1 text-ui-xs text-muted-foreground">
-                      {severity.description}
+                      {t(severity.description)}
                     </p>
                   </div>
                   <Switch
                     checked={draft.severities.includes(severity.id)}
-                    aria-label={`${severity.label} hook deliveries`}
+                    aria-label={t("{{label}} hook deliveries", {
+                      label: t(severity.label),
+                    })}
                     onCheckedChange={(checked) => {
                       setDraft((previous) => ({
                         ...previous,
@@ -204,15 +212,17 @@ export function NotificationHookEditorDialog(props: {
                 setDraft((previous) => ({ ...previous, enabled }));
               }}
             />
-            <Label htmlFor="hook-enabled">Enabled</Label>
+            <Label htmlFor="hook-enabled">{t("Enabled")}</Label>
           </div>
         </div>
 
         <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-ui-xs text-destructive">{problem ?? ""}</p>
+          <p className="text-ui-xs text-destructive">
+            {problem === null ? "" : t(problem)}
+          </p>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={props.onCancel}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               type="button"
@@ -228,7 +238,7 @@ export function NotificationHookEditorDialog(props: {
                   variant={undefined}
                 />
               ) : null}
-              Save hook
+              {t("Save hook")}
             </Button>
           </div>
         </DialogFooter>

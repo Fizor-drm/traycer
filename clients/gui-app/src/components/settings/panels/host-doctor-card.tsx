@@ -40,6 +40,7 @@ import type {
   IHostManagement,
 } from "@traycer-clients/shared/platform/runner-host";
 import { reportableErrorToast } from "@/lib/reportable-error-toast";
+import { useTranslation } from "react-i18next";
 
 export interface HostDoctorCardProps {
   readonly recurrenceState?: RecurrenceState;
@@ -84,6 +85,7 @@ function HostDoctorCardInner(props: HostDoctorCardInnerProps) {
     externalRecurrence,
     onExternalRecurrenceChange,
   } = props;
+  const { t } = useTranslation("panels");
   const queryClient = useQueryClient();
   const recurrenceModel = useDoctorRecurrence({
     externalRecurrence,
@@ -143,7 +145,7 @@ function HostDoctorCardInner(props: HostDoctorCardInnerProps) {
         );
         return;
       }
-      toast.success("Fix applied");
+      toast.success(t("Fix applied"));
       recurrenceModel.setRecurrence({ failures: [], locked: false });
       void queryClient.invalidateQueries({
         queryKey: runnerQueryKeys.hostDoctor(
@@ -153,7 +155,7 @@ function HostDoctorCardInner(props: HostDoctorCardInnerProps) {
       });
     },
     onError: (err, issue) => {
-      toastFromRunnerError(err, "Fix failed");
+      toastFromRunnerError(err, t("Fix failed"));
       recurrenceModel.setRecurrence((prev) =>
         nextFailedRecurrence(prev, issue.code),
       );
@@ -171,7 +173,7 @@ function HostDoctorCardInner(props: HostDoctorCardInnerProps) {
     mutationFn: (input) =>
       management.freePortAndRestart({ ...input, expectedHostId }),
     onSuccess: (_data, _input, context) => {
-      toast.success("Restarted with port freed");
+      toast.success(t("Restarted with port freed"));
       setFreePortPrompt(null);
       void queryClient.invalidateQueries({
         queryKey: runnerQueryKeys.hostDoctor(
@@ -193,13 +195,13 @@ function HostDoctorCardInner(props: HostDoctorCardInnerProps) {
     (issue: HostDoctorIssue) => {
       if (recurrenceModel.recurrence.locked) {
         reportableErrorToast(
-          "Doctor paused after 3 failed fixes. Click Re-run Doctor to retry.",
+          t("Doctor paused after 3 failed fixes. Click Re-run Doctor to retry."),
           undefined,
           {
-            title: "Host Doctor paused",
-            message: "Host Doctor paused after repeated failed fixes.",
+            title: t("Host Doctor paused"),
+            message: t("Host Doctor paused after repeated failed fixes."),
             code: null,
-            source: "Host Doctor",
+            source: t("Host Doctor"),
           },
         );
         return;
@@ -211,7 +213,7 @@ function HostDoctorCardInner(props: HostDoctorCardInnerProps) {
       }
       mutateFix(issue);
     },
-    [mutateFix, recurrenceModel.recurrence.locked],
+    [mutateFix, recurrenceModel.recurrence.locked, t],
   );
 
   const handleToggleIssue = useCallback((code: string) => {
@@ -239,7 +241,7 @@ function HostDoctorCardInner(props: HostDoctorCardInnerProps) {
           testId={undefined}
           variant={undefined}
         />
-        Running Doctor…
+        {t("Running Doctor…")}
       </div>
     );
   }
@@ -251,9 +253,11 @@ function HostDoctorCardInner(props: HostDoctorCardInnerProps) {
   if (reportError !== null) {
     return (
       <div className="space-y-2">
-        <div className="rounded-md border border-rose-700/40 bg-rose-900/20 px-3 py-2 text-ui-sm text-rose-200">
-          Doctor could not run: {reportError.message}
-        </div>
+      <div className="rounded-md border border-rose-700/40 bg-rose-900/20 px-3 py-2 text-ui-sm text-rose-200">
+        {t("Doctor could not run: {{message}}", {
+          message: reportError.message,
+        })}
+      </div>
         {/* The retry belongs on THIS arm above all others. The commonest way
             to land here is a momentary identity refusal, whose own message
             says "try again in a moment" — an arm that says that while
@@ -275,7 +279,7 @@ function HostDoctorCardInner(props: HostDoctorCardInnerProps) {
             onClick={handleRerun}
             data-testid="host-doctor-rerun"
           >
-            Re-run Doctor
+            {t("Re-run Doctor")}
           </Button>
         </div>
       </div>
@@ -285,7 +289,7 @@ function HostDoctorCardInner(props: HostDoctorCardInnerProps) {
   if (issues.length === 0) {
     return (
       <div className="rounded-md border border-emerald-700/40 bg-emerald-900/20 px-3 py-2 text-ui-sm text-emerald-200">
-        Doctor: no issues detected.
+        {t("Doctor: no issues detected.")}
       </div>
     );
   }

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { HostBootCard } from "@/components/centered-card";
 import { LocalHostLoadingContent } from "@/components/local-host-loading";
 import { usePressStartActivation } from "@/lib/host/press-start-activation";
@@ -83,6 +84,7 @@ export function HostBootSurface(props: {
 export function BootOpenSettingsButton(props: {
   readonly onOpenSettings: () => void;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const activation = usePressStartActivation(props.onOpenSettings);
   return (
     <button
@@ -91,7 +93,7 @@ export function BootOpenSettingsButton(props: {
       data-testid="host-boot-open-settings"
       className="inline-flex items-center text-ui-xs text-muted-foreground hover:text-foreground"
     >
-      Open settings
+      {t("Open settings")}
     </button>
   );
 }

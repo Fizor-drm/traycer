@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { AgentSpinningDots } from "@/components/ui/agent-spinning-dots";
 import { Button } from "@/components/ui/button";
 import { resolveManageSubscriptionUrl } from "@/lib/auth/manage-subscription-url";
@@ -31,6 +32,7 @@ import { useRunnerHost } from "@/providers/use-runner-host";
 export function PlanRestrictedUpgradeAction(): ReactNode {
   const runnerHost = useRunnerHost();
   const openExternalLink = useRunnerOpenExternalLink();
+  const { t } = useTranslation("panels");
   return (
     <Button
       type="button"
@@ -51,7 +53,7 @@ export function PlanRestrictedUpgradeAction(): ReactNode {
           variant={undefined}
         />
       ) : null}
-      Upgrade plan
+      {t("Upgrade plan")}
     </Button>
   );
 }

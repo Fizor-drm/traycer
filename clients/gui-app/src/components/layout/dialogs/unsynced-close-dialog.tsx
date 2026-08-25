@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,6 +22,7 @@ interface UnsyncedCloseDialogProps {
 }
 
 export function UnsyncedCloseDialog(props: UnsyncedCloseDialogProps) {
+  const { t } = useTranslation("common");
   const keepOpenRef = useRef<HTMLButtonElement | null>(null);
   const { onDiscard, onWait, open, epicId } = props;
 
@@ -70,10 +72,11 @@ export function UnsyncedCloseDialog(props: UnsyncedCloseDialogProps) {
         }}
       >
         <DialogHeader>
-          <DialogTitle>You have unsynced changes for this Epic.</DialogTitle>
+          <DialogTitle>{t("You have unsynced changes for this Epic.")}</DialogTitle>
           <DialogDescription>
-            They'll be discarded if you close the tab now. Keep it open and
-            they'll sync as soon as the connection returns.
+            {t(
+              "They'll be discarded if you close the tab now. Keep it open and they'll sync as soon as the connection returns.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -83,7 +86,7 @@ export function UnsyncedCloseDialog(props: UnsyncedCloseDialogProps) {
             onClick={onDiscard}
             data-testid="epic-tab-unsynced-discard"
           >
-            Close anyway
+            {t("Close anyway")}
           </Button>
           <Button
             type="button"
@@ -92,7 +95,7 @@ export function UnsyncedCloseDialog(props: UnsyncedCloseDialogProps) {
             data-testid="epic-tab-unsynced-wait"
             ref={keepOpenRef}
           >
-            Keep open
+            {t("Keep open")}
           </Button>
         </DialogFooter>
       </DialogContent>

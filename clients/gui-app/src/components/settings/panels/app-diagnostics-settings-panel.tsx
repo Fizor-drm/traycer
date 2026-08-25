@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SettingsPanelShell } from "@/components/settings/settings-panel-shell";
@@ -50,6 +51,7 @@ const PANEL_DESCRIPTION =
  * asked twice — once per bridge — so a shell missing one still gets the other.
  */
 export function AppDiagnosticsSettingsPanel(): ReactNode {
+  const { t } = useTranslation("panels");
   const compact = useSettingsDensity() === "compact";
   const desktopControl = useDesktopLogLevelControl();
   const runnerHost = useRunnerHost();
@@ -67,8 +69,8 @@ export function AppDiagnosticsSettingsPanel(): ReactNode {
 
   return (
     <SettingsPanelShell
-      title="Diagnostics"
-      description={PANEL_DESCRIPTION}
+      title={t("Diagnostics")}
+      description={t(PANEL_DESCRIPTION)}
       fillHeight
       bodyClassName="overflow-visible rounded-none border-none bg-transparent"
     >
@@ -82,7 +84,7 @@ export function AppDiagnosticsSettingsPanel(): ReactNode {
           controls={controls}
           emptyState={
             <LogInfoLine>
-              Log level controls are only available on the desktop app.
+              {t("Log level controls are only available on the desktop app.")}
             </LogInfoLine>
           }
         />
@@ -90,7 +92,7 @@ export function AppDiagnosticsSettingsPanel(): ReactNode {
         <RecentLogsFrame>
           {support === null ? (
             <LogInfoLine>
-              Recent logs are only available on the desktop app.
+              {t("Recent logs are only available on the desktop app.")}
             </LogInfoLine>
           ) : (
             <DesktopAppLogEntry support={support} />
@@ -111,17 +113,22 @@ export function AppDiagnosticsSettingsPanel(): ReactNode {
 function DesktopAppLogEntry(props: {
   readonly support: DesktopSupportBridge;
 }): ReactNode {
+  const { t } = useTranslation("panels");
   const listQuery = useSupportSnapshotQuery(props.support);
   const entry =
     listQuery.data?.logs.find((log) => log.target === "desktop") ?? null;
-  if (listQuery.isPending) return <LogInfoLine>Loading logs…</LogInfoLine>;
+  if (listQuery.isPending) {
+    return <LogInfoLine>{t("Loading logs…")}</LogInfoLine>;
+  }
   if (listQuery.isError) {
-    return <LogInfoLine>Couldn&apos;t load log details.</LogInfoLine>;
+    return <LogInfoLine>{t("Couldn't load log details.")}</LogInfoLine>;
   }
   // The snapshot answered without the entry it has always carried. Stated
   // rather than rendered as an empty card, which reads as "still loading"
   // forever.
-  if (entry === null) return <LogInfoLine>No app log file found.</LogInfoLine>;
+  if (entry === null) {
+    return <LogInfoLine>{t("No app log file found.")}</LogInfoLine>;
+  }
   return <BridgeLogEntry entry={entry} support={props.support} />;
 }
 
@@ -137,6 +144,7 @@ function DesktopAppLogEntry(props: {
 const HEAP_SNAPSHOT_MUTATION_SCOPE = "runner-heap-snapshot";
 
 function MemoryDiagnosticsGroup(): ReactNode {
+  const { t } = useTranslation("panels");
   const bridge = useMemo(() => getDesktopHeapSnapshotBridge(), []);
   const [snapshotPath, setSnapshotPath] = useState<string | null>(null);
 
@@ -152,7 +160,7 @@ function MemoryDiagnosticsGroup(): ReactNode {
     onSuccess: (path) => {
       setSnapshotPath(path);
       if (path === null) {
-        toast.error("Couldn't capture a heap snapshot");
+        toast.error(t("Couldn't capture a heap snapshot"));
       }
     },
     onError: (error) => {
@@ -160,20 +168,20 @@ function MemoryDiagnosticsGroup(): ReactNode {
       // toast offers a Copy button for a file this capture never wrote -
       // the user pastes it into a report as the snapshot they just took.
       setSnapshotPath(null);
-      toastFromRunnerError(error, "Couldn't capture a heap snapshot");
+      toastFromRunnerError(error, t("Couldn't capture a heap snapshot"));
     },
   });
 
   if (bridge === null) {
     return (
       <SettingsGroup
-        title="Memory"
+        title={t("Memory")}
         tone="default"
         dataTestId={undefined}
         fill={false}
       >
         <LogInfoLine>
-          Memory snapshots are only available on the desktop app.
+          {t("Memory snapshots are only available on the desktop app.")}
         </LogInfoLine>
       </SettingsGroup>
     );
@@ -181,16 +189,16 @@ function MemoryDiagnosticsGroup(): ReactNode {
 
   return (
     <SettingsGroup
-      title="Memory"
+      title={t("Memory")}
       tone="default"
       dataTestId={undefined}
       fill={false}
     >
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
         <span className="min-w-0 flex-1 text-ui-xs text-muted-foreground">
-          Captures a heap snapshot of this window for a memory report. The app
-          stops responding while the snapshot is written, and the file can be
-          several gigabytes.
+          {t(
+            "Captures a heap snapshot of this window for a memory report. The app stops responding while the snapshot is written, and the file can be several gigabytes.",
+          )}
         </span>
         <Button
           type="button"
@@ -208,7 +216,7 @@ function MemoryDiagnosticsGroup(): ReactNode {
               variant={undefined}
             />
           ) : null}
-          Capture heap snapshot
+          {t("Capture heap snapshot")}
         </Button>
       </div>
       {snapshotPath === null ? null : (
@@ -221,8 +229,8 @@ function MemoryDiagnosticsGroup(): ReactNode {
           </pre>
           <CopyTextButton
             value={snapshotPath}
-            label="Copy"
-            ariaLabel="Copy heap snapshot path"
+            label={t("Copy")}
+            ariaLabel={t("Copy heap snapshot path")}
             disabled={false}
           />
         </div>

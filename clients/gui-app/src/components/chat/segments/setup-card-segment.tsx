@@ -7,6 +7,8 @@ import {
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import type {
   WorktreeBindingOwnerKind,
   WorktreeFolderIntent,
@@ -152,6 +154,7 @@ export function SetupCardSegment(props: {
   readonly variant: "card" | "inline";
 }) {
   const { model, viewTabId, variant } = props;
+  const { t } = useTranslation("canvas");
   const { aggregate, workspaces, createdAt, isActive } = model;
 
   // Open terminal, liveness, and Retry must all address the SAME host the tab
@@ -214,13 +217,13 @@ export function SetupCardSegment(props: {
             );
             if (failed === undefined) return;
             reportableErrorToast(
-              failed.errorMessage ?? "Couldn't create worktree.",
+              failed.errorMessage ?? t("Couldn't create worktree."),
               undefined,
               createReportIssueContext({
-                title: "Worktree re-provision failed",
+                title: t("Worktree re-provision failed"),
                 message: failed.errorMessage,
                 code: null,
-                source: "Setup",
+                source: t("Setup"),
               }),
             );
           },
@@ -274,13 +277,16 @@ export function SetupCardSegment(props: {
     active: isActive,
   };
 
-  const title = headerTitle({
-    state: aggregate.state,
-    multi,
-    total,
-    active: isActive,
-    hasProvisionFailure,
-  });
+  const title = headerTitle(
+    {
+      state: aggregate.state,
+      multi,
+      total,
+      active: isActive,
+      hasProvisionFailure,
+    },
+    t,
+  );
   const provisionFailureDetail =
     workspaces.find(isProvisionFailure)?.errorMessage ?? null;
   const toggleAccessibleLabel =
@@ -288,7 +294,7 @@ export function SetupCardSegment(props: {
       ? title
       : `${title}. ${provisionFailureDetail}`;
   const secondary = multi
-    ? `${readyCount} of ${total} done`
+    ? t("{{ready}} of {{total}} done", { ready: readyCount, total })
     : workspaceSecondary(workspaces[0]);
   const ChevronIcon = expanded ? ChevronDown : ChevronRight;
   const titleLabel = <span className="text-foreground/85">{title}</span>;
@@ -435,6 +441,7 @@ function WorkspaceSetupDetail(
     tabReady,
     active,
   } = props;
+  const { t } = useTranslation("canvas");
   const provisionFailed = isProvisionFailure(entry);
   const creationState = creationStepState(entry, provisionFailed);
   const setupState = setupStepState(entry, provisionFailed);
@@ -445,7 +452,7 @@ function WorkspaceSetupDetail(
       <RetryButton
         pending={retryPending}
         onRetry={() => onRetry(entry)}
-        label={provisionFailed ? "Retry creation" : "Retry setup"}
+        label={provisionFailed ? t("Retry creation") : t("Retry setup")}
       />
     ) : null;
   const reportIssue =
@@ -453,11 +460,11 @@ function WorkspaceSetupDetail(
       <ReportIssueAction
         context={createReportIssueContext({
           title: provisionFailed
-            ? "Worktree creation failed"
-            : "Worktree setup failed",
+            ? t("Worktree creation failed")
+            : t("Worktree setup failed"),
           message: entry.errorMessage,
           code: null,
-          source: "Setup",
+          source: t("Setup"),
         })}
         presentation="icon"
         className={undefined}
@@ -481,7 +488,7 @@ function WorkspaceSetupDetail(
           {/* Spins while `git worktree add` runs (state "creating"); flips to a
               done check once the add finishes and the rest proceeds. */}
           <StatusIcon state={creationState} active={active} />
-          <span className="text-foreground/85">Creating worktree</span>
+          <span className="text-foreground/85">{t("Creating worktree")}</span>
         </li>
         <li className="flex items-center gap-2">
           {/* Pending (static dot) until the worktree exists and the setup
@@ -493,11 +500,11 @@ function WorkspaceSetupDetail(
               provisionFailed && "text-muted-foreground",
             )}
           >
-            Setting up worktree
+            {t("Setting up worktree")}
           </span>
           {entry.state === "failed" && entry.setupExitCode !== null ? (
             <span className="text-muted-foreground">
-              (exit {entry.setupExitCode})
+              {t("(exit {{code}})", { code: entry.setupExitCode })}
             </span>
           ) : null}
           <span aria-hidden className="flex-1" />
@@ -550,30 +557,34 @@ function setupStepState(
   return entry.state;
 }
 
-function headerTitle(props: {
-  readonly state: SetupWorkspaceState;
-  readonly multi: boolean;
-  readonly total: number;
-  readonly active: boolean;
-  readonly hasProvisionFailure: boolean;
-}): string {
+function headerTitle(
+  props: {
+    readonly state: SetupWorkspaceState;
+    readonly multi: boolean;
+    readonly total: number;
+    readonly active: boolean;
+    readonly hasProvisionFailure: boolean;
+  },
+  t: TFunction<"canvas">,
+): string {
   const { state, multi, total, active, hasProvisionFailure } = props;
   if (state === "failed" && hasProvisionFailure) {
-    return "Worktree creation failed";
+    return t("Worktree creation failed");
   }
   if (multi) {
-    if (state === "ready") return `${total} worktrees ready`;
-    if (state === "failed") return "Worktree setup failed";
-    if (state === "cancelled") return "Worktree setup cancelled";
-    if (state === "creating") return `Creating ${total} worktrees`;
-    return `Setting up ${total} worktrees`;
+    if (state === "ready") return t("{{count}} worktrees ready", { count: total });
+    if (state === "failed") return t("Worktree setup failed");
+    if (state === "cancelled") return t("Worktree setup cancelled");
+    if (state === "creating")
+      return t("Creating {{count}} worktrees", { count: total });
+    return t("Setting up {{count}} worktrees", { count: total });
   }
-  if (state === "ready") return "Worktree ready";
-  if (state === "failed") return "Setup failed";
-  if (state === "cancelled") return "Setup cancelled";
-  if (state === "creating") return "Creating worktree";
+  if (state === "ready") return t("Worktree ready");
+  if (state === "failed") return t("Setup failed");
+  if (state === "cancelled") return t("Setup cancelled");
+  if (state === "creating") return t("Creating worktree");
   // `setting-up`: a stranded historical window is no longer in flight.
-  return active ? "Setting up worktree" : "Worktree setup incomplete";
+  return active ? t("Setting up worktree") : t("Worktree setup incomplete");
 }
 
 function workspaceSecondary(entry: SetupCardWorkspace): string {
@@ -589,6 +600,7 @@ function OpenTerminalButton(props: {
   readonly liveness: TerminalLiveness;
   readonly onOpen: () => void;
 }) {
+  const { t } = useTranslation("canvas");
   if (props.liveness === "none") return null;
   if (props.liveness === "ended") {
     // "session ended" reads as a tooltip on the disabled button rather than
@@ -606,13 +618,13 @@ function OpenTerminalButton(props: {
               data-testid="setup-card-open-terminal-ended"
               className="text-muted-foreground"
             >
-              Open terminal
+              {t("Open terminal")}
               <ArrowRight aria-hidden />
             </Button>
           </span>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          Setup terminal session ended
+          {t("Setup terminal session ended")}
         </TooltipContent>
       </Tooltip>
     );
@@ -625,7 +637,7 @@ function OpenTerminalButton(props: {
       onClick={props.onOpen}
       data-testid="setup-card-open-terminal"
     >
-      Open terminal
+      {t("Open terminal")}
       <ArrowRight aria-hidden />
     </Button>
   );
@@ -634,7 +646,7 @@ function OpenTerminalButton(props: {
 function RetryButton(props: {
   readonly pending: boolean;
   readonly onRetry: () => void;
-  readonly label: "Retry creation" | "Retry setup";
+  readonly label: string;
 }) {
   return (
     <Button

@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   queryOptions,
   useMutation,
@@ -24,6 +25,7 @@ import { hostReleaseChannelAllowsRcRecovery } from "@traycer/protocol/framework/
 import { runnerMutationKeys, runnerQueryKeys } from "@/lib/query-keys";
 import { runnerHostQueryScopeId } from "@/lib/query-keys/runner-mutation-keys";
 import { toastFromRunnerError } from "@/lib/runner-error-toast";
+import { i18n } from "@/lib/i18n/init-i18n";
 import type {
   DesktopAppUpdateChannelChange,
   DesktopAppUpdateSnapshot,
@@ -62,6 +64,7 @@ export function ClientUpdateRequiredAction(props: {
    */
   readonly requirement: ClientCompatibilityRequirement;
 }): ReactNode {
+  const { t } = useTranslation("common");
   const { bridge, snapshot } = useDesktopAppUpdates();
   const openExternalLink = useRunnerOpenExternalLink();
   const openInstallGuidance = useDesktopDialogStore(
@@ -134,8 +137,10 @@ export function ClientUpdateRequiredAction(props: {
         <span className="inline-flex items-center gap-1.5">
           <span>
             {recovery.data.rcCandidateVersion === null
-              ? "Enable RC updates and update"
-              : `Enable RC updates and get ${recovery.data.rcCandidateVersion}`}
+              ? t("Enable RC updates and update")
+              : t("Enable RC updates and get {{version}}", {
+                  version: recovery.data.rcCandidateVersion,
+                })}
           </span>
           {enableRc.isPending ? (
             <AgentSpinningDots
@@ -167,11 +172,16 @@ export function ClientUpdateRequiredAction(props: {
           data-testid="client-update-required-staged-note"
         >
           {recovery.data.stagedVersion === null
-            ? "An update is already downloaded and will install the next time you quit Traycer - but it is still too old for this host. "
-            : `Traycer ${recovery.data.stagedVersion} is already downloaded and will install the next time you quit - but it is still too old for this host. `}
-          Quit and reopen Traycer to let it apply, then this dialog will offer
-          the next step. If you would rather install a newer build by hand, quit
-          Traycer first.
+            ? t(
+                "An update is already downloaded and will install the next time you quit Traycer - but it is still too old for this host.",
+              )
+            : t(
+                "Traycer {{version}} is already downloaded and will install the next time you quit - but it is still too old for this host.",
+                { version: recovery.data.stagedVersion },
+              )}{" "}
+          {t(
+            "Quit and reopen Traycer to let it apply, then this dialog will offer the next step. If you would rather install a newer build by hand, quit Traycer first.",
+          )}
         </p>
         <ReleasesPageButton openExternalLink={openExternalLink} />
       </>
@@ -188,7 +198,7 @@ export function ClientUpdateRequiredAction(props: {
         data-testid="client-update-required-checking"
       >
         <span className="inline-flex items-center gap-1.5">
-          <span>Checking for updates</span>
+          <span>{t("Checking for updates")}</span>
           <AgentSpinningDots
             className="text-current"
             testId={undefined}
@@ -227,7 +237,7 @@ function renderCachedUpdateAction(input: {
               void bridge.downloadUpdate();
             }}
           >
-            Download update
+            {i18n.t("Download update", { ns: "common" })}
           </Button>
         );
       }
@@ -243,8 +253,11 @@ function renderCachedUpdateAction(input: {
           <span className="inline-flex items-center gap-1.5">
             <span>
               {snapshot.downloadProgress === null
-                ? "Downloading update"
-                : `Downloading ${snapshot.downloadProgress}%`}
+                ? i18n.t("Downloading update", { ns: "common" })
+                : i18n.t("Downloading {{progress}}%", {
+                    ns: "common",
+                    progress: snapshot.downloadProgress,
+                  })}
             </span>
             <AgentSpinningDots
               className="text-current"
@@ -281,7 +294,9 @@ function renderCachedUpdateAction(input: {
         >
           <span className="inline-flex items-center gap-1.5">
             <span>
-              {needsManualInstall ? "Finish update" : "Restart to update"}
+              {needsManualInstall
+                ? i18n.t("Finish update", { ns: "common" })
+                : i18n.t("Restart to update", { ns: "common" })}
             </span>
             {snapshot.installInFlight ? (
               <AgentSpinningDots
@@ -301,6 +316,7 @@ function renderCachedUpdateAction(input: {
 function ReleasesPageButton(props: {
   readonly openExternalLink: UseMutationResult<void, Error, string>;
 }): ReactNode {
+  const { t } = useTranslation("common");
   return (
     <Button
       type="button"
@@ -317,7 +333,7 @@ function ReleasesPageButton(props: {
       }}
     >
       <span className="inline-flex items-center gap-1.5">
-        <span>Get the latest Traycer</span>
+        <span>{t("Get the latest Traycer")}</span>
         {props.openExternalLink.isPending ? (
           <AgentSpinningDots
             className="text-current"
@@ -447,7 +463,10 @@ function useAppUpdateEnableRcRecovery(
     mutationFn: (target: DesktopAppUpdatesBridge) =>
       target.setAllowPrerelease(true),
     onError: (error) => {
-      toastFromRunnerError(error, "Couldn't enable RC updates");
+      toastFromRunnerError(
+        error,
+        i18n.t("Couldn't enable RC updates", { ns: "common" }),
+      );
     },
     onSettled: () => {
       void queryClient.invalidateQueries({

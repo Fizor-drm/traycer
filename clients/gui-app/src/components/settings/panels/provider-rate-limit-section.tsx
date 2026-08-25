@@ -1,4 +1,5 @@
 import { useCallback, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { ProviderId } from "@traycer/protocol/host/provider-schemas";
 import { RefreshIconButton } from "@/components/refresh-icon-button";
 import { ProviderRateLimitBody } from "@/components/settings/panels/provider-rate-limit-views";
@@ -92,10 +93,11 @@ export function ProviderProfilesRefreshButton({
 
 function ProfilesOnlyRefreshButton(): ReactNode {
   const refreshProviders = useRefreshProviders();
+  const { t } = useTranslation("panels");
   return (
     <RefreshIconButton
       onRefresh={refreshProviders}
-      label="Refresh profile statuses"
+      label={t("Refresh profile statuses")}
     />
   );
 }
@@ -112,6 +114,7 @@ function ProfilesAndUsageRefreshButton({
   readonly fetchEligible: boolean;
 }): ReactNode {
   const refreshProviders = useRefreshProviders();
+  const { t } = useTranslation("panels");
   const query = useHostProviderRateLimitsQuery(
     providerId,
     profileId,
@@ -133,7 +136,7 @@ function ProfilesAndUsageRefreshButton({
   return (
     <RefreshIconButton
       onRefresh={refresh}
-      label="Refresh profile statuses and usage limits"
+      label={t("Refresh profile statuses and usage limits")}
       refreshing={isRefreshing}
     />
   );
@@ -178,10 +181,13 @@ function EmbeddedProviderRateLimitSettingsCard({
     isError: query.isError,
     presentedIsError,
   });
+  const { t } = useTranslation("panels");
 
   return (
     <div className="flex flex-col gap-3 border-t border-border/60 pt-3">
-      <div className="text-ui-sm font-medium text-foreground">Usage limits</div>
+      <div className="text-ui-sm font-medium text-foreground">
+        {t("Usage limits")}
+      </div>
       <ProviderRateLimitBody
         isPending={query.isPending}
         isFetching={query.isFetching || recoveringUnheardRead}
@@ -259,17 +265,18 @@ function ProviderRateLimitSettingsCard({
     isError: query.isError,
     presentedIsError,
   });
+  const { t } = useTranslation("panels");
 
   return (
     <div className="mb-3 flex flex-col gap-3 rounded-lg border border-border/60 p-3">
       <div className="flex items-center justify-between gap-2">
         <div className="text-ui-sm font-medium text-foreground">
-          Usage limits
+          {t("Usage limits")}
         </div>
         {fetchEligible ? (
           <RefreshIconButton
             onRefresh={refresh}
-            label="Refresh usage limits"
+            label={t("Refresh usage limits")}
             refreshing={isRefreshing}
           />
         ) : null}

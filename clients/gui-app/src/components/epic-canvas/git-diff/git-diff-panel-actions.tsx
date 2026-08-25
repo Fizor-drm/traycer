@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { FolderTree, List, MoreHorizontal } from "lucide-react";
 import type { LeftPanelHeaderSlotProps } from "@/components/epic-canvas/sidebar/epic-sidebar";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import {
 const GIT_REFRESH_TIMEOUT_MS = 10_000;
 
 export function GitDiffPanelActions(props: LeftPanelHeaderSlotProps) {
+  const { t } = useTranslation("canvas");
   const listLayout = useGitPanelStore(
     (s) => selectGitPanelEpicState(props.epicId)(s).listLayout,
   );
@@ -37,7 +39,9 @@ export function GitDiffPanelActions(props: LeftPanelHeaderSlotProps) {
     (s) => s.diffViewerPreferences.ignoreWhitespace,
   );
   const layoutToggleLabel =
-    listLayout === "sections" ? "Switch to tree view" : "Switch to list view";
+    listLayout === "sections"
+      ? t("Switch to tree view")
+      : t("Switch to list view");
 
   const handleToggleLayout = useCallback(() => {
     const nextLayout = listLayout === "sections" ? "tree" : "sections";
@@ -79,7 +83,7 @@ export function GitDiffPanelActions(props: LeftPanelHeaderSlotProps) {
   return (
     <DropdownMenu open={menuOpen} onOpenChange={handleMenuOpenChange}>
       <TooltipWrapper
-        label="More Git Diff actions"
+        label={t("More Git Diff actions")}
         side="top"
         sideOffset={undefined}
         align={undefined}
@@ -89,7 +93,7 @@ export function GitDiffPanelActions(props: LeftPanelHeaderSlotProps) {
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label="More Git Diff actions"
+            aria-label={t("More Git Diff actions")}
             data-testid="git-diff-panel-more"
             className="shrink-0 text-muted-foreground hover:text-foreground aria-expanded:bg-accent aria-expanded:text-accent-foreground"
           >
@@ -121,7 +125,7 @@ export function GitDiffPanelActions(props: LeftPanelHeaderSlotProps) {
           data-testid="git-diff-panel-refresh"
         >
           <RefreshIcon refreshing={refresh.refreshing} />
-          Refresh
+          {t("Refresh")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

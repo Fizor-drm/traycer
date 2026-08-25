@@ -15,7 +15,9 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useCallback, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { EpicArtifactKind } from "@traycer/protocol/common/registry";
+import type { TFunction } from "i18next";
 import {
   EPIC_NODE_ICONS,
   EPIC_NODE_LABELS,
@@ -131,12 +133,15 @@ const CHAT_ARCHIVE_VISIBILITY_OPTIONS: ReadonlyArray<{
   { value: CHAT_ARCHIVE_VISIBILITY.All, label: "All chats" },
 ];
 
-function archiveVisibilityLabel(visibility: ChatArchiveVisibility): string {
-  return (
+function archiveVisibilityLabel(
+  visibility: ChatArchiveVisibility,
+  t: TFunction<"canvas">,
+): string {
+  const label =
     CHAT_ARCHIVE_VISIBILITY_OPTIONS.find(
       (option) => option.value === visibility,
-    )?.label ?? "Unarchived only"
-  );
+    )?.label ?? "Unarchived only";
+  return t(label);
 }
 
 const ARTIFACT_STATUS_OPTIONS: ReadonlyArray<ArtifactStatusFilter> = [
@@ -263,22 +268,31 @@ function ViewMenuTrigger(props: {
   );
 }
 
-function viewTriggerLabel(args: {
-  readonly base: string;
-  readonly filterCount: number;
-  readonly sort: SortMode;
-  readonly showChanged: boolean;
-}): string {
+function viewTriggerLabel(
+  args: {
+    readonly base: string;
+    readonly filterCount: number;
+    readonly sort: SortMode;
+    readonly showChanged: boolean;
+  },
+  t: TFunction<"canvas">,
+): string {
   const details: string[] = [];
   if (args.filterCount > 0) {
     details.push(
-      `${args.filterCount} ${args.filterCount === 1 ? "filter" : "filters"} active`,
+      args.filterCount === 1
+        ? t("{{count}} filter active", { count: args.filterCount })
+        : t("{{count}} filters active", { count: args.filterCount }),
     );
   }
   if (isSortModeActive(args.sort)) {
-    details.push(`ordered by ${SORT_FIELD_LABELS[args.sort.field]}`);
+    details.push(
+      t("ordered by {{field}}", {
+        field: t(SORT_FIELD_LABELS[args.sort.field]),
+      }),
+    );
   }
-  if (args.showChanged) details.push("visibility changed");
+  if (args.showChanged) details.push(t("visibility changed"));
   return details.length === 0
     ? args.base
     : `${args.base}, ${details.join(", ")}`;
@@ -338,6 +352,7 @@ function DrillInHeader(props: {
   readonly title: string;
   readonly onBack: () => void;
 }) {
+  const { t } = useTranslation("canvas");
   return (
     <>
       <DropdownMenuItem
@@ -348,7 +363,7 @@ function DrillInHeader(props: {
         }}
       >
         <ChevronLeft className="size-4" />
-        Back
+        {t("Back")}
         <DropdownMenuShortcut>{props.title}</DropdownMenuShortcut>
       </DropdownMenuItem>
       <DropdownMenuSeparator />
@@ -362,6 +377,7 @@ function OrderingDetail(props: {
   readonly onFieldChange: (field: SortField) => void;
   readonly onToggleDirection: () => void;
 }) {
+  const { t } = useTranslation("canvas");
   const resetOrdering = (): void => {
     props.onFieldChange(DEFAULT_SORT_MODE.field);
     if (props.sort.direction !== DEFAULT_SORT_MODE.direction) {
@@ -370,7 +386,7 @@ function OrderingDetail(props: {
   };
   return (
     <>
-      <DropdownMenuLabel>Order by</DropdownMenuLabel>
+      <DropdownMenuLabel>{t("Order by")}</DropdownMenuLabel>
       <DropdownMenuRadioGroup
         value={props.sort.field}
         onValueChange={(next) => {
@@ -384,7 +400,7 @@ function OrderingDetail(props: {
             value={field}
             onSelect={(event) => event.preventDefault()}
           >
-            {SORT_FIELD_LABELS[field]}
+            {t(SORT_FIELD_LABELS[field])}
           </DropdownMenuRadioItem>
         ))}
       </DropdownMenuRadioGroup>
@@ -400,7 +416,7 @@ function OrderingDetail(props: {
           }}
         >
           <ArrowDownWideNarrow className="size-4" />
-          Descending
+          {t("Descending")}
         </DropdownMenuRadioItem>
         <DropdownMenuRadioItem
           value={SORT_DIRECTION.Asc}
@@ -412,7 +428,7 @@ function OrderingDetail(props: {
           }}
         >
           <ArrowUpNarrowWide className="size-4" />
-          Ascending
+          {t("Ascending")}
         </DropdownMenuRadioItem>
       </DropdownMenuRadioGroup>
       {isSortModeActive(props.sort) ? (
@@ -425,7 +441,7 @@ function OrderingDetail(props: {
             }}
           >
             <RotateCcw className="size-4" />
-            Reset ordering
+            {t("Reset ordering")}
           </DropdownMenuItem>
         </>
       ) : null}
@@ -433,16 +449,22 @@ function OrderingDetail(props: {
   );
 }
 
-function sortSummary(sort: SortMode): string {
-  return `${SORT_FIELD_LABELS[sort.field]} ${
+function sortSummary(
+  sort: SortMode,
+  t: TFunction<"canvas">,
+): string {
+  return `${t(SORT_FIELD_LABELS[sort.field])} ${
     sort.direction === SORT_DIRECTION.Asc ? "↑" : "↓"
   }`;
 }
 
-function selectedSummary(labels: readonly string[]): string {
-  if (labels.length === 0) return "All";
+function selectedSummary(
+  labels: readonly string[],
+  t: TFunction<"canvas">,
+): string {
+  if (labels.length === 0) return t("All");
   if (labels.length === 1) return labels[0];
-  return `${labels.length} selected`;
+  return t("{{count}} selected", { count: labels.length });
 }
 
 function ChatDetailContent(props: {
@@ -457,6 +479,7 @@ function ChatDetailContent(props: {
   readonly setSortField: (field: SortField) => void;
   readonly toggleSortDirection: () => void;
 }) {
+  const { t } = useTranslation("canvas");
   switch (props.detail) {
     case "ordering":
       return (
@@ -488,7 +511,7 @@ function ChatDetailContent(props: {
               onSelect={(event) => event.preventDefault()}
               data-testid={`epic-sidebar-archive-visibility-${option.value}`}
             >
-              {option.label}
+              {t(option.label)}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
@@ -510,7 +533,7 @@ function ChatDetailContent(props: {
               value={option.value}
               onSelect={(event) => event.preventDefault()}
             >
-              {option.label}
+              {t(option.label)}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
@@ -532,7 +555,7 @@ function ChatDetailContent(props: {
               value={option.value}
               onSelect={(event) => event.preventDefault()}
             >
-              {option.label}
+              {t(option.label)}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
@@ -547,6 +570,7 @@ export function ChatFilterMenu(props: {
   readonly canArchive: boolean;
 }) {
   const { epicId } = props;
+  const { t } = useTranslation("canvas");
   const filter = useChatFilter(epicId);
   const sort = useChatSort(epicId);
   const archiveVisibility = useChatArchiveVisibility(epicId);
@@ -585,18 +609,23 @@ export function ChatFilterMenu(props: {
     setSortField: (field: SortField) => setChatSortField(epicId, field),
     toggleSortDirection: () => toggleChatSortDirection(epicId),
   };
-  const currentInterface =
+  const currentInterface = t(
     CHAT_ORIGIN_OPTIONS.find((option) => option.value === filter.origin)
-      ?.label ?? "All";
-  const currentOwnership =
+      ?.label ?? "All",
+  );
+  const currentOwnership = t(
     CHAT_OWNERSHIP_OPTIONS.find((option) => option.value === filter.ownership)
-      ?.label ?? "All";
-  const triggerLabel = viewTriggerLabel({
-    base: "Filter agents",
-    filterCount,
-    sort,
-    showChanged: archiveVisibilityChanged,
-  });
+      ?.label ?? "All",
+  );
+  const triggerLabel = viewTriggerLabel(
+    {
+      base: t("Filter agents"),
+      filterCount,
+      sort,
+      showChanged: archiveVisibilityChanged,
+    },
+    t,
+  );
 
   return (
     <DropdownMenu open={menu.open} onOpenChange={menu.handleOpenChange}>
@@ -617,7 +646,7 @@ export function ChatFilterMenu(props: {
         {menu.drillIn && menu.detail !== null ? (
           <>
             <DrillInHeader
-              title={CHAT_DETAIL_LABELS[menu.detail]}
+              title={t(CHAT_DETAIL_LABELS[menu.detail])}
               onBack={menu.closeDetail}
             />
             <ChatDetailContent detail={menu.detail} {...detailProps} />
@@ -627,8 +656,8 @@ export function ChatFilterMenu(props: {
             <ViewDetailEntry
               detail="ordering"
               drillIn={menu.drillIn}
-              label="Ordering"
-              summary={sortSummary(sort)}
+              label={t("Ordering")}
+              summary={sortSummary(sort, t)}
               onOpenDetail={menu.openDetail}
             >
               <ChatDetailContent detail="ordering" {...detailProps} />
@@ -637,20 +666,20 @@ export function ChatFilterMenu(props: {
               <ViewDetailEntry
                 detail="show"
                 drillIn={menu.drillIn}
-                label="Show"
-                summary={archiveVisibilityLabel(archiveVisibility)}
+                label={t("Show")}
+                summary={archiveVisibilityLabel(archiveVisibility, t)}
                 onOpenDetail={menu.openDetail}
               >
                 <ChatDetailContent detail="show" {...detailProps} />
               </ViewDetailEntry>
             ) : null}
             <DropdownMenuLabel className="mt-1 text-overline uppercase tracking-wide">
-              Filters
+              {t("Filters")}
             </DropdownMenuLabel>
             <ViewDetailEntry
               detail="interface"
               drillIn={menu.drillIn}
-              label="Interface"
+              label={t("Interface")}
               summary={currentInterface}
               onOpenDetail={menu.openDetail}
             >
@@ -659,7 +688,7 @@ export function ChatFilterMenu(props: {
             <ViewDetailEntry
               detail="ownership"
               drillIn={menu.drillIn}
-              label="Ownership"
+              label={t("Ownership")}
               summary={currentOwnership}
               onOpenDetail={menu.openDetail}
             >
@@ -675,7 +704,7 @@ export function ChatFilterMenu(props: {
                   }}
                 >
                   <RotateCcw className="size-4" />
-                  Reset view
+                  {t("Reset view")}
                 </DropdownMenuItem>
               </>
             ) : null}
@@ -698,6 +727,7 @@ function ArtifactDetailContent(props: {
   readonly setSortField: (field: SortField) => void;
   readonly toggleSortDirection: () => void;
 }) {
+  const { t } = useTranslation("canvas");
   switch (props.detail) {
     case "ordering":
       return (
@@ -724,7 +754,7 @@ function ArtifactDetailContent(props: {
                   STATUS_DOT_CLASSES[status],
                 )}
               />
-              {STATUS_LABELS[status]}
+              {t(STATUS_LABELS[status])}
             </DropdownMenuCheckboxItem>
           ))}
         </>
@@ -753,7 +783,7 @@ function ArtifactDetailContent(props: {
               value={option.value}
               onSelect={(event) => event.preventDefault()}
             >
-              {option.label}
+              {t(option.label)}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
@@ -765,6 +795,7 @@ function ArtifactTypeDetail(props: {
   readonly filterKinds: readonly EpicArtifactKind[];
   readonly toggleKind: (kind: EpicArtifactKind) => void;
 }) {
+  const { t } = useTranslation("canvas");
   const artifactIconColors = useSettingsStore(
     (state) => state.artifactIconColors,
   );
@@ -792,7 +823,7 @@ function ArtifactTypeDetail(props: {
           )}
           style={iconStyle}
         />
-        {EPIC_NODE_LABELS[kind]}
+        {t(EPIC_NODE_LABELS[kind])}
       </DropdownMenuCheckboxItem>
     );
   });
@@ -806,6 +837,7 @@ export function ArtifactFilterMenu(props: {
   readonly markAllReadDisabled: boolean;
 }) {
   const { epicId } = props;
+  const { t } = useTranslation("canvas");
   const filter = useArtifactFilter(epicId);
   const sort = useArtifactSort(epicId);
   const toggleArtifactStatus = useLeftPanelStore(
@@ -846,20 +878,26 @@ export function ArtifactFilterMenu(props: {
     toggleSortDirection: () => toggleArtifactSortDirection(epicId),
   };
   const statusSummary = selectedSummary(
-    filter.statuses.map((status) => STATUS_LABELS[status]),
+    filter.statuses.map((status) => t(STATUS_LABELS[status])),
+    t,
   );
   const kindSummary = selectedSummary(
-    filter.kinds.map((kind) => EPIC_NODE_LABELS[kind]),
+    filter.kinds.map((kind) => t(EPIC_NODE_LABELS[kind])),
+    t,
   );
-  const readSummary =
+  const readSummary = t(
     ARTIFACT_READ_OPTIONS.find((option) => option.value === filter.read)
-      ?.label ?? "All";
-  const triggerLabel = viewTriggerLabel({
-    base: "Filter artifacts",
-    filterCount,
-    sort,
-    showChanged: false,
-  });
+      ?.label ?? "All",
+  );
+  const triggerLabel = viewTriggerLabel(
+    {
+      base: t("Filter artifacts"),
+      filterCount,
+      sort,
+      showChanged: false,
+    },
+    t,
+  );
 
   return (
     <DropdownMenu open={menu.open} onOpenChange={menu.handleOpenChange}>
@@ -880,7 +918,7 @@ export function ArtifactFilterMenu(props: {
         {menu.drillIn && menu.detail !== null ? (
           <>
             <DrillInHeader
-              title={ARTIFACT_DETAIL_LABELS[menu.detail]}
+              title={t(ARTIFACT_DETAIL_LABELS[menu.detail])}
               onBack={menu.closeDetail}
             />
             <ArtifactDetailContent detail={menu.detail} {...detailProps} />
@@ -890,19 +928,19 @@ export function ArtifactFilterMenu(props: {
             <ViewDetailEntry
               detail="ordering"
               drillIn={menu.drillIn}
-              label="Ordering"
-              summary={sortSummary(sort)}
+              label={t("Ordering")}
+              summary={sortSummary(sort, t)}
               onOpenDetail={menu.openDetail}
             >
               <ArtifactDetailContent detail="ordering" {...detailProps} />
             </ViewDetailEntry>
             <DropdownMenuLabel className="mt-1 text-overline uppercase tracking-wide">
-              Filters
+              {t("Filters")}
             </DropdownMenuLabel>
             <ViewDetailEntry
               detail="status"
               drillIn={menu.drillIn}
-              label="Status"
+              label={t("Status")}
               summary={statusSummary}
               onOpenDetail={menu.openDetail}
             >
@@ -911,7 +949,7 @@ export function ArtifactFilterMenu(props: {
             <ViewDetailEntry
               detail="type"
               drillIn={menu.drillIn}
-              label="Type"
+              label={t("Type")}
               summary={kindSummary}
               onOpenDetail={menu.openDetail}
             >
@@ -920,7 +958,7 @@ export function ArtifactFilterMenu(props: {
             <ViewDetailEntry
               detail="read"
               drillIn={menu.drillIn}
-              label="Read state"
+              label={t("Read state")}
               summary={readSummary}
               onOpenDetail={menu.openDetail}
             >
@@ -931,7 +969,7 @@ export function ArtifactFilterMenu(props: {
               disabled={props.markAllReadDisabled}
               onSelect={props.onMarkAllRead}
             >
-              Mark all as read
+              {t("Mark all as read")}
             </DropdownMenuItem>
             {active ? (
               <DropdownMenuItem
@@ -941,7 +979,7 @@ export function ArtifactFilterMenu(props: {
                 }}
               >
                 <RotateCcw className="size-4" />
-                Reset view
+                {t("Reset view")}
               </DropdownMenuItem>
             ) : null}
           </>

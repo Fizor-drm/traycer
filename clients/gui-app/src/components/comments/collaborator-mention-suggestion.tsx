@@ -6,6 +6,7 @@ import {
   type Ref,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import {
   autoUpdate,
   computePosition,
@@ -74,6 +75,7 @@ function MentionSuggestionListContent({
   getReferenceClientRect,
   ref,
 }: MentionSuggestionListProps) {
+  const { t } = useTranslation("canvas");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const floatingRef = useRef<HTMLDivElement | null>(null);
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -149,7 +151,7 @@ function MentionSuggestionListContent({
     <div
       ref={floatingRef}
       role="listbox"
-      aria-label="Mention collaborator"
+      aria-label={t("Mention collaborator")}
       data-slot="mention-suggestion"
       className={cn(
         "absolute top-0 left-0 z-50 w-[min(80vw,18rem)] max-h-[min(40vh,18rem)] overflow-y-auto rounded-md border border-border bg-popover p-1 text-ui-sm text-popover-foreground shadow-md outline-none",
@@ -157,7 +159,7 @@ function MentionSuggestionListContent({
     >
       {items.length === 0 ? (
         <div className="px-2 py-3 text-center text-ui-xs text-muted-foreground">
-          No matching collaborators
+          {t("No matching collaborators")}
         </div>
       ) : (
         items.map((item, index) => {

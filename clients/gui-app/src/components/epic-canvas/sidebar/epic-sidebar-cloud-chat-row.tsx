@@ -1,5 +1,7 @@
 import { useCallback, type ReactNode } from "react";
 import { Lock } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { v4 as uuidv4 } from "uuid";
 import type { CloudChatSummary } from "@traycer/protocol/host/epic/cloud-chat";
 import { cn } from "@/lib/utils";
@@ -63,8 +65,9 @@ export interface EpicSidebarCloudChatRowProps {
 export function EpicSidebarCloudChatRow(
   props: EpicSidebarCloudChatRowProps,
 ): ReactNode {
+  const { t } = useTranslation("canvas");
   const { chat } = props;
-  const title = chat.title ?? "Untitled chat";
+  const title = chat.title ?? t("Untitled chat");
   // The Epic SESSION's host - not `useTabHostId()`, and not the app-wide one.
   // The sidebar is not a tab (it sits outside every `<TabHostProvider>`, so a
   // tab-scoped read throws here - it did), and it is not an app-wide surface
@@ -189,7 +192,7 @@ export function EpicSidebarCloudChatRow(
   ]);
 
   const ownerLabel = ownerReachability.hostLabel;
-  const lockCopy = lockedRowCopy(ownerLabel);
+  const lockCopy = lockedRowCopy(ownerLabel, t);
   return (
     <li role="treeitem" aria-selected={isActive}>
       <button
@@ -282,12 +285,18 @@ function CloudRowIdleTime(props: { readonly publishedAt: number }): ReactNode {
  * thing to say and one wording for it. The longer explanation lives on the
  * surface the row opens; a tooltip states the fact.
  */
-function lockedRowCopy(ownerLabel: string): {
+function lockedRowCopy(
+  ownerLabel: string,
+  t: TFunction<"canvas">,
+): {
   readonly tooltip: string;
   readonly ariaLabel: string;
 } {
   return {
-    tooltip: `Lives on ${ownerLabel}, which is offline. Opens read-only from the last published copy.`,
-    ariaLabel: `On ${ownerLabel}, offline`,
+    tooltip: t(
+      "Lives on {{host}}, which is offline. Opens read-only from the last published copy.",
+      { host: ownerLabel },
+    ),
+    ariaLabel: t("On {{host}}, offline", { host: ownerLabel }),
   };
 }

@@ -1,4 +1,6 @@
 import { useMemo, useReducer } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import {
   useEpicBatchUpdateRoles,
   useEpicGrantAccess,
@@ -111,6 +113,7 @@ export interface SharingPanelController {
 export function useEpicSharingPanelController(
   epicId: string,
 ): SharingPanelController {
+  const { t } = useTranslation("canvas");
   const currentRole = useEpicPermissionRole();
   const isOwner = currentRole === "owner";
   const canInvitePeople = currentRole === "owner" || currentRole === "editor";
@@ -203,26 +206,36 @@ export function useEpicSharingPanelController(
     });
 
     if (result.succeededNewInvites.length > 0) {
-      const invitedNoun =
-        result.succeededNewInvites.length === 1 ? "person" : "people";
       toast.success(
-        `Invited ${result.succeededNewInvites.length} ${invitedNoun}`,
+        result.succeededNewInvites.length === 1
+          ? t("Invited {{count}} person", {
+              count: result.succeededNewInvites.length,
+            })
+          : t("Invited {{count}} people", {
+              count: result.succeededNewInvites.length,
+            }),
       );
     }
 
     result.succeededReInvites.forEach((invite) => {
-      toast.success(`Role updated for ${formatInviteLabel(invite)}`);
+      toast.success(
+        t("Role updated for {{name}}", {
+          name: formatInviteLabel(invite),
+        }),
+      );
     });
 
     if (result.failedInvites.length > 0) {
       reportableErrorToast(
-        `Couldn't invite ${result.failedInvites.map(formatInviteLabel).join(", ")}`,
+        t("Couldn't invite {{names}}", {
+          names: result.failedInvites.map(formatInviteLabel).join(", "),
+        }),
         undefined,
         {
-          title: "Could not invite collaborators",
+          title: t("Could not invite collaborators"),
           message: null,
           code: null,
-          source: "Epic sharing",
+          source: t("Epic sharing"),
         },
       );
     }
@@ -245,7 +258,7 @@ export function useEpicSharingPanelController(
       },
       {
         onSuccess: () => {
-          toast.success("Role updated");
+          toast.success(t("Role updated"));
         },
         onSettled: () => {
           dispatch({ type: "set-pending-action", pendingAction: null });
@@ -276,7 +289,7 @@ export function useEpicSharingPanelController(
       },
       {
         onSuccess: () => {
-          toast.success("Team role updated");
+          toast.success(t("Team role updated"));
         },
         onSettled: () => {
           dispatch({ type: "set-pending-action", pendingAction: null });
@@ -307,7 +320,7 @@ export function useEpicSharingPanelController(
       },
       {
         onSuccess: () => {
-          toast.success(`Shared with ${team.name}`);
+          toast.success(t("Shared with {{name}}", { name: team.name }));
           Analytics.getInstance().track(AnalyticsEvent.TaskShared, null);
         },
         onSettled: () => {
@@ -333,7 +346,7 @@ export function useEpicSharingPanelController(
         {
           onSuccess: () => {
             dispatch({ type: "set-revoke-target", target: null });
-            toast.success("Collaborator removed");
+            toast.success(t("Collaborator removed"));
           },
           onSettled: () => {
             dispatch({ type: "set-pending-action", pendingAction: null });
@@ -361,7 +374,7 @@ export function useEpicSharingPanelController(
       {
         onSuccess: () => {
           dispatch({ type: "set-revoke-target", target: null });
-          toast.success("Team access removed");
+          toast.success(t("Team access removed"));
         },
         onSettled: () => {
           dispatch({ type: "set-pending-action", pendingAction: null });
@@ -401,6 +414,7 @@ export function useEpicSharingPanelController(
       isLoading,
       collaboratorsQuery.isError,
       directUsers.length,
+      t,
     ),
     peopleProps: {
       loadState,
@@ -422,7 +436,7 @@ export function useEpicSharingPanelController(
       isLoading,
       collaboratorsQuery.isError,
       teams.length,
-      isOwner ? shareableTeams.length : 0,
+      { available: isOwner ? shareableTeams.length : 0, t },
     ),
     teamsProps: {
       loadState,
@@ -457,8 +471,8 @@ export function useEpicSharingPanelController(
       onOpenChange: (open) => {
         if (!open) dispatch({ type: "set-revoke-target", target: null });
       },
-      title: buildRevokeTitle(state.revokeTarget),
-      description: buildRevokeDescription(state.revokeTarget),
+      title: buildRevokeTitle(state.revokeTarget, t),
+      description: buildRevokeDescription(state.revokeTarget, t),
       isPending: revokeCollaborator.isPending,
       onConfirm: handleRevokeConfirm,
     },
@@ -555,42 +569,56 @@ function buildPeopleHint(
   isLoading: boolean,
   isError: boolean,
   count: number,
+  t: TFunction<"canvas">,
 ): string {
-  if (isLoading) return "Loading collaborators...";
-  if (isError) return "Couldn't load collaborators.";
-  const subject = count === 1 ? "person has" : "people have";
-  return `${count} ${subject} direct access.`;
+  if (isLoading) return t("Loading collaborators...");
+  if (isError) return t("Couldn't load collaborators.");
+  return count === 1
+    ? t("{{count}} person has direct access.", { count })
+    : t("{{count}} people have direct access.", { count });
 }
 
 function buildTeamHint(
   isLoading: boolean,
   isError: boolean,
   sharedCount: number,
-  availableCount: number,
+  fallback: { readonly available: number; readonly t: TFunction<"canvas"> },
 ): string {
-  if (isLoading) return "Loading teams...";
-  if (isError) return "Couldn't load teams.";
+  const t = fallback.t;
+  if (isLoading) return t("Loading teams...");
+  if (isError) return t("Couldn't load teams.");
   if (sharedCount > 0) {
-    const subject = sharedCount === 1 ? "team has" : "teams have";
-    return `${sharedCount} ${subject} access.`;
+    return sharedCount === 1
+      ? t("{{count}} team has access.", { count: sharedCount })
+      : t("{{count}} teams have access.", { count: sharedCount });
   }
-  if (availableCount > 0) return "Share with one of your teams.";
-  return "No teams available.";
+  if (fallback.available > 0) return t("Share with one of your teams.");
+  return t("No teams available.");
 }
 
-function buildRevokeTitle(target: RevokeTarget | null): string {
-  if (target === null) return "Remove access?";
+function buildRevokeTitle(
+  target: RevokeTarget | null,
+  t: TFunction<"canvas">,
+): string {
+  if (target === null) return t("Remove access?");
   if (target.kind === "user") {
-    return `Remove ${target.collaborator.displayName}?`;
+    return t("Remove {{name}}?", { name: target.collaborator.displayName });
   }
-  return `Remove ${target.team.teamName}?`;
+  return t("Remove {{name}}?", { name: target.team.teamName });
 }
 
-function buildRevokeDescription(target: RevokeTarget | null): string {
+function buildRevokeDescription(
+  target: RevokeTarget | null,
+  t: TFunction<"canvas">,
+): string {
   if (target?.kind === "team") {
-    return "Everyone relying on this team grant will immediately lose access to this epic.";
+    return t(
+      "Everyone relying on this team grant will immediately lose access to this epic.",
+    );
   }
-  return "They will immediately lose access to this epic, and any open sessions they have will be closed.";
+  return t(
+    "They will immediately lose access to this epic, and any open sessions they have will be closed.",
+  );
 }
 
 function computeIsLoading(query: {

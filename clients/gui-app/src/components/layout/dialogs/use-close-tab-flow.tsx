@@ -2,6 +2,7 @@ import { useCallback, useMemo, type ReactNode } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { navigateToTabIntent } from "@/lib/tab-navigation";
+import { i18n } from "@/lib/i18n/init-i18n";
 import { readTabStripLayout } from "@/stores/tabs/store";
 import {
   findStripItemForRef,
@@ -88,10 +89,24 @@ export function useCloseTabFlow(): CloseTabFlow {
       }
       if (skipped.length > 0) {
         const detail =
-          skipped.length === 1 ? `"${skipped[0]}"` : `${skipped.length} tabs`;
-        toast.warning(`Kept ${detail} open with unsynced edits`, {
-          description: "Close those tabs individually to discard their edits.",
-        });
+          skipped.length === 1
+            ? `"${skipped[0]}"`
+            : i18n.t("{{count}} tabs", {
+                ns: "common",
+                count: skipped.length,
+              });
+        toast.warning(
+          i18n.t("Kept {{detail}} open with unsynced edits", {
+            ns: "common",
+            detail,
+          }),
+          {
+            description: i18n.t(
+              "Close those tabs individually to discard their edits.",
+              { ns: "common" },
+            ),
+          },
+        );
       }
       navigateToTabIntent(navigate, tabResolveIntent(target), undefined);
     },
