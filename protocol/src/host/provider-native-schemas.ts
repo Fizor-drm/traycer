@@ -1052,55 +1052,69 @@ export type ProvidersSkillsMutateAction = z.infer<
  * Scope/workspaceRoot invariant applied via shared refinement (union arms
  * cannot individually be ZodEffects under discriminatedUnion).
  */
-export const nativeListQuerySchema = z
-  .discriminatedUnion("kind", [
-    z.object({
-      kind: z.literal("mcp"),
-      providerId: providerIdSchema,
-      scope: providerNativeScopeSchema,
-      workspaceRoot: z.string().nullable(),
-    }),
-    z.object({
-      kind: z.literal("plugins"),
-      providerId: providerIdSchema,
-      scope: providerNativeScopeSchema,
-      workspaceRoot: z.string().nullable(),
-    }),
-    z.object({
-      kind: z.literal("skills"),
-      providerId: providerIdSchema,
-      scope: providerNativeScopeSchema,
-      workspaceRoot: z.string().nullable(),
-    }),
-    z.object({
-      kind: z.literal("mcpDiscover"),
-      providerId: providerIdSchema,
-      scope: providerNativeScopeSchema,
-      workspaceRoot: z.string().nullable(),
-      serverName: z.string().min(1),
+/**
+ * Builds the native list query over a GIVEN provider id enum. The live
+ * `nativeListQuerySchema` ranges over the live `providerIdSchema`; frozen
+ * carrier lines (e.g. `providers.list@7.0`'s request pin) build their own cut
+ * with the matching frozen enum (`providerIdSchemaV70`) so released rows stop
+ * tracking live id growth. Same shape, different enum - the refinement is
+ * shared.
+ */
+export function makeNativeListQuerySchema(
+  providerEnum: z.ZodEnum<Record<string, string>>,
+) {
+  return z
+    .discriminatedUnion("kind", [
+      z.object({
+        kind: z.literal("mcp"),
+        providerId: providerEnum,
+        scope: providerNativeScopeSchema,
+        workspaceRoot: z.string().nullable(),
+      }),
+      z.object({
+        kind: z.literal("plugins"),
+        providerId: providerEnum,
+        scope: providerNativeScopeSchema,
+        workspaceRoot: z.string().nullable(),
+      }),
+      z.object({
+        kind: z.literal("skills"),
+        providerId: providerEnum,
+        scope: providerNativeScopeSchema,
+        workspaceRoot: z.string().nullable(),
+      }),
+      z.object({
+        kind: z.literal("mcpDiscover"),
+        providerId: providerEnum,
+        scope: providerNativeScopeSchema,
+        workspaceRoot: z.string().nullable(),
+        serverName: z.string().min(1),
+        /**
+         * When true, bypass the discovery cache and re-probe / re-query native.
+         */
+        forceRefresh: z.boolean(),
+      }),
       /**
-       * When true, bypass the discovery cache and re-probe / re-query native.
+       * One plugin's artwork, addressed BY ID rather than by a path taken from
+       * the `plugins` row. The host re-resolves the file from its own walk, so
+       * no client-supplied filesystem path is ever opened - the same reason
+       * `assertRemovableSkill` re-lists instead of trusting the row it was
+       * handed. Split off `plugins` so the megabyte-scale bytes are not re-sent
+       * on that list's 30s refetch.
        */
-      forceRefresh: z.boolean(),
-    }),
-    /**
-     * One plugin's artwork, addressed BY ID rather than by a path taken from
-     * the `plugins` row. The host re-resolves the file from its own walk, so
-     * no client-supplied filesystem path is ever opened - the same reason
-     * `assertRemovableSkill` re-lists instead of trusting the row it was
-     * handed. Split off `plugins` so the megabyte-scale bytes are not re-sent
-     * on that list's 30s refetch.
-     */
-    z.object({
-      kind: z.literal("pluginIcon"),
-      providerId: providerIdSchema,
-      scope: providerNativeScopeSchema,
-      workspaceRoot: z.string().nullable(),
-      pluginId: z.string().min(1),
-      theme: providerPluginIconThemeSchema,
-    }),
-  ])
-  .superRefine(refineProviderNativeScope);
+      z.object({
+        kind: z.literal("pluginIcon"),
+        providerId: providerEnum,
+        scope: providerNativeScopeSchema,
+        workspaceRoot: z.string().nullable(),
+        pluginId: z.string().min(1),
+        theme: providerPluginIconThemeSchema,
+      }),
+    ])
+    .superRefine(refineProviderNativeScope);
+}
+
+export const nativeListQuerySchema = makeNativeListQuerySchema(providerIdSchema);
 export type NativeListQuery = z.infer<typeof nativeListQuerySchema>;
 
 const nativeListSuccessResultSchema = z.discriminatedUnion("kind", [

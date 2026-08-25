@@ -68,6 +68,7 @@ export const guiHarnessIdSchema = harnessIdSchema.extract([
   "hermes",
   "omp",
   "huggingface",
+  "antigravity",
 ]);
 export type GuiHarnessId = z.infer<typeof guiHarnessIdSchema>;
 
@@ -380,6 +381,7 @@ export const AGENT_FACING_HARNESS_IDS = [
   "hermes",
   "omp",
   "huggingface",
+  "antigravity",
 ] as const;
 
 export const AGENT_FACING_HARNESS_ID_LIST = AGENT_FACING_HARNESS_IDS.join(", ");
@@ -904,6 +906,22 @@ export const listAgentsResponseSchemaV60 = listAgentsResponseSchema.extend({
   agents: z.array(agentSummarySchemaV60),
 });
 export type ListAgentsResponseV60 = z.infer<typeof listAgentsResponseSchemaV60>;
+
+// ── Frozen protocol-v7.0 agent.list response (with Hugging Face, pre-
+// Antigravity) ───────────────────────────────────────────────────────────────
+// `agent.list` enumerates every agent in the epic - including Antigravity GUI
+// harness chats a newer client created - so an already-shipped v7.0 client
+// would hit a strict enum on those rows. This line IS released (`cli-v1.2.0`,
+// tagged 2026-08), so it is frozen here as actually shipped; the v8.0 line
+// carries Antigravity rows and v8→v7 … v8→v1 bridges drop them for older
+// callers. Do not add new harnesses here - use the existing v8 bridge.
+export const agentSummarySchemaV70 = agentSummarySchema.extend({
+  harnessId: guiHarnessIdSchemaV70.nullable(),
+});
+export const listAgentsResponseSchemaV70 = listAgentsResponseSchema.extend({
+  agents: z.array(agentSummarySchemaV70),
+});
+export type ListAgentsResponseV70 = z.infer<typeof listAgentsResponseSchemaV70>;
 
 /**
  * `agent.sendMessage@1.0` - fire-and-forget enqueue from one agent to

@@ -31,12 +31,14 @@ import {
   listAgentsResponseSchemaV40,
   listAgentsResponseSchemaV50,
   listAgentsResponseSchemaV60,
+  listAgentsResponseSchemaV70,
   agentSummarySchemaV10,
   agentSummarySchemaV20,
   agentSummarySchemaV30,
   agentSummarySchemaV40,
   agentSummarySchemaV50,
   agentSummarySchemaV60,
+  agentSummarySchemaV70,
   sendAgentMessageRequestSchema,
   sendAgentMessageResponseSchema,
   stopAgentRequestSchema,
@@ -710,6 +712,16 @@ export const agentListV70 = defineRpcContract({
   method: "agent.list",
   schemaVersion: { major: 7, minor: 0 } as const,
   requestSchema: listAgentsRequestSchema,
+  // Frozen: `cli-v1.2.0` shipped this line, so it must serve the row shape
+  // those peers negotiate rather than the live one, which v8.0 grows with
+  // Antigravity rows.
+  responseSchema: listAgentsResponseSchemaV70,
+});
+
+export const agentListV80 = defineRpcContract({
+  method: "agent.list",
+  schemaVersion: { major: 8, minor: 0 } as const,
+  requestSchema: listAgentsRequestSchema,
   responseSchema: listAgentsResponseSchema,
 });
 
@@ -719,10 +731,22 @@ export const agentListUpgradeV6ToV7 = defineUpgradePath<
 >({
   from: { major: 6, minor: 0 },
   to: { major: 7, minor: 0 },
-  // The request shape is identical. Parsing the response through the live v7
+  // The request shape is identical. Parsing the response through the frozen v7
   // schema default-fills `runConfig: null` on every released v6 row.
   upgradeRequest: (request) => request,
-  upgradeResponse: (response) => listAgentsResponseSchema.parse(response),
+  upgradeResponse: (response) => listAgentsResponseSchemaV70.parse(response),
+});
+
+export const agentListUpgradeV7ToV8 = defineUpgradePath<
+  typeof agentListV70,
+  typeof agentListV80
+>({
+  from: { major: 7, minor: 0 },
+  to: { major: 8, minor: 0 },
+  // The request shape is identical; a v7.0 response without Antigravity rows is
+  // a valid v8.0 response (purely additive), so both upgrades are identity.
+  upgradeRequest: (request) => request,
+  upgradeResponse: (response) => response,
 });
 
 export const agentListDowngradeV7ToV6 = defineDowngradePath<
@@ -828,6 +852,142 @@ export const agentListDowngradeV7ToV1 = defineDowngradePath<
   typeof agentListV10
 >({
   from: { major: 7, minor: 0 },
+  to: { major: 1, minor: 0 },
+  downgradeRequest: (request) => ({ ok: true, value: request }),
+  downgradeResponse: (response) => ({
+    ok: true,
+    value: listAgentsResponseSchemaV10.parse({
+      ...response,
+      agents: response.agents.filter(
+        (agent) => agentSummarySchemaV10.safeParse(agent).success,
+      ),
+    }),
+  }),
+});
+
+export const agentListDowngradeV8ToV7 = defineDowngradePath<
+  typeof agentListV80,
+  typeof agentListV70
+>({
+  from: { major: 8, minor: 0 },
+  to: { major: 7, minor: 0 },
+  downgradeRequest: (request) => ({ ok: true, value: request }),
+  // Drop Antigravity agents so an already-shipped v7.0 client's strict decode
+  // never sees one.
+  downgradeResponse: (response) => ({
+    ok: true,
+    value: listAgentsResponseSchemaV70.parse({
+      ...response,
+      agents: response.agents.filter(
+        (agent) => agentSummarySchemaV70.safeParse(agent).success,
+      ),
+    }),
+  }),
+});
+
+export const agentListDowngradeV8ToV6 = defineDowngradePath<
+  typeof agentListV80,
+  typeof agentListV60
+>({
+  from: { major: 8, minor: 0 },
+  to: { major: 6, minor: 0 },
+  downgradeRequest: (request) => ({ ok: true, value: request }),
+  // Drop Hugging Face/Antigravity agents so an already-shipped v6.0 client's
+  // strict decode never sees one.
+  downgradeResponse: (response) => ({
+    ok: true,
+    value: listAgentsResponseSchemaV60.parse({
+      ...response,
+      agents: response.agents.filter(
+        (agent) => agentSummarySchemaV60.safeParse(agent).success,
+      ),
+    }),
+  }),
+});
+
+export const agentListDowngradeV8ToV5 = defineDowngradePath<
+  typeof agentListV80,
+  typeof agentListV50
+>({
+  from: { major: 8, minor: 0 },
+  to: { major: 5, minor: 0 },
+  downgradeRequest: (request) => ({ ok: true, value: request }),
+  // Drop omp/Hugging Face/Antigravity agents so an already-shipped v5.0
+  // client's strict decode never sees one.
+  downgradeResponse: (response) => ({
+    ok: true,
+    value: listAgentsResponseSchemaV50.parse({
+      ...response,
+      agents: response.agents.filter(
+        (agent) => agentSummarySchemaV50.safeParse(agent).success,
+      ),
+    }),
+  }),
+});
+
+export const agentListDowngradeV8ToV4 = defineDowngradePath<
+  typeof agentListV80,
+  typeof agentListV40
+>({
+  from: { major: 8, minor: 0 },
+  to: { major: 4, minor: 0 },
+  downgradeRequest: (request) => ({ ok: true, value: request }),
+  // Drop Hermes/omp/Hugging Face/Antigravity agents so an already-shipped v4.0
+  // client's strict decode never sees one.
+  downgradeResponse: (response) => ({
+    ok: true,
+    value: listAgentsResponseSchemaV40.parse({
+      ...response,
+      agents: response.agents.filter(
+        (agent) => agentSummarySchemaV40.safeParse(agent).success,
+      ),
+    }),
+  }),
+});
+
+export const agentListDowngradeV8ToV3 = defineDowngradePath<
+  typeof agentListV80,
+  typeof agentListV30
+>({
+  from: { major: 8, minor: 0 },
+  to: { major: 3, minor: 0 },
+  downgradeRequest: (request) => ({ ok: true, value: request }),
+  // Drop Devin/Pi/Hermes/omp/Hugging Face/Antigravity agents so an
+  // already-shipped v3.0 client's strict decode never sees one.
+  downgradeResponse: (response) => ({
+    ok: true,
+    value: listAgentsResponseSchemaV30.parse({
+      ...response,
+      agents: response.agents.filter(
+        (agent) => agentSummarySchemaV30.safeParse(agent).success,
+      ),
+    }),
+  }),
+});
+
+export const agentListDowngradeV8ToV2 = defineDowngradePath<
+  typeof agentListV80,
+  typeof agentListV20
+>({
+  from: { major: 8, minor: 0 },
+  to: { major: 2, minor: 0 },
+  downgradeRequest: (request) => ({ ok: true, value: request }),
+  downgradeResponse: (response) => ({
+    ok: true,
+    value: listAgentsResponseSchemaV20.parse({
+      ...response,
+      agents: response.agents.filter(
+        (agent) => agentSummarySchemaV20.safeParse(agent).success,
+      ),
+    }),
+  }),
+});
+
+export const agentListDowngradeV8ToV1 = defineDowngradePath<
+  typeof agentListV80,
+  typeof agentListV10
+>({
+  from: { major: 8, minor: 0 },
   to: { major: 1, minor: 0 },
   downgradeRequest: (request) => ({ ok: true, value: request }),
   downgradeResponse: (response) => ({

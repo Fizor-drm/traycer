@@ -447,6 +447,23 @@ export type HuggingFaceChatSessionAnchor = z.infer<
   typeof huggingFaceChatSessionAnchorSchema
 >;
 
+// Antigravity CLI (`agy`) resumes at conversation granularity only —
+// `--conversation <id>` reloads a whole conversation with no per-message
+// truncation/fork point — so the anchor carries just the conversation id.
+// `sessionId` is the agy `conversation_id` emitted by its stream-json events.
+export const antigravityChatSessionAnchorSchema = z.object({
+  harnessId: z.literal("antigravity"),
+  hostId: z.string(),
+  sessionId: z.string(),
+  sessionWorkspaceSnapshot: sessionWorkspaceSnapshotSchema,
+  createdAt: z.number(),
+  coveredUntilMessageId: z.string().nullable().default(null),
+  ...profileSnapshotFields,
+});
+export type AntigravityChatSessionAnchor = z.infer<
+  typeof antigravityChatSessionAnchorSchema
+>;
+
 export const chatSessionAnchorSchema = z.discriminatedUnion("harnessId", [
   claudeChatSessionAnchorSchema,
   codexChatSessionAnchorSchema,
@@ -467,6 +484,7 @@ export const chatSessionAnchorSchema = z.discriminatedUnion("harnessId", [
   hermesChatSessionAnchorSchema,
   ompChatSessionAnchorSchema,
   huggingFaceChatSessionAnchorSchema,
+  antigravityChatSessionAnchorSchema,
 ]);
 export type ChatSessionAnchor = z.infer<typeof chatSessionAnchorSchema>;
 
@@ -513,5 +531,6 @@ export const chatSessionAnchorSchemaPreTurnTail = z.discriminatedUnion(
     hermesChatSessionAnchorSchema,
     ompChatSessionAnchorSchema,
     huggingFaceChatSessionAnchorSchema,
+    antigravityChatSessionAnchorSchema,
   ],
 );

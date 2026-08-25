@@ -838,7 +838,8 @@ export const FROZEN_CATALOG_LINE_SNAPSHOTS = {
                   "pi",
                   "hermes",
                   "omp",
-                  "huggingface"
+                  "huggingface",
+                  "antigravity"
                 ]
               },
               "label": {
@@ -7846,7 +7847,8 @@ export const FROZEN_CATALOG_LINE_SNAPSHOTS = {
                   "pi",
                   "hermes",
                   "omp",
-                  "huggingface"
+                  "huggingface",
+                  "antigravity"
                 ]
               },
               "enabled": {
@@ -8727,7 +8729,8 @@ export const FROZEN_CATALOG_LINE_SNAPSHOTS = {
                             "pi",
                             "hermes",
                             "omp",
-                            "huggingface"
+                            "huggingface",
+                            "antigravity"
                           ]
                         }
                       },
@@ -10700,7 +10703,8 @@ export const FROZEN_CATALOG_LINE_SNAPSHOTS = {
                         "pi",
                         "hermes",
                         "omp",
-                        "huggingface"
+                        "huggingface",
+                        "antigravity"
                       ]
                     },
                     "scope": {
@@ -10757,7 +10761,8 @@ export const FROZEN_CATALOG_LINE_SNAPSHOTS = {
                         "pi",
                         "hermes",
                         "omp",
-                        "huggingface"
+                        "huggingface",
+                        "antigravity"
                       ]
                     },
                     "scope": {
@@ -10814,7 +10819,8 @@ export const FROZEN_CATALOG_LINE_SNAPSHOTS = {
                         "pi",
                         "hermes",
                         "omp",
-                        "huggingface"
+                        "huggingface",
+                        "antigravity"
                       ]
                     },
                     "scope": {
@@ -10871,7 +10877,8 @@ export const FROZEN_CATALOG_LINE_SNAPSHOTS = {
                         "pi",
                         "hermes",
                         "omp",
-                        "huggingface"
+                        "huggingface",
+                        "antigravity"
                       ]
                     },
                     "scope": {
@@ -10937,7 +10944,8 @@ export const FROZEN_CATALOG_LINE_SNAPSHOTS = {
                         "pi",
                         "hermes",
                         "omp",
-                        "huggingface"
+                        "huggingface",
+                        "antigravity"
                       ]
                     },
                     "scope": {

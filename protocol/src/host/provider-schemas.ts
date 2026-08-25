@@ -27,6 +27,7 @@ import {
   modelProviderAuthPollContextSchema,
   modelProviderAuthResultSchema,
   modelProvidersListResultSchema,
+  makeNativeListQuerySchema,
   nativeAuthActionSchema,
   nativeAuthCancelContextSchema,
   nativeAuthPollContextSchema,
@@ -228,6 +229,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderId, string> = {
   hermes: "Hermes Agent",
   omp: "Oh My Pi",
   huggingface: "Hugging Face",
+  antigravity: "Antigravity",
 };
 
 /**
@@ -689,6 +691,14 @@ export const providerManagedVersionsSchema = z.object({
 export type ProviderManagedVersions = z.infer<
   typeof providerManagedVersionsSchema
 >;
+
+// Frozen v7.0 cut of the version manager: identical to the live shape except
+// `sharedWithProviders` is pinned to `providerIdSchemaV70`. The live enum grew
+// with Antigravity; the released `providers.list@7.0` row must not. Do NOT
+// widen this schema - the live shape above carries new ids.
+const providerManagedVersionsSchemaV70 = providerManagedVersionsSchema.extend({
+  sharedWithProviders: z.array(providerIdSchemaV70).catch([]),
+});
 
 /**
  * Why the version manager cannot be offered for a pack that HAS one.
@@ -1562,7 +1572,13 @@ export type ProvidersListRequestBeforeV70 = z.infer<
  */
 export const providersListRequestSchemaV70 = z.object({
   forceAuthRefresh: z.boolean().optional(),
-  native: nativeListQuerySchema.nullable().default(null),
+  // Hand-frozen at the v7.0 cut over `providerIdSchemaV70`: the live native
+  // query's per-arm `providerId` enum grew with Antigravity, and the released
+  // v7.0 request must not track it. Same shape, frozen enum - see
+  // `makeNativeListQuerySchema`.
+  native: makeNativeListQuerySchema(providerIdSchemaV70)
+    .nullable()
+    .default(null),
 });
 export type ProvidersListRequestV70 = z.infer<
   typeof providersListRequestSchemaV70
@@ -1940,7 +1956,12 @@ const providerCliStateBaseShapeV70 = {
   advisory: providerAdvisorySchema.nullable().catch(null).optional(),
   cliBinaryResolved: z.boolean().catch(true).optional(),
   packId: z.string().nullable().catch(null).optional(),
-  managedVersions: providerManagedVersionsSchema
+  // Hand-frozen at the v7.0 cut: the live `providerManagedVersionsSchema`
+  // keeps a LIVE `sharedWithProviders` id enum, which Antigravity grew. The
+  // frozen shape pins that enum (`providerIdSchemaV70`) so the released
+  // `providers.list@7.0` row stops tracking live - see the block comment
+  // above this shape.
+  managedVersions: providerManagedVersionsSchemaV70
     .nullable()
     .catch(null)
     .optional(),

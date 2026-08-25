@@ -45,12 +45,20 @@ import {
   agentListDowngradeV7ToV4,
   agentListDowngradeV7ToV5,
   agentListDowngradeV7ToV6,
+  agentListDowngradeV8ToV1,
+  agentListDowngradeV8ToV2,
+  agentListDowngradeV8ToV3,
+  agentListDowngradeV8ToV4,
+  agentListDowngradeV8ToV5,
+  agentListDowngradeV8ToV6,
+  agentListDowngradeV8ToV7,
   agentListUpgradeV1ToV2,
   agentListUpgradeV2ToV3,
   agentListUpgradeV3ToV4,
   agentListUpgradeV4ToV5,
   agentListUpgradeV5ToV6,
   agentListUpgradeV6ToV7,
+  agentListUpgradeV7ToV8,
   agentListV10,
   agentListV20,
   agentListV30,
@@ -58,6 +66,7 @@ import {
   agentListV50,
   agentListV60,
   agentListV70,
+  agentListV80,
   agentSelectionGuideV10,
   agentSelectionGuideGlobalGetV10,
   agentSelectionGuideGlobalOnboardingDraftGetV10,
@@ -74,39 +83,57 @@ import {
   agentConfigureDowngradeV40ToV10,
   agentConfigureDowngradeV40ToV20,
   agentConfigureDowngradeV40ToV30,
+  agentConfigureDowngradeV50ToV10,
+  agentConfigureDowngradeV50ToV20,
+  agentConfigureDowngradeV50ToV30,
+  agentConfigureDowngradeV50ToV40,
   agentConfigureV10,
   agentConfigureV20,
   agentConfigureV30,
   agentConfigureV40,
+  agentConfigureV50,
   agentConfigureUpgradeV10ToV20,
   agentConfigureUpgradeV20ToV30,
   agentConfigureUpgradeV30ToV40,
+  agentConfigureUpgradeV40ToV50,
   agentGetProviderProfileRateLimitsDowngradeV20ToV10,
   agentGetProviderProfileRateLimitsDowngradeV30ToV10,
   agentGetProviderProfileRateLimitsDowngradeV30ToV20,
   agentGetProviderProfileRateLimitsDowngradeV40ToV10,
   agentGetProviderProfileRateLimitsDowngradeV40ToV20,
   agentGetProviderProfileRateLimitsDowngradeV40ToV30,
+  agentGetProviderProfileRateLimitsDowngradeV50ToV10,
+  agentGetProviderProfileRateLimitsDowngradeV50ToV20,
+  agentGetProviderProfileRateLimitsDowngradeV50ToV30,
+  agentGetProviderProfileRateLimitsDowngradeV50ToV40,
   agentGetProviderProfileRateLimitsV10,
   agentGetProviderProfileRateLimitsV20,
   agentGetProviderProfileRateLimitsV30,
   agentGetProviderProfileRateLimitsV40,
+  agentGetProviderProfileRateLimitsV50,
   agentGetProviderProfileRateLimitsUpgradeV10ToV20,
   agentGetProviderProfileRateLimitsUpgradeV20ToV30,
   agentGetProviderProfileRateLimitsUpgradeV30ToV40,
+  agentGetProviderProfileRateLimitsUpgradeV40ToV50,
   agentListProviderProfilesDowngradeV20ToV10,
   agentListProviderProfilesDowngradeV30ToV10,
   agentListProviderProfilesDowngradeV30ToV20,
   agentListProviderProfilesDowngradeV40ToV10,
   agentListProviderProfilesDowngradeV40ToV20,
   agentListProviderProfilesDowngradeV40ToV30,
+  agentListProviderProfilesDowngradeV50ToV10,
+  agentListProviderProfilesDowngradeV50ToV20,
+  agentListProviderProfilesDowngradeV50ToV30,
+  agentListProviderProfilesDowngradeV50ToV40,
   agentListProviderProfilesV10,
   agentListProviderProfilesV20,
   agentListProviderProfilesV30,
   agentListProviderProfilesV40,
+  agentListProviderProfilesV50,
   agentListProviderProfilesUpgradeV10ToV20,
   agentListProviderProfilesUpgradeV20ToV30,
   agentListProviderProfilesUpgradeV30ToV40,
+  agentListProviderProfilesUpgradeV40ToV50,
 } from "@traycer/protocol/host/agent/profiles";
 import {
   agentInboxAckV10,
@@ -4614,6 +4641,13 @@ const HOST_RPC_REGISTRY_BASE_DEFINITION = {
         1: {
           contract: agentGuiListHarnessesV71,
           upgradeFromPreviousVersion: agentGuiListHarnessesUpgradeV70ToV71,
+          // Antigravity rides this unreleased minor as an id-enum value on
+          // the catalog rows. Emission IS gated on the negotiated version:
+          // a v7.0 caller's catalog is projected through the frozen
+          // `listGuiHarnessesResponseSchemaV70`, which cannot name the new
+          // harness, and every cross-major bridge below filters by frozen
+          // reparse - so a released peer never sees the id.
+          responseGrowthProjectionGated: true,
         },
       },
       downgradePathsFromLatest: {
@@ -4985,6 +5019,24 @@ const HOST_RPC_REGISTRY_BASE_DEFINITION = {
         4: agentListDowngradeV7ToV4,
         5: agentListDowngradeV7ToV5,
         6: agentListDowngradeV7ToV6,
+      },
+    },
+    8: {
+      latestMinor: 0,
+      versions: {
+        0: {
+          contract: agentListV80,
+          upgradeFromPreviousVersion: agentListUpgradeV7ToV8,
+        },
+      },
+      downgradePathsFromLatest: {
+        1: agentListDowngradeV8ToV1,
+        2: agentListDowngradeV8ToV2,
+        3: agentListDowngradeV8ToV3,
+        4: agentListDowngradeV8ToV4,
+        5: agentListDowngradeV8ToV5,
+        6: agentListDowngradeV8ToV6,
+        7: agentListDowngradeV8ToV7,
       },
     },
   },
@@ -6910,6 +6962,21 @@ const HOST_RPC_REGISTRY_BASE_TAIL_DEFINITION = {
         3: agentListProviderProfilesDowngradeV40ToV30,
       },
     },
+    5: {
+      latestMinor: 0,
+      versions: {
+        0: {
+          contract: agentListProviderProfilesV50,
+          upgradeFromPreviousVersion: agentListProviderProfilesUpgradeV40ToV50,
+        },
+      },
+      downgradePathsFromLatest: {
+        1: agentListProviderProfilesDowngradeV50ToV10,
+        2: agentListProviderProfilesDowngradeV50ToV20,
+        3: agentListProviderProfilesDowngradeV50ToV30,
+        4: agentListProviderProfilesDowngradeV50ToV40,
+      },
+    },
   },
   "agent.getProviderProfileRateLimits": {
     degrade: { kind: "unsupported" },
@@ -6965,6 +7032,22 @@ const HOST_RPC_REGISTRY_BASE_TAIL_DEFINITION = {
         3: agentGetProviderProfileRateLimitsDowngradeV40ToV30,
       },
     },
+    5: {
+      latestMinor: 0,
+      versions: {
+        0: {
+          contract: agentGetProviderProfileRateLimitsV50,
+          upgradeFromPreviousVersion:
+            agentGetProviderProfileRateLimitsUpgradeV40ToV50,
+        },
+      },
+      downgradePathsFromLatest: {
+        1: agentGetProviderProfileRateLimitsDowngradeV50ToV10,
+        2: agentGetProviderProfileRateLimitsDowngradeV50ToV20,
+        3: agentGetProviderProfileRateLimitsDowngradeV50ToV30,
+        4: agentGetProviderProfileRateLimitsDowngradeV50ToV40,
+      },
+    },
   },
   "agent.configure": {
     degrade: { kind: "unsupported" },
@@ -7013,6 +7096,21 @@ const HOST_RPC_REGISTRY_BASE_TAIL_DEFINITION = {
         1: agentConfigureDowngradeV40ToV10,
         2: agentConfigureDowngradeV40ToV20,
         3: agentConfigureDowngradeV40ToV30,
+      },
+    },
+    5: {
+      latestMinor: 0,
+      versions: {
+        0: {
+          contract: agentConfigureV50,
+          upgradeFromPreviousVersion: agentConfigureUpgradeV40ToV50,
+        },
+      },
+      downgradePathsFromLatest: {
+        1: agentConfigureDowngradeV50ToV10,
+        2: agentConfigureDowngradeV50ToV20,
+        3: agentConfigureDowngradeV50ToV30,
+        4: agentConfigureDowngradeV50ToV40,
       },
     },
   },
@@ -7202,6 +7300,14 @@ const HOST_RPC_PROVIDERS_REGISTRY_DEFINITION = {
         1: {
           contract: providersListV71,
           upgradeFromPreviousVersion: providersListUpgradeV70ToV71,
+          // Antigravity rides this unreleased minor as an id-enum value on
+          // the provider rows. Emission IS gated on the negotiated version:
+          // a v7.0 caller's list is projected through the frozen
+          // `providersListResponseSchemaV70`, which cannot name the new
+          // provider, and every cross-major bridge below filters by frozen
+          // reparse (`downgradeProviderCliStateListToV60` and friends) - so a
+          // released peer never sees the id.
+          responseGrowthProjectionGated: true,
         },
       },
       // Every older major needs its own entry: `downgradePathsFromLatest` is

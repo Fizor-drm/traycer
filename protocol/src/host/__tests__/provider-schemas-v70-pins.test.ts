@@ -216,10 +216,23 @@ describe("the v7-era schemas are distinct objects from the canonical live ones",
   // represent. The point is that it must be a DECISION. Adding a harness now
   // fails here until someone states, in this file, which side the new id
   // belongs on.
-  it("the live and frozen provider id sets have not drifted apart", () => {
-    expect([...providerIdSchema.options].sort()).toEqual(
-      [...providerIdSchemaV70.options].sort(),
-    );
+  //
+  // DECISION (Antigravity): the new id belongs on the LIVE side only.
+  // `antigravity` rides the unreleased head lines (`agent.gui.listHarnesses@7.1`,
+  // `providers.list@7.1`, `agent.list@8.0`, and the `@5.0` profile/configure
+  // majors); every released line - including this frozen v7.0 set - drops it by
+  // reparse or fail-closed bridge. The live set is exactly the frozen set plus
+  // the enumerated post-v7.0 ids below; anything else drifting is a failure.
+  it("the live provider id set is exactly the frozen set plus the post-v7.0 ids", () => {
+    const live: string[] = [...providerIdSchema.options].sort();
+    const frozen: string[] = [...providerIdSchemaV70.options].sort();
+    expect(live.filter((id) => !frozen.includes(id))).toEqual([
+      "antigravity",
+    ]);
+    // No id may vanish from the frozen set: released peers still speak it.
+    for (const id of frozen) {
+      expect(live).toContain(id);
+    }
   });
 });
 
@@ -444,18 +457,46 @@ describe("v7.0 is behaviour-preserving for what it already serializes", () => {
   });
 
   // The round-trip above drives ONE sample value, which an added optional field
-  // would slip straight past. This compares the schemas themselves, and it is
-  // what keeps the bare `V70` name honest: v7.0 binds the LIVE request, so the
-  // day a field is added there the frozen copy stops being the v7.0 wire - the
-  // exact drift the response side had to be renamed out of. Red here means
-  // "update the copy, or rename it `Preimage` like the response", never
-  // "regenerate to green".
-  it("the frozen v7.0 request is still exactly the live request", () => {
-    expect(
-      z.toJSONSchema(providersListRequestSchemaV70, { unrepresentable: "any" }),
-    ).toEqual(
-      z.toJSONSchema(providersListRequestSchema, { unrepresentable: "any" }),
+  // would slip straight past. This compares the schemas themselves. It used to
+  // assert byte equality with the live request; Antigravity ended that: the
+  // native query's per-arm `providerId` enum grew on the live side, and the
+  // released v7.0 request hand-freezes it over `providerIdSchemaV70` instead of
+  // tracking live (the same decision the response side made when v7.0 froze).
+  // What must still hold is the KEY SET - a field added to the live request
+  // stops this copy being the v7.0 wire and is exactly the drift to refuse -
+  // plus the deliberate, enumerated enum divergence.
+  it("the frozen v7.0 request keeps the live key set; only the native provider enum may differ", () => {
+    expect(Object.keys(providersListRequestSchemaV70.shape).sort()).toEqual(
+      Object.keys(providersListRequestSchema.shape).sort(),
     );
+    const live = z.toJSONSchema(providersListRequestSchema, {
+      unrepresentable: "any",
+    });
+    const frozen = z.toJSONSchema(providersListRequestSchemaV70, {
+      unrepresentable: "any",
+    });
+    // The ONLY allowed difference: id enums inside the frozen copy name
+    // `antigravity` nowhere, while the live one does. Anything else drifting
+    // (a new key, a new arm) stays a failure.
+    const stripAntigravity = (node: unknown): unknown => {
+      if (Array.isArray(node)) {
+        return node.map(stripAntigravity);
+      }
+      if (node && typeof node === "object") {
+        const record = node as Record<string, unknown>;
+        const next: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(record)) {
+          if (key === "enum" && Array.isArray(value)) {
+            next[key] = value.filter((id) => id !== "antigravity");
+          } else {
+            next[key] = stripAntigravity(value);
+          }
+        }
+        return next;
+      }
+      return node;
+    };
+    expect(stripAntigravity(live)).toEqual(frozen);
   });
 });
 

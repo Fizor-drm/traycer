@@ -8,6 +8,7 @@ import {
   providerIdSchemaV40,
   providerIdSchemaV50,
   providerIdSchemaV60,
+  providerIdSchemaV70,
 } from "@traycer/protocol/host/provider-schemas";
 
 // `host.getRateLimitUsage` v1.0 request: no fields. Non-strict on purpose so a
@@ -796,6 +797,50 @@ export const providerRateLimitsSchemaV60 = z.union([
   unavailableProviderRateLimitsSchemaV60,
 ]);
 export type ProviderRateLimitsV60 = z.infer<typeof providerRateLimitsSchemaV60>;
+
+// Frozen pre-Antigravity unavailable arm: same v2 reason enum, but `provider`
+// is pinned to `providerIdSchemaV70` (the provider id set as shipped in
+// cli-v1.2.0, with Hugging Face and before Antigravity) so an already-shipped
+// `agent.getProviderProfileRateLimits@4.0` caller's strict decode never sees
+// `"antigravity"` in the `available: false` arm.
+const unavailableProviderRateLimitsSchemaV70 = z.object({
+  provider: providerIdSchemaV70,
+  available: z.literal(false),
+  reason: rateLimitUnavailableReasonSchemaV2,
+});
+
+/**
+ * Frozen pre-Antigravity provider union - identical to the latest
+ * `providerRateLimitsSchema` except the `available: false` arm's `provider`
+ * is pinned to `providerIdSchemaV70`. Keeps every available arm that shipped
+ * through `cli-v1.2.0` (grok, Hugging Face, OpenCode Go, Cursor).
+ *
+ * Feeds only `agent.getProviderProfileRateLimits@4.0`'s frozen response (see
+ * `host/agent/profiles.ts`) so that released line never receives
+ * `antigravity`; the v5.0 line carries it via the live
+ * `providerRateLimitsSchema` above, with a v5->v4 downgrade bridge that fails
+ * closed for such a rate-limit read instead of silently mis-decoding it. Do
+ * NOT widen this schema - extend the latest schema and use that v5 bridge
+ * instead.
+ *
+ * Antigravity appears in NEITHER arm of this union: it has no available arm
+ * (it is not rate-limit capable), and `providerIdSchemaV70` cannot name it in
+ * the unavailable one. Pinning that arm's enum is what closes the second door
+ * - left live, an unavailable row naming Antigravity would still reach a v4.0
+ * caller on a line that has never heard of it.
+ */
+export const providerRateLimitsSchemaV70 = z.union([
+  codexRateLimitsSchema,
+  claudeCodeRateLimitsSchema,
+  openRouterRateLimitsSchema,
+  kiloCodeRateLimitsSchema,
+  grokRateLimitsSchema,
+  huggingFaceRateLimitsSchema,
+  openCodeRateLimitsSchema,
+  cursorRateLimitsSchema,
+  unavailableProviderRateLimitsSchemaV70,
+]);
+export type ProviderRateLimitsV70 = z.infer<typeof providerRateLimitsSchemaV70>;
 
 // v1.2 response = v1.0/v1.1 flat aperture fields (unchanged) + a nullable
 // provider-account snapshot, frozen at the v1 reason enum (see

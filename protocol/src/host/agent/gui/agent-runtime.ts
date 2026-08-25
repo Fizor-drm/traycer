@@ -1019,6 +1019,15 @@ export const huggingFaceUserMessageAnchorResolvedSchema = z.object({
   opencodeUserMessageId: z.string(),
 });
 
+export const antigravityUserMessageAnchorResolvedSchema = z.object({
+  harnessId: z.literal("antigravity"),
+  sessionId: z.string(),
+  // The Antigravity CLI (`agy`) conversation id assigned for this turn. Null
+  // until the first headless run resolves it; used to resume the same
+  // conversation (`--conversation`) on a later turn.
+  antigravityConversationId: z.string().nullable(),
+});
+
 export const userMessageAnchorResolvedEventSchema = z.object({
   ...baseRuntimeEventFields,
   type: z.literal("user_message.anchor_resolved"),
@@ -1043,6 +1052,7 @@ export const userMessageAnchorResolvedEventSchema = z.object({
     hermesUserMessageAnchorResolvedSchema,
     ompUserMessageAnchorResolvedSchema,
     huggingFaceUserMessageAnchorResolvedSchema,
+    antigravityUserMessageAnchorResolvedSchema,
   ]),
 });
 export type UserMessageAnchorResolvedEvent = z.infer<

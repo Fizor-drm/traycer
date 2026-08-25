@@ -573,18 +573,19 @@ describe("optional-method capability negotiation", () => {
       split.manifest["agent.getProviderProfileRateLimits"],
     ).toBeUndefined();
     expect(split.manifest["agent.configure"]).toBeUndefined();
-    // list/configure and rate-limit reads all sit on the v4.0 line: the
-    // OpenCode arm and credentialGeneration ride major 4 rather than a
-    // separate 5, since 4 has never shipped.
+    // list/configure and rate-limit reads sit on the v5.0 line now: v4.0
+    // shipped in `cli-v1.2.0`, so the Antigravity provider/harness ids could
+    // not ride it and opened major 5 instead (the same hermes→v2 / omp→v3 /
+    // huggingface→v4 progression).
     expect(split.optionalManifest["agent.listProviderProfiles"]).toEqual({
-      major: 4,
+      major: 5,
       minor: 0,
     });
     expect(
       split.optionalManifest["agent.getProviderProfileRateLimits"],
-    ).toEqual({ major: 4, minor: 0 });
+    ).toEqual({ major: 5, minor: 0 });
     expect(split.optionalManifest["agent.configure"]).toEqual({
-      major: 4,
+      major: 5,
       minor: 0,
     });
   });

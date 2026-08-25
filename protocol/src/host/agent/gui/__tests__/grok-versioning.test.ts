@@ -25,6 +25,7 @@ import {
 } from "@traycer/protocol/host/agent/contracts";
 import {
   listAgentsResponseSchema,
+  listAgentsResponseSchemaV70,
   listAgentsResponseSchemaV10,
   listAgentsResponseSchemaV20,
   listAgentsResponseSchemaV30,
@@ -712,7 +713,7 @@ describe("post-v5.0 omp/Hugging Face non-breaking downgrade bridges", () => {
   });
 
   it("drops Hugging Face agents from agent.list for every released caller down to v1.0", () => {
-    const v7Response = listAgentsResponseSchema.parse({
+    const v7Response = listAgentsResponseSchemaV70.parse({
       caller: { agentId: "self", canSendMessages: true },
       scope: "all",
       agents: [
