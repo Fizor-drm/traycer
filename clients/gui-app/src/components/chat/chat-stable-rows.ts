@@ -124,6 +124,8 @@ const CHAT_MESSAGE_FIELD_UNCHANGED: {
   hasLaterAssistantText: (a, b) =>
     a.hasLaterAssistantText === b.hasLaterAssistantText,
   manualRungAnchorId: (a, b) => a.manualRungAnchorId === b.manualRungAnchorId,
+  routingSettledNoticeId: (a, b) =>
+    a.routingSettledNoticeId === b.routingSettledNoticeId,
   showCompletionFooter: (a, b) =>
     a.showCompletionFooter === b.showCompletionFooter,
   completedAt: (a, b) => a.completedAt === b.completedAt,

@@ -4,13 +4,16 @@ Default branch: `main`. Bun 1.3.14 workspaces + Nx.
 
 Open-source **clients, CLI, and protocol**. The Traycer Host and cloud backends
 are **not** here — the CLI provisions a signed host from GitHub Releases; see
-[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
+[`clients/traycer-cli/README.md`](clients/traycer-cli/README.md). Setup,
+toolchain and pre-commit hooks: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Nested docs (read when editing there)
 
 - [`clients/gui-app/AGENTS.md`](clients/gui-app/AGENTS.md)
 - [`clients/desktop/AGENTS.md`](clients/desktop/AGENTS.md)
 - [`clients/mobile/AGENTS.md`](clients/mobile/AGENTS.md)
+- [`mintlify/AGENTS.md`](mintlify/AGENTS.md) — public docs site
+  (docs.traycer.ai); every page there is published
 
 ## Map
 
@@ -21,6 +24,7 @@ are **not** here — the CLI provisions a signed host from GitHub Releases; see
 | `clients/shared/`      | `@traycer-clients/shared`      | Transport / auth / formatting    |
 | `clients/gui-app/`     | `@traycer-clients/gui-app`     | GUI renderer                     |
 | `clients/desktop/`     | `@traycer-clients/desktop`     | Electron shell                   |
+| `mintlify/`            | —                              | Public docs site (Mintlify)      |
 
 ## Commands
 
@@ -33,8 +37,7 @@ make dev-desktop                # signed host from Releases + HMR desktop
 make dev-desktop VERSION=1.2.3  # pin host release
 ```
 
-`make dev-desktop` talks to the **production** cloud — no local backends. Details:
-[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
+`make dev-desktop` talks to the **production** cloud — no local backends.
 
 **Never run a full compile, lint, format, test or build locally.** That means
 `bun run compile`, `bun run lint`, `bun run format`, `bun run test`,

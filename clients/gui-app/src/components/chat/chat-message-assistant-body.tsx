@@ -8,6 +8,8 @@ import { BrowserSessionRow } from "./segments/browser-session-row";
 import { chatFindSegmentUnitId } from "@/components/chat/chat-find";
 import { ChatBlockNavigationAnchor } from "@/components/chat/chat-navigation-highlight";
 import { deriveEarlierActivityCollapsibleKey } from "@/components/chat/chat-collapsible-key";
+import { useTranscriptQueuePauseReasonSupport } from "@/components/chat/use-transcript-queue-pause-reason-support";
+import { segmentsShownInTranscript } from "@/stores/chats/hidden-transcript-notices";
 import {
   WorkingVerbContext,
   pickWorkingVerb,
@@ -58,13 +60,13 @@ import { CommandSegment } from "./segments/command-segment";
 import { CompactionSegment } from "./segments/compaction-segment";
 import { AutonomousResumeSegment } from "./segments/autonomous-resume-segment";
 import { ErrorSegment } from "./segments/error-segment";
+import type { RoutingSettledNotice } from "@/components/chat/fallback/routing-settled-card";
 import { FileChangeGroupSegment } from "./segments/file-change-group-segment";
 import { FileChangeSegment } from "./segments/file-change-segment";
 import { InterviewSegment } from "./segments/interview-segment";
 import type { NextStepActionHandler } from "./segments/next-steps-action-group";
 import { PlanSegment } from "./segments/plan-segment";
 import { ProviderNoticeSegment } from "./segments/provider-notice-segment";
-import { FallbackWaitResumedMarker } from "@/components/chat/fallback/fallback-notice-attribution";
 import { ReasoningSegment } from "./segments/reasoning-segment";
 import { SubagentSegment } from "./segments/subagent-segment";
 import { TextSegment } from "./segments/text-segment";
@@ -159,9 +161,96 @@ interface AssistantBodyProps {
    * for one failed attempt.
    */
   manualRungAnchorId: string | null;
+  /**
+   * The settled routing notice the anchor's card absorbs, or `null` - see
+   * `ChatMessage.routingSettledNoticeId`. The notice then renders nothing of
+   * its own and the anchor error renders the settled card.
+   */
+  routingSettledNoticeId: string | null;
   nextStepActions: NextStepActionHandler | null;
   forkAction: ChatMessageForkAction | null;
   interviewDeliveryRetry: InterviewDeliveryRetryAction | null;
+}
+
+type ProviderNoticeMessageSegment = Extract<
+  MessageSegment,
+  { kind: "provider_notice" }
+>;
+
+/**
+ * The settled notice on this row, as the card reads it - or `null` when the
+ * row absorbs none, or when the id names no receipt-carrying notice here
+ * (which the projection rules out, and which then leaves the divider and the
+ * plain card exactly as an older host's transcript has them).
+ *
+ * Only beside an anchor on this row: the settled card IS the anchor's card,
+ * and a notice with no card to fold into stays a divider.
+ */
+function settledNoticeOnRow(
+  segments: ReadonlyArray<MessageSegment>,
+  routingSettledNoticeId: string | null,
+  manualRungAnchorId: string | null,
+): { readonly id: string; readonly notice: RoutingSettledNotice } | null {
+  if (routingSettledNoticeId === null || manualRungAnchorId === null) {
+    return null;
+  }
+  const segment = segments.find(
+    (candidate): candidate is ProviderNoticeMessageSegment =>
+      candidate.kind === "provider_notice" &&
+      candidate.id === routingSettledNoticeId,
+  );
+  if (segment === undefined || segment.receipt === null) return null;
+  return {
+    id: segment.id,
+    notice: {
+      title: segment.title,
+      message: segment.message,
+      details: segment.details,
+      receipt: segment.receipt,
+    },
+  };
+}
+
+/** The recovery props one timeline item renders with. */
+interface RecoveryProps {
+  readonly turnId: string | null;
+  readonly settledNotice: RoutingSettledNotice | null;
+  readonly settledNoticeFindUnitId: string | null;
+}
+
+const NO_RECOVERY: RecoveryProps = {
+  turnId: null,
+  settledNotice: null,
+  settledNoticeFindUnitId: null,
+};
+
+/**
+ * What one item of this row is to the turn's recovery: the anchor (it gets the
+ * turn id, and the settled notice when the row has one), the absorbed settled
+ * notice (it renders nothing - the anchor's card paints it), or neither.
+ */
+function recoveryRoleOf(
+  itemId: string,
+  input: {
+    readonly manualRungAnchorId: string | null;
+    readonly turnId: string | null;
+    readonly settled: {
+      readonly id: string;
+      readonly notice: RoutingSettledNotice;
+    } | null;
+  },
+): RecoveryProps | "absorbed" {
+  const { manualRungAnchorId, turnId, settled } = input;
+  if (settled !== null && itemId === settled.id) return "absorbed";
+  if (manualRungAnchorId === null || itemId !== manualRungAnchorId) {
+    return NO_RECOVERY;
+  }
+  return {
+    turnId,
+    settledNotice: settled === null ? null : settled.notice,
+    settledNoticeFindUnitId:
+      settled === null ? null : chatFindSegmentUnitId(settled.id),
+  };
 }
 
 export function AssistantMessageBody({
@@ -181,6 +270,7 @@ export function AssistantMessageBody({
   meta,
   turnId,
   manualRungAnchorId,
+  routingSettledNoticeId,
   nextStepActions,
   forkAction,
   interviewDeliveryRetry,
@@ -206,17 +296,29 @@ export function AssistantMessageBody({
     [earlierActivityKey, setActivityGroupOpen, setFindForcedOpen],
   );
   const activityTimelineTurnState = turnComplete ? "complete" : "active";
+  const queuePauseReasonSupport = useTranscriptQueuePauseReasonSupport();
+  // What this row draws: the host's notices this client keeps off screen are
+  // gone before anything is built from the list (`hidden-transcript-notices`).
+  const shownSegments = useMemo(
+    () => segmentsShownInTranscript(segments, queuePauseReasonSupport),
+    [queuePauseReasonSupport, segments],
+  );
+  const settled = useMemo(
+    () =>
+      settledNoticeOnRow(segments, routingSettledNoticeId, manualRungAnchorId),
+    [manualRungAnchorId, routingSettledNoticeId, segments],
+  );
   const timeline = useMemo(
     () =>
-      buildChatActivityTimeline(segments, {
+      buildChatActivityTimeline(shownSegments, {
         turnState: activityTimelineTurnState,
         promotedToolBlockIds: backgroundToolBlockIds,
       }),
-    [activityTimelineTurnState, backgroundToolBlockIds, segments],
+    [activityTimelineTurnState, backgroundToolBlockIds, shownSegments],
   );
   const finalTextId = useMemo(
-    () => lastAssistantTextSegmentId(segments),
-    [segments],
+    () => lastAssistantTextSegmentId(shownSegments),
+    [shownSegments],
   );
   const finalTextIndex = useMemo(
     () =>
@@ -271,7 +373,12 @@ export function AssistantMessageBody({
   const showElapsedFooter =
     !stoppedBeforeResponding &&
     showCompletionFooter &&
-    shouldShowElapsedFooter(runState, completedAt, segments, stopped);
+    shouldShowElapsedFooter(
+      runState,
+      completedAt,
+      lastSegmentDrawnOnItsOwn(shownSegments, settledNoticeId(settled)),
+      stopped,
+    );
   // No content yet. While the turn is live (`runState` non-null) show the
   // in-progress indicator for the pre-first-token gap. Once the turn has
   // ended (`runState === null`), a genuinely empty stopped turn (no output
@@ -282,8 +389,9 @@ export function AssistantMessageBody({
   // render below instead: an empty `segments` there renders an empty
   // timeline plus just the elapsed footer, which is exactly the "Stopped ·
   // Nm Xs" the turn's true end needs. Any other ended, empty turn renders
-  // nothing, NEVER a "Working…" indicator that would stick.
-  if (segments.length === 0) {
+  // nothing, NEVER a "Working…" indicator that would stick. A row holding
+  // only hidden notices is empty here too.
+  if (shownSegments.length === 0) {
     if (runState !== null) {
       return (
         <AssistantRunIndicator
@@ -335,8 +443,12 @@ export function AssistantMessageBody({
           interviewDeliveryRetry,
           meta,
           manualRungAnchorId,
+          settled,
           turnId,
         });
+        // A settled notice is painted inside its anchor's settled card, so it
+        // renders no row of its own.
+        if (rendered === null) return null;
         return (
           <IntermediateTimelineItem
             key={key}
@@ -390,15 +502,42 @@ export function AssistantMessageBody({
 function shouldShowElapsedFooter(
   runState: ChatMessageRunState | null,
   completedAt: number | null,
-  segments: ReadonlyArray<MessageSegment>,
+  last: MessageSegment | undefined,
   stopped: ChatMessageStoppedInfo | null,
 ): boolean {
   if (runState !== null) return false;
   if (completedAt === null) return false;
   if (stopped !== null) return true;
-  const last = segments.at(-1);
   if (last !== undefined && last.kind === "error") return false;
   return true;
+}
+
+/**
+ * The id of the notice this row's settled card absorbs, or `null` when the row
+ * absorbs none - the id `lastSegmentDrawnOnItsOwn` skips.
+ */
+function settledNoticeId(
+  settled: { readonly id: string } | null,
+): string | null {
+  if (settled === null) return null;
+  return settled.id;
+}
+
+/**
+ * The last segment the row DRAWS on its own - the one the footer asks about.
+ *
+ * `segments` is the list the row renders (the notices this client hides
+ * already left out), and `absorbedNoticeId` - the settled notice the anchor
+ * error's card paints - is skipped too. A routing settlement appends its
+ * notice AFTER the failed turn's error block, so the raw last block gave a
+ * failed turn a success footer: under the settled card, and under the
+ * failed-turn card once the user's own refusal wrote its (hidden) notice.
+ */
+function lastSegmentDrawnOnItsOwn(
+  segments: ReadonlyArray<MessageSegment>,
+  absorbedNoticeId: string | null,
+): MessageSegment | undefined {
+  return segments.findLast((segment) => segment.id !== absorbedNoticeId);
 }
 
 /**
@@ -452,6 +591,10 @@ interface AssistantTimelineItemRenderArgs {
   readonly interviewDeliveryRetry: InterviewDeliveryRetryAction | null;
   readonly meta: AssistantTurnMeta | null;
   readonly manualRungAnchorId: string | null;
+  readonly settled: {
+    readonly id: string;
+    readonly notice: RoutingSettledNotice;
+  } | null;
   readonly turnId: string | null;
 }
 
@@ -469,6 +612,7 @@ function renderAssistantTimelineItem(
     manualRungAnchorId,
     meta,
     nextStepActions,
+    settled,
     turnId,
   } = args;
   if (item.kind === "activity_group") {
@@ -508,6 +652,13 @@ function renderAssistantTimelineItem(
       </ChatBlockNavigationAnchor>
     );
   }
+  const recovery = recoveryRoleOf(item.id, {
+    manualRungAnchorId,
+    turnId,
+    settled,
+  });
+  // The settled notice is painted inside the anchor's settled card.
+  if (recovery === "absorbed") return null;
   const assistantSegment = (
     <AssistantSegment
       id={item.id}
@@ -516,12 +667,35 @@ function renderAssistantTimelineItem(
       nextStepActions={nextStepActions}
       forkAction={forkAction}
       interviewDeliveryRetry={interviewDeliveryRetry}
+      // The turn's OWN harness, for an error row that offers to open that
+      // provider's settings. Taken from the row rather than from ambient
+      // app state so the link points at the provider that actually failed,
+      // even when the transcript is scrolled back to a turn from a harness
+      // the chat has since switched away from. `null` on legacy turns with
+      // no metadata; the affordance then falls back to the section root.
       harnessId={meta?.provider ?? null}
-      turnId={
-        manualRungAnchorId !== null && item.id === manualRungAnchorId
-          ? turnId
-          : null
-      }
+      // ONE segment, not every error row on the turn, and not one per
+      // row of a split turn. A failed turn routinely carries several
+      // error blocks that all share this `turnId` - the queue-pause
+      // notice the host appends beside the failure, a non-terminal
+      // extension error before the real terminal - and handing the id to
+      // each of them rendered a full recovery group under each,
+      // including under "Resume the queue to send them", where Retry
+      // retried the failed prompt instead.
+      //
+      // The anchor names the segment that describes the failed ATTEMPT.
+      // It is resolved over the WHOLE turn, but not before the split -
+      // `planAssistantTurnRows` splits first and the rows are built, then
+      // `withManualRungAnchor` runs LAST and rebuilds the ordered
+      // whole-turn segment list from those finished rows
+      // (`assistantTurnSegments`). Whole-turn is a claim about the INPUT
+      // to the walk, not about its position in the pipeline. Either way a
+      // turn rendered as several rows still names exactly one. On every
+      // other row `manualRungAnchorId` is null and nothing here matches
+      // - the same answer a row with no turn identity already gets.
+      turnId={recovery.turnId}
+      settledNotice={recovery.settledNotice}
+      settledNoticeFindUnitId={recovery.settledNoticeFindUnitId}
     />
   );
   return (
@@ -1219,6 +1393,9 @@ interface AssistantSegmentProps {
   harnessId: GuiHarnessId | null;
   /** See `AssistantBodyProps.turnId`. */
   turnId: string | null;
+  /** The settled notice the anchor error absorbs; `null` on every other item. */
+  settledNotice: RoutingSettledNotice | null;
+  settledNoticeFindUnitId: string | null;
 }
 
 function ApprovalSegmentCard({
@@ -1257,6 +1434,8 @@ function AssistantSegment({
   interviewDeliveryRetry,
   harnessId,
   turnId,
+  settledNotice,
+  settledNoticeFindUnitId,
 }: AssistantSegmentProps) {
   const findUnitId = chatFindSegmentUnitId(id);
   switch (segment.kind) {
@@ -1408,6 +1587,8 @@ function AssistantSegment({
           harnessId={harnessId}
           failure={segment.failure}
           turnId={turnId}
+          settledNotice={settledNotice}
+          settledNoticeFindUnitId={settledNoticeFindUnitId}
         />
       );
     case "compaction":
@@ -1424,19 +1605,11 @@ function AssistantSegment({
         />
       );
     case "provider_notice":
-      // The resumed-turn marker is a different FRAME, not a different notice:
-      // the turn it heads had no user message, so the transcript's existing
-      // answer to "why is the agent talking" - the autonomous-resume marker -
-      // is the shape that reads correctly. A hairline rule between two
-      // assistant messages does not.
-      return segment.noticeKind === "fallback_wait_resumed" ? (
-        <FallbackWaitResumedMarker
-          title={segment.title}
-          message={segment.message}
-          details={segment.details}
-          findUnitId={findUnitId}
-        />
-      ) : (
+      // Every notice kind is the one hairline divider, `fallback_wait_resumed`
+      // included (clutter cuts, 2026-09-27): "Resumed on Surya 2 after the
+      // limit reset" reads the way the applied notice does, with its details
+      // under the same chevron, rather than as a bordered card of its own.
+      return (
         <ProviderNoticeSegment
           status={segment.status}
           noticeKind={segment.noticeKind}

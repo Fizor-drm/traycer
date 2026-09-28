@@ -96,6 +96,10 @@ function noOpOnVisibleOrdinalRangeChange(_range: OrdinalRange | null): void {
   return undefined;
 }
 
+function noOpOnFindReadOrdinalChange(_ordinal: number | null): void {
+  return undefined;
+}
+
 const platformMock = vi.hoisted(() => ({ isMac: true }));
 // Default false matches an empty canvas store (existing tests never seed live
 // tiles). Ticket 5 remount-save tests flip this true so unmount commits to the
@@ -991,6 +995,7 @@ function renderChatMessages(options: RenderChatMessagesOptions) {
           composerOverlayHeight={state.composerOverlayHeight}
           transcriptWindow={state.transcriptWindow}
           onVisibleOrdinalRangeChange={state.onVisibleOrdinalRangeChange}
+          onFindReadOrdinalChange={noOpOnFindReadOrdinalChange}
           coldRewrittenMessageIds={state.coldRewrittenMessageIds}
         />
       </div>
@@ -4693,6 +4698,7 @@ describe("ChatMessages scroll policy", () => {
             composerOverlayHeight={80}
             transcriptWindow={null}
             onVisibleOrdinalRangeChange={noOpOnVisibleOrdinalRangeChange}
+            onFindReadOrdinalChange={noOpOnFindReadOrdinalChange}
             coldRewrittenMessageIds={new Set()}
           />
         </Parent>

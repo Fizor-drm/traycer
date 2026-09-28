@@ -1,9 +1,14 @@
 import {
   organizationReadV10,
+  organizationReadV11,
+  organizationReadUpgradeV10ToV11,
   organizationRefreshV10,
+  organizationRefreshV11,
+  organizationRefreshUpgradeV10ToV11,
   organizationCommandV10,
   organizationHistoryV10,
   organizationSubscribeV10,
+  organizationSubscribeV11,
 } from "./organization/contracts";
 import {
   defineDowngradePath,
@@ -286,6 +291,7 @@ import {
   chatSubscribeV115,
   chatSubscribeV116,
   chatSubscribeV117,
+  chatSubscribeV118,
 } from "@traycer/protocol/host/agent/gui/contracts";
 import {
   agentTuiGenerateTitleV10,
@@ -327,18 +333,27 @@ import {
   hostRestartV12,
 } from "@traycer/protocol/host/restart/contracts";
 import {
+  providersFallbackPolicyGetUpgradeV10ToV11,
   providersFallbackPolicyGetV10,
+  providersFallbackPolicyGetV11,
+  providersFallbackPolicyPreviewTierGroupsUpgradeV10ToV11,
   providersFallbackPolicyPreviewTierGroupsV10,
+  providersFallbackPolicyPreviewTierGroupsV11,
   providersFallbackPolicyResetV10,
   providersFallbackPolicyRestoreTierGroupsV10,
+  providersFallbackPolicySetUpgradeV10ToV11,
   providersFallbackPolicySetV10,
+  providersFallbackPolicySetV11,
 } from "@traycer/protocol/host/fallback-policy";
 import {
   chatFallbackCancelV10,
   chatFallbackChooseTargetV10,
   chatFallbackListTargetsV10,
+  chatFallbackProceedV10,
   chatFallbackReturnToPreferredV10,
+  chatFallbackRunManualRungUpgradeV10ToV11,
   chatFallbackRunManualRungV10,
+  chatFallbackRunManualRungV11,
 } from "@traycer/protocol/host/chat-fallback";
 import {
   hostIdentityGetV10,
@@ -556,6 +571,7 @@ import {
   epicGetChatRunSettingsV10,
   epicGetChatRunSettingsV20,
   epicGetChatRunSettingsV30,
+  epicGetChatRunSettingsBatchV10,
   epicListChatPublicationTargetsV10,
   epicListCloudChatPayloadsV10,
   epicListCloudChatsV10,
@@ -721,7 +737,9 @@ import {
   browserScreencastV21,
   browserSessionsV20,
   browserSessionsV21,
+  browserSessionsV22,
 } from "@traycer/protocol/host/browser/contracts";
+import { browserDesktopControlV10 } from "@traycer/protocol/host/browser/desktop-control";
 import {
   browserScreencastV10,
   browserSessionsV10,
@@ -827,12 +845,20 @@ import {
 } from "@traycer/protocol/host/session-import/scan";
 import {
   autoJudgeGetUpgradeV10ToV11,
+  autoJudgeGetUpgradeV11ToV12,
+  autoJudgeGetUpgradeV12ToV13,
   autoJudgeGetV10,
   autoJudgeGetV11,
+  autoJudgeGetV12,
+  autoJudgeGetV13,
   autoJudgeListRecentV10,
   autoJudgeSetUpgradeV10ToV11,
+  autoJudgeSetUpgradeV11ToV12,
+  autoJudgeSetUpgradeV12ToV13,
   autoJudgeSetV10,
   autoJudgeSetV11,
+  autoJudgeSetV12,
+  autoJudgeSetV13,
   autoPolicyGetV10,
   autoPolicySetV10,
   providersSetAutoJudgeV10,
@@ -854,7 +880,10 @@ import {
   worktreeDeleteByPathStreamV12,
   worktreeDeleteByPathStreamV13,
 } from "@traycer/protocol/host/worktree-delete-stream";
-import { worktreeChangedV10 } from "@traycer/protocol/host/worktree-changed-stream";
+import {
+  worktreeChangedV10,
+  worktreeChangedV11,
+} from "@traycer/protocol/host/worktree-changed-stream";
 import {
   providersChangedV10,
   providersChangedV11,
@@ -4924,9 +4953,13 @@ const HOST_RPC_REGISTRY_BASE_DEFINITION = {
   "organization.read": {
     degrade: { kind: "unsupported" },
     1: {
-      latestMinor: 0,
+      latestMinor: 1,
       versions: {
         0: { contract: organizationReadV10, upgradeFromPreviousVersion: null },
+        1: {
+          contract: organizationReadV11,
+          upgradeFromPreviousVersion: organizationReadUpgradeV10ToV11,
+        },
       },
       downgradePathsFromLatest: {},
     },
@@ -4934,11 +4967,15 @@ const HOST_RPC_REGISTRY_BASE_DEFINITION = {
   "organization.refresh": {
     degrade: { kind: "unsupported" },
     1: {
-      latestMinor: 0,
+      latestMinor: 1,
       versions: {
         0: {
           contract: organizationRefreshV10,
           upgradeFromPreviousVersion: null,
+        },
+        1: {
+          contract: organizationRefreshV11,
+          upgradeFromPreviousVersion: organizationRefreshUpgradeV10ToV11,
         },
       },
       downgradePathsFromLatest: {},
@@ -5009,8 +5046,11 @@ const HOST_RPC_REGISTRY_BASE_DEFINITION = {
     1: {
       // @1.0 is RELEASED (`host-v1.3.2-staging.39` advertised it), so the
       // Automatic judge's `{ source: "fallback" }` answer opens @1.1 rather
-      // than widening it in place.
-      latestMinor: 1,
+      // than widening it in place. @1.1 is RELEASED too (every host tag from
+      // `host-v1.3.2-staging.52` on), so the machine's last judge pick opens
+      // @1.2 the same way. @1.2 is spoken by a released desktop (traycer#2162),
+      // so the judge's reasoning effort opens @1.3 rather than widening it.
+      latestMinor: 3,
       versions: {
         0: {
           contract: autoJudgeGetV10,
@@ -5028,6 +5068,23 @@ const HOST_RPC_REGISTRY_BASE_DEFINITION = {
           // never to the Traycer pocket a 1.0 desktop would bill it to.
           responseGrowthProjectionGated: true,
         },
+        2: {
+          contract: autoJudgeGetV12,
+          upgradeFromPreviousVersion: autoJudgeGetUpgradeV11ToV12,
+          // No `responseGrowthProjectionGated`: `lastSelection` is a new
+          // KEY, not value growth, so a 1.1 caller's within-major re-parse
+          // strips it, as it does `providers.list@9.1`'s `autoJudge`. A 1.0
+          // caller still gets the 1.1 projection, which builds its answer
+          // field by field and so never copies the key.
+        },
+        3: {
+          contract: autoJudgeGetV13,
+          upgradeFromPreviousVersion: autoJudgeGetUpgradeV12ToV13,
+          // `selection` / `lastSelection` gain the `reasoningEffort` KEY (the
+          // judge's effort). A new key is structural growth, not value
+          // growth: a <=1.2 caller's non-strict decode drops it, and the 1.0
+          // projection strips it on its way down, so no gate is declared.
+        },
       },
       downgradePathsFromLatest: {},
     },
@@ -5035,9 +5092,10 @@ const HOST_RPC_REGISTRY_BASE_DEFINITION = {
   "autoJudge.set": {
     degrade: { kind: "unsupported" },
     1: {
-      // Same line, same reason, as `autoJudge.get`: the echo reports the
-      // judge the new selection resolves to.
-      latestMinor: 1,
+      // Same line, same reasons, as `autoJudge.get`: the echo reports the
+      // judge the new selection resolves to, (@1.2) the last pick this write
+      // left, and (@1.3) the effort the selection carries.
+      latestMinor: 3,
       versions: {
         0: {
           contract: autoJudgeSetV10,
@@ -5049,6 +5107,18 @@ const HOST_RPC_REGISTRY_BASE_DEFINITION = {
           // See `autoJudge.get@1.1`; the projection is
           // `projectAutoJudgeSetResponseToV10`.
           responseGrowthProjectionGated: true,
+        },
+        2: {
+          contract: autoJudgeSetV12,
+          upgradeFromPreviousVersion: autoJudgeSetUpgradeV11ToV12,
+          // See `autoJudge.get@1.2`: `lastSelection` is a new key.
+        },
+        3: {
+          contract: autoJudgeSetV13,
+          upgradeFromPreviousVersion: autoJudgeSetUpgradeV12ToV13,
+          // See `autoJudge.get@1.3`. The request grows by the same key: a
+          // <=1.2 save is upgraded with `reasoningEffort: null`, the host's
+          // default for the model.
         },
       },
       downgradePathsFromLatest: {},
@@ -6155,7 +6225,7 @@ const HOST_RPC_REGISTRY_BASE_DEFINITION = {
       downgradePathsFromLatest: {},
     },
   },
-  // The four external fallback actions. All off-floor: a client meeting a host
+  // The five external fallback actions. All off-floor: a client meeting a host
   // without the fallback engine must simply not render the affordance, which is
   // exactly what `unsupported` degradation gives it. Unary rather than stream
   // actions because they name a traversal rather than a subscription - the two
@@ -6188,14 +6258,22 @@ const HOST_RPC_REGISTRY_BASE_DEFINITION = {
       downgradePathsFromLatest: {},
     },
   },
+  // `1.1` adds the refusal `detail` beside `rung_unavailable` /
+  // `rung_target_unavailable`. A `1.0` client is served by reparsing through
+  // the `1.0` response, which strips it; a `1.1` client on a `1.0` host is
+  // lifted to `detail: null` by the upgrade path.
   "chat.fallback.runManualRung": {
     degrade: { kind: "unsupported" },
     1: {
-      latestMinor: 0,
+      latestMinor: 1,
       versions: {
         0: {
           contract: chatFallbackRunManualRungV10,
           upgradeFromPreviousVersion: null,
+        },
+        1: {
+          contract: chatFallbackRunManualRungV11,
+          upgradeFromPreviousVersion: chatFallbackRunManualRungUpgradeV10ToV11,
         },
       },
       downgradePathsFromLatest: {},
@@ -6208,6 +6286,26 @@ const HOST_RPC_REGISTRY_BASE_DEFINITION = {
       versions: {
         0: {
           contract: chatFallbackReturnToPreferredV10,
+          upgradeFromPreviousVersion: null,
+        },
+      },
+      downgradePathsFromLatest: {},
+    },
+  },
+  // End the hold through the expiry path so the planned step runs and the
+  // ladder continues. The countdown card sends it from "Switch now", on a
+  // switch plan only: a wait plan draws no "now" button (the countdown flows
+  // into waiting by itself; its buttons are "Choose another model…" and "Don't
+  // wait"), and a countdown never plans a retry. `unsupported` like its
+  // siblings: a client meeting a host without it draws no "Switch now", which
+  // is the card that host already renders.
+  "chat.fallback.proceed": {
+    degrade: { kind: "unsupported" },
+    1: {
+      latestMinor: 0,
+      versions: {
+        0: {
+          contract: chatFallbackProceedV10,
           upgradeFromPreviousVersion: null,
         },
       },
@@ -8441,6 +8539,23 @@ const HOST_RPC_REGISTRY_BASE_TAIL_DEFINITION = {
     },
     degrade: { kind: "unsupported" },
   },
+  // N-chat counterpart of the unary above. Same owner-scoped nulls, same
+  // store-first precedence, one round trip. Optional for the same reason:
+  // an old host answers `E_HOST_UNSUPPORTED` and the client falls back to
+  // N singles of `epic.getChatRunSettings`.
+  "epic.getChatRunSettingsBatch": {
+    1: {
+      latestMinor: 0,
+      versions: {
+        0: {
+          contract: epicGetChatRunSettingsBatchV10,
+          upgradeFromPreviousVersion: null,
+        },
+      },
+      downgradePathsFromLatest: {},
+    },
+    degrade: { kind: "unsupported" },
+  },
   // The terminal-agent record read (the TUI eviction). Optional and
   // host-local for the reason `epic.listChatRecords` is: it answers out of
   // this host's own registry. A client talking to a host without it runs
@@ -10463,11 +10578,15 @@ const HOST_RPC_PROVIDERS_REGISTRY_DEFINITION = {
   "providers.fallbackPolicy.get": {
     degrade: { kind: "unsupported" },
     1: {
-      latestMinor: 0,
+      latestMinor: 1,
       versions: {
         0: {
           contract: providersFallbackPolicyGetV10,
           upgradeFromPreviousVersion: null,
+        },
+        1: {
+          contract: providersFallbackPolicyGetV11,
+          upgradeFromPreviousVersion: providersFallbackPolicyGetUpgradeV10ToV11,
         },
       },
       downgradePathsFromLatest: {},
@@ -10476,11 +10595,15 @@ const HOST_RPC_PROVIDERS_REGISTRY_DEFINITION = {
   "providers.fallbackPolicy.set": {
     degrade: { kind: "unsupported" },
     1: {
-      latestMinor: 0,
+      latestMinor: 1,
       versions: {
         0: {
           contract: providersFallbackPolicySetV10,
           upgradeFromPreviousVersion: null,
+        },
+        1: {
+          contract: providersFallbackPolicySetV11,
+          upgradeFromPreviousVersion: providersFallbackPolicySetUpgradeV10ToV11,
         },
       },
       downgradePathsFromLatest: {},
@@ -10515,11 +10638,16 @@ const HOST_RPC_PROVIDERS_REGISTRY_DEFINITION = {
   "providers.fallbackPolicy.previewTierGroups": {
     degrade: { kind: "unsupported" },
     1: {
-      latestMinor: 0,
+      latestMinor: 1,
       versions: {
         0: {
           contract: providersFallbackPolicyPreviewTierGroupsV10,
           upgradeFromPreviousVersion: null,
+        },
+        1: {
+          contract: providersFallbackPolicyPreviewTierGroupsV11,
+          upgradeFromPreviousVersion:
+            providersFallbackPolicyPreviewTierGroupsUpgradeV10ToV11,
         },
       },
       downgradePathsFromLatest: {},
@@ -11352,8 +11480,11 @@ export type HostRpcRegistry = typeof hostRpcRegistry;
 const HOST_STREAM_RPC_REGISTRY_OTHER_DEFINITION = {
   "organization.subscribe": {
     1: {
-      latestMinor: 0,
-      versions: { 0: { contract: organizationSubscribeV10 } },
+      latestMinor: 1,
+      versions: {
+        0: { contract: organizationSubscribeV10 },
+        1: { contract: organizationSubscribeV11 },
+      },
     },
   },
   "epic.subscribe": {
@@ -11644,6 +11775,12 @@ const HOST_STREAM_RPC_REGISTRY_OTHER_DEFINITION = {
   // client that drops the frame. The GUI feature-detects browser support by
   // these two NAMES in the host's openAck manifest, so a served major is the
   // only way to evolve them (`released-stream-surface-compat.test.ts`).
+  "host.browserPreparation.subscribe": {
+    1: {
+      latestMinor: 0,
+      versions: { 0: { contract: browserDesktopControlV10 } },
+    },
+  },
   "browser.sessions": {
     1: {
       latestMinor: 0,
@@ -11654,13 +11791,16 @@ const HOST_STREAM_RPC_REGISTRY_OTHER_DEFINITION = {
       },
     },
     2: {
-      latestMinor: 1,
+      latestMinor: 2,
       versions: {
         0: {
           contract: browserSessionsV20,
         },
         1: {
           contract: browserSessionsV21,
+        },
+        2: {
+          contract: browserSessionsV22,
         },
       },
     },
@@ -12087,10 +12227,15 @@ const HOST_STREAM_RPC_REGISTRY_OTHER_DEFINITION = {
   },
   "worktree.changed": {
     1: {
-      latestMinor: 0,
+      // @1.1 adds the resume cursor: the host skips the reconnect catch-up
+      // frame when the client's last cursor is still current.
+      latestMinor: 1,
       versions: {
         0: {
           contract: worktreeChangedV10,
+        },
+        1: {
+          contract: worktreeChangedV11,
         },
       },
     },
@@ -12164,7 +12309,7 @@ const HOST_STREAM_RPC_REGISTRY_DEFINITION = {
   ...HOST_STREAM_RPC_REGISTRY_OTHER_DEFINITION,
   "chat.subscribe": {
     1: {
-      latestMinor: 17,
+      latestMinor: 18,
       versions: {
         0: {
           contract: chatSubscribeV10,
@@ -12260,6 +12405,13 @@ const HOST_STREAM_RPC_REGISTRY_DEFINITION = {
         // a non-strict object at every minor, so the host withholds nothing.
         17: {
           contract: chatSubscribeV117,
+        },
+        // @1.18 adds `receipt` on a provider notice's metadata (the settled
+        // fallback card) and `pausedReason` on the queue. Optional keys in
+        // non-strict objects at every minor, so the host withholds nothing: a
+        // @1.17 peer drops both on parse.
+        18: {
+          contract: chatSubscribeV118,
         },
       },
     },

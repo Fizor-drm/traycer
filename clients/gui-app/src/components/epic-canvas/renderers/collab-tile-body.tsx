@@ -208,6 +208,39 @@ export function CollabTileBody(props: CollabTileBodyProps) {
     fragment === null ||
     fragmentDoc === null ||
     artifactRoomAwareness === null;
+
+  /**
+   * Whether this tile has held THIS artifact's body BOUND - the host served
+   * it and its fragment and awareness were resident here - latched with the
+   * same derived-state idiom as `bodyAnsweredOnce` above.
+   *
+   * It is what tells a reconnect from a first open, and nothing else can: both
+   * arrive here as `retrying` with no fragment. A room that leaves `ready`
+   * discards its local replica (`applyAvailability` -> `tier.invalidate`), so
+   * the fragment goes `null` and a bound tile falls back to this pre-editor
+   * path - that is a real lost connection, and the reader is owed a sentence.
+   * A tile that has never had a body bound is waiting on its first open
+   * attempt, which the host also reports as `retrying`, and is owed the
+   * skeleton. See `collabTileNotice`.
+   *
+   * Deliberately the binding and not the editor's first paint. Tiptap builds
+   * its editor in an effect (`immediatelyRender: false`), so there is a commit
+   * with a bound body and no editor yet; a room that leaves `ready` inside that
+   * window has still been served and lost, which is what "Reconnecting" says.
+   * The sentence is a claim about the connection, not about the pixels.
+   *
+   * Keyed by artifact id rather than a boolean, so a tile that is handed a
+   * different artifact does not carry the previous one's history into the new
+   * document's first open.
+   */
+  const [bodyBoundForId, setBodyBoundForId] = useState<string | null>(
+    bodyPending ? null : props.node.id,
+  );
+  if (!bodyPending && bodyBoundForId !== props.node.id) {
+    setBodyBoundForId(props.node.id);
+  }
+  const bodyBoundOnce = bodyBoundForId === props.node.id;
+
   // Invariant 6. The artifact room is doc-scoped rather than host-scoped, so
   // this bounds on the node itself rather than reaching for a host lease -
   // there is no host here whose name would tell the reader anything.
@@ -222,6 +255,7 @@ export function CollabTileBody(props: CollabTileBodyProps) {
         testId={props.testId}
         bodyAvailability={bodyAvailability}
         subscribeAnswered={bodyAnsweredOnce}
+        bodyBoundOnce={bodyBoundOnce}
         budgetElapsed={loadBudgetElapsed}
       />
     );
@@ -238,7 +272,7 @@ export function CollabTileBody(props: CollabTileBodyProps) {
 }
 
 /**
- * The three pre-editor states, which used to be ONE.
+ * The pre-editor states, which used to be ONE.
  *
  * `unavailable` and `loading` rendered byte-identical markup - the same three
  * pulsing bars - distinguished only by a `data-testid` suffix no reader can
@@ -246,22 +280,26 @@ export function CollabTileBody(props: CollabTileBodyProps) {
  * document that was about to appear, and the only way to tell them apart was
  * to keep waiting: indefinitely, since neither state ended.
  *
- * Now each says which one it is, and the wait has a deadline (invariant 6).
- * The pulsing bars are kept for the short, genuinely-loading window - they
- * are a good placeholder for content that is coming - and retired the moment
- * the answer is anything else.
+ * Now a refusal says so, a lost connection says so, and the wait has a
+ * deadline (invariant 6). The pulsing bars are kept for the genuinely-loading
+ * window - they are a good placeholder for content that is coming - and that
+ * window includes a FIRST open reported `retrying`, which on the wire is an
+ * open attempt in flight and not a lost connection. `collabTileNotice` holds
+ * the copy and the reasoning.
  *
  * "The answer", precisely: `subscribeAnswered` is false until the body plane
  * has stated something about this artifact, and an UNANSWERED tile is a
- * loading one however `bodyAvailability` reads. The two are separate props
- * rather than one pre-collapsed value so the DOM carries both - a tile that
- * looks stuck can be told apart from one that was refused without re-running
- * the app.
+ * loading one however `bodyAvailability` reads. `bodyBoundOnce` is what
+ * separates a reconnect from a first open. All three are separate props
+ * rather than one pre-collapsed value so the DOM carries each - a tile that
+ * looks stuck can be told apart from one that was refused, or one that lost
+ * its connection, without re-running the app.
  */
 function CollabTileSkeleton(props: {
   readonly testId: string;
   readonly bodyAvailability: EpicArtifactRoomAvailability;
   readonly subscribeAnswered: boolean;
+  readonly bodyBoundOnce: boolean;
   readonly budgetElapsed: boolean;
 }) {
   const testIdSuffix =
@@ -272,6 +310,7 @@ function CollabTileSkeleton(props: {
     props.bodyAvailability,
     props.budgetElapsed,
     props.subscribeAnswered,
+    props.bodyBoundOnce,
   );
 
   return (
@@ -279,6 +318,7 @@ function CollabTileSkeleton(props: {
       data-testid={`${props.testId}-${testIdSuffix}`}
       data-artifact-room-availability={props.bodyAvailability}
       data-body-subscribe-answered={props.subscribeAnswered ? "true" : "false"}
+      data-body-bound-once={props.bodyBoundOnce ? "true" : "false"}
       data-budget-elapsed={props.budgetElapsed ? "true" : "false"}
       className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-6 py-8"
     >
@@ -803,11 +843,15 @@ function CollabTileBodyEditor(props: CollabTileBodyEditorProps) {
  * is missing, and saying "Reconnecting to this document…" over one the host
  * already holds is the state this strip replaced.
  *
- * The same sweep and the same words as every other surface that says it is
- * syncing, escalated the same way: after `LINK_DOWN_ESCALATION_MS` the bar
- * stops moving and the label becomes "Still syncing…". A sync that is paused
- * (a credential the host is waiting to see rotated) would otherwise animate for
- * as long as the tile is open.
+ * The same sweep as every other surface that says it is syncing, escalated the
+ * same way: after `LINK_DOWN_ESCALATION_MS` the bar stops moving. A sync that
+ * is paused (a credential the host is waiting to see rotated) would otherwise
+ * animate for as long as the tile is open.
+ *
+ * The bar is the whole visible signal; the words are for assistive tech only.
+ * A visible caption had nowhere to go: the tile's top-right corner belongs to
+ * the version-history button, which covered it on every artifact kind, and a
+ * moving bar at the tile edge already says what the word said.
  */
 function CollabTileBodySyncStrip(props: {
   readonly artifactId: string;
@@ -824,14 +868,17 @@ function CollabTileBodySyncStrip(props: {
       data-testid={`${props.testId}-body-syncing`}
       role="status"
       aria-live="polite"
-      className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col items-end"
+      className="pointer-events-none absolute inset-x-0 top-0 z-10"
     >
       <SyncingSweepBar
         settled={escalated}
         testId={`${props.testId}-body-syncing-bar`}
         className={undefined}
       />
-      <span className="mt-1 mr-3 text-ui-xs text-muted-foreground">
+      <span
+        data-testid={`${props.testId}-body-syncing-label`}
+        className="sr-only"
+      >
         {streamSyncingLabel(escalated)}
       </span>
     </div>
