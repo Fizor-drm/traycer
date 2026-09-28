@@ -10,6 +10,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { domMax, LazyMotion } from "motion/react";
 import { forwardRef, type ReactNode } from "react";
+import { userEvent } from "@testing-library/user-event";
 import type { Mock } from "vitest";
 import type { ChatSearchMessageHitsStatus } from "@/hooks/chats/use-chat-search-message-hits";
 import type { ProviderId } from "@/components/home/data/landing-options";
@@ -506,6 +507,33 @@ vi.mock("@/components/ui/hover-card", async (importOriginal) => {
       ),
   };
 });
+
+function openRowMore(nodeId: string): void {
+  fireEvent.click(screen.getByTestId(`epic-sidebar-more-${nodeId}`));
+}
+
+const ROW_MORE_NODE_IDS = [
+  "chat-grandchild",
+  "ticket-child",
+  "chat-child",
+  "agent-child",
+  "agent-root",
+  "chat-root",
+  "spec-root",
+] as const;
+
+function dropdownItem(suffix: string): HTMLElement {
+  const testId = `epic-sidebar-${suffix}`;
+  const existing = screen.queryByTestId(testId);
+  if (existing !== null) return existing;
+  for (const nodeId of ROW_MORE_NODE_IDS) {
+    if (suffix === nodeId || suffix.endsWith(`-${nodeId}`)) {
+      openRowMore(nodeId);
+      break;
+    }
+  }
+  return screen.getByTestId(testId);
+}
 
 vi.mock("@/components/ui/sidebar", () => ({
   Sidebar: (props: {
@@ -1442,7 +1470,8 @@ describe("epic sidebar selection mode", () => {
     seedArtifactTree();
     testState.activePanelId = "artifacts";
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
-    fireEvent.click(screen.getByTestId("epic-sidebar-rename-ticket-child"));
+    openRowMore("ticket-child");
+    fireEvent.click(dropdownItem("rename-ticket-child"));
 
     act(() => requestSidebarNodeReveal(TAB_ID, "ticket-child"));
 
@@ -1457,7 +1486,8 @@ describe("epic sidebar selection mode", () => {
   it("flash-highlights a chat row while it is being renamed", async () => {
     seedChatTree();
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
-    fireEvent.click(screen.getByTestId("epic-sidebar-rename-chat-child"));
+    openRowMore("chat-child");
+    fireEvent.click(dropdownItem("rename-chat-child"));
 
     act(() => requestSidebarNodeReveal(TAB_ID, "chat-child"));
 
@@ -1940,6 +1970,32 @@ describe("epic sidebar selection mode", () => {
     expect(screen.getByRole("button", { name: "Select all" })).not.toBeNull();
   });
 
+  it("keeps checkbox focus across Tab onto a never-touched selection row", async () => {
+    seedChatTree();
+    render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Select agents" }));
+
+    const user = userEvent.setup();
+    screen.getByTestId("epic-sidebar-select-chat-root").focus();
+    await waitFor(() => {
+      const active = document.activeElement;
+      expect(active).toBeInstanceOf(HTMLInputElement);
+      expect(active).not.toBe(document.body);
+      expect(active?.getAttribute("data-testid")).toBe(
+        "epic-sidebar-select-chat-root",
+      );
+    });
+    if (!(document.activeElement instanceof HTMLInputElement)) {
+      throw new Error("expected the row checkbox");
+    }
+    expect(document.activeElement.checked).toBe(false);
+    await user.keyboard(" ");
+    if (!(document.activeElement instanceof HTMLInputElement)) {
+      throw new Error("expected the row checkbox after Space");
+    }
+    expect(document.activeElement.checked).toBe(true);
+  });
+
   it("gives selection controls the full header row without changing its height", () => {
     seedChatTree();
 
@@ -2112,8 +2168,9 @@ describe("epic sidebar selection mode", () => {
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
     expect(screen.getByTestId("epic-sidebar-more-agent-root")).not.toBeNull();
-    expect(screen.getByTestId("epic-sidebar-rename-agent-root")).not.toBeNull();
-    expect(screen.getByTestId("epic-sidebar-delete-agent-root")).not.toBeNull();
+    openRowMore("agent-root");
+    expect(dropdownItem("rename-agent-root")).not.toBeNull();
+    expect(dropdownItem("delete-agent-root")).not.toBeNull();
     expect(screen.getByTestId("epic-sidebar-more-chat-root")).not.toBeNull();
   });
 
@@ -2157,9 +2214,8 @@ describe("epic sidebar selection mode", () => {
     expect(
       chatRow.parentElement?.querySelector('[aria-label="Add child agent"]'),
     ).toBeNull();
-    expect(
-      screen.getByTestId("epic-sidebar-new-child-chat-root"),
-    ).not.toBeNull();
+    openRowMore("chat-root");
+    expect(dropdownItem("new-child-chat-root")).not.toBeNull();
 
     // ...and via the right-click context menu, both seeded with this row as
     // parent.
@@ -2389,10 +2445,9 @@ describe("epic sidebar selection mode", () => {
     testState.permissionRole = "viewer";
 
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
+    openRowMore("spec-root");
 
-    fireEvent.click(
-      screen.getByTestId("epic-sidebar-export-markdown-spec-root"),
-    );
+    fireEvent.click(dropdownItem("export-markdown-spec-root"));
 
     expect(testState.exportArtifactsMutate).toHaveBeenCalledWith({
       archive: false,
@@ -2400,12 +2455,8 @@ describe("epic sidebar selection mode", () => {
       artifacts: [{ id: "spec-root", title: "Root spec" }],
       format: "markdown",
     });
-    expect(
-      screen.getByTestId("epic-sidebar-rename-spec-root").matches(":disabled"),
-    ).toBe(true);
-    expect(
-      screen.getByTestId("epic-sidebar-delete-spec-root").matches(":disabled"),
-    ).toBe(true);
+    expect(dropdownItem("rename-spec-root").matches(":disabled")).toBe(true);
+    expect(dropdownItem("delete-spec-root").matches(":disabled")).toBe(true);
   });
 
   it("bulk-exports every selected visible artifact, including descendants", () => {
@@ -2655,13 +2706,20 @@ function statusGlyphKind(testId: string): string | null {
  * has claimed the icon. Scoped to the row so a sibling's lock cannot satisfy it.
  */
 /**
- * The hover label attached to `el`. The real `TooltipContent` is portalled and
- * open-only, but this file's `@/components/ui/tooltip` mock renders it inline -
- * as a sibling of the trigger, since the mocked `Tooltip`/`TooltipTrigger` both
- * render their children directly.
+ * The hover label attached to `el`. Leaf tooltips mount on hover; the
+ * `@/components/ui/tooltip` mock then renders content inline as a sibling of
+ * the trigger.
  */
 function tooltipTextIn(el: HTMLElement): string | null {
-  const tip = el.parentElement?.querySelector('[role="tooltip"]') ?? null;
+  const testId = el.getAttribute("data-testid");
+  vi.useFakeTimers();
+  fireEvent.pointerEnter(el, { pointerType: "mouse", buttons: 0 });
+  act(() => {
+    vi.advanceTimersByTime(150);
+  });
+  vi.useRealTimers();
+  const current = testId === null ? el : screen.getByTestId(testId);
+  const tip = current.parentElement?.querySelector('[role="tooltip"]') ?? null;
   return tip === null ? null : tip.textContent;
 }
 
@@ -3436,7 +3494,8 @@ describe("status survives selection mode and rename", () => {
       screen.getByTestId("chat-descendant-status-failure-chat-child"),
     ).toBeTruthy();
 
-    fireEvent.click(screen.getByTestId("epic-sidebar-rename-chat-child"));
+    openRowMore("chat-child");
+    fireEvent.click(dropdownItem("rename-chat-child"));
 
     const input = screen.getByTestId("epic-sidebar-rename-input-chat-child");
     // Renaming shows chat-child's OWN status - idle, since it has no attention
@@ -3737,7 +3796,7 @@ describe("sidebar leading identity icon", () => {
       "chat-child": "claude",
     };
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
-    fireEvent.click(screen.getByTestId("epic-sidebar-rename-chat-root"));
+    fireEvent.click(dropdownItem("rename-chat-root"));
     expect(
       screen.getByTestId("epic-sidebar-rename-input-chat-root"),
     ).toBeTruthy();
@@ -3758,7 +3817,7 @@ describe("sidebar leading identity icon", () => {
     seedChatTree();
     testState.tuiHarnessIds = { "agent-root": "codex" };
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
-    fireEvent.click(screen.getByTestId("epic-sidebar-rename-agent-root"));
+    fireEvent.click(dropdownItem("rename-agent-root"));
     expect(
       screen.getByTestId("epic-sidebar-rename-input-agent-root"),
     ).toBeTruthy();
@@ -4011,8 +4070,8 @@ describe("terminal-agent row session-state badge", () => {
     // lock) does not make this case red for the wrong reason.
     // Reached from the badge rather than by name, so it is provably the SAME
     // row this case seeded rather than whichever row happens to match.
-    const sleepingRow = badge.closest("button[aria-label]");
-    expect(sleepingRow?.getAttribute("aria-label")).toContain(
+    const sleepingRow = screen.getByTestId("epic-sidebar-item-agent-root");
+    expect(sleepingRow.getAttribute("aria-label")).toContain(
       "asleep, resumes on the next message or when you open it",
     );
 
@@ -4371,7 +4430,7 @@ describe("chat row archive", () => {
       screen.queryByTestId("epic-sidebar-context-archive-chat-root"),
     ).toBeNull();
     // Non-archive menu still works so the gate did not blank the whole menu.
-    expect(screen.getByTestId("epic-sidebar-rename-chat-root")).toBeTruthy();
+    expect(dropdownItem("rename-chat-root")).toBeTruthy();
   });
 
   it("offers archive affordances when the host supports the method (B4)", () => {
@@ -4381,9 +4440,7 @@ describe("chat row archive", () => {
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
     expect(screen.getByTestId("epic-sidebar-archive-chat-root")).toBeTruthy();
-    expect(
-      screen.getByTestId("epic-sidebar-archive-item-chat-root"),
-    ).toBeTruthy();
+    expect(dropdownItem("archive-item-chat-root")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Archive Root chat" }),
     ).toBeTruthy();
@@ -4451,7 +4508,7 @@ describe("chat row archive", () => {
     cleanup();
     seedChatTree();
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
-    fireEvent.click(screen.getByTestId("epic-sidebar-rename-chat-root"));
+    fireEvent.click(dropdownItem("rename-chat-root"));
     expect(
       screen.getByTestId("epic-sidebar-rename-input-chat-root"),
     ).toBeTruthy();
@@ -4464,7 +4521,7 @@ describe("chat row archive", () => {
     seedChatTree();
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
-    fireEvent.click(screen.getByTestId("epic-sidebar-rename-chat-root"));
+    fireEvent.click(dropdownItem("rename-chat-root"));
     const input = screen.getByTestId("epic-sidebar-rename-input-chat-root");
     fireEvent.change(input, { target: { value: "Renamed while in flight" } });
     fireEvent.keyDown(input, { key: "Enter" });
@@ -4499,7 +4556,7 @@ describe("chat row archive", () => {
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
     const commitRename = (value: string): void => {
-      fireEvent.click(screen.getByTestId("epic-sidebar-rename-chat-root"));
+      fireEvent.click(dropdownItem("rename-chat-root"));
       const input = screen.getByTestId("epic-sidebar-rename-input-chat-root");
       fireEvent.change(input, { target: { value } });
       fireEvent.keyDown(input, { key: "Enter" });
@@ -4549,9 +4606,7 @@ describe("chat row archive", () => {
 
     const view = render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
-    const archiveItem = screen.getByTestId(
-      "epic-sidebar-archive-item-chat-root",
-    );
+    const archiveItem = dropdownItem("archive-item-chat-root");
     expect(archiveItem.textContent).toContain("Archive");
     expect(archiveItem.matches(":disabled")).toBe(false);
 
@@ -4561,9 +4616,9 @@ describe("chat row archive", () => {
     ).toBeTruthy();
 
     // Terminal-agent rows get the same entry.
-    expect(
-      screen.getByTestId("epic-sidebar-archive-item-agent-root").textContent,
-    ).toContain("Archive");
+    expect(dropdownItem("archive-item-agent-root").textContent).toContain(
+      "Archive",
+    );
 
     // Running row: entry present but unavailable. Soft-disabled (ARIA) rather
     // than hard-disabled, so it stays keyboard-reachable and can explain
@@ -4571,11 +4626,9 @@ describe("chat row archive", () => {
     testState.activeAgentIds = new Set(["chat-root"]);
     testState.activityTierById = new Map([["chat-root", "turn"]]);
     view.rerender(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
-    expect(
-      isMenuItemUnavailable(
-        screen.getByTestId("epic-sidebar-archive-item-chat-root"),
-      ),
-    ).toBe(true);
+    expect(isMenuItemUnavailable(dropdownItem("archive-item-chat-root"))).toBe(
+      true,
+    );
 
     // Archived row offers the action "Unarchive".
     testState.activeAgentIds = new Set<string>();
@@ -4583,9 +4636,9 @@ describe("chat row archive", () => {
     testState.archivedIds = ["chat-root"];
     testState.archiveVisibility = "all";
     view.rerender(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
-    expect(
-      screen.getByTestId("epic-sidebar-archive-item-chat-root").textContent,
-    ).toContain("Unarchive");
+    expect(dropdownItem("archive-item-chat-root").textContent).toContain(
+      "Unarchive",
+    );
     const unarchiveHover = screen.getByTestId("epic-sidebar-archive-chat-root");
     expect(unarchiveHover.getAttribute("aria-label")).toBe(
       "Unarchive Root chat",
@@ -4605,18 +4658,18 @@ describe("chat row archive", () => {
     // Chat row ⋯ menu is open to a viewer - only its mutating entries
     // (Archive, Rename) are hard-disabled; the read-only Copy ID entry works.
     expect(screen.getByTestId("epic-sidebar-more-chat-child")).toBeTruthy();
-    expect(
-      isMenuItemUnavailable(
-        screen.getByTestId("epic-sidebar-archive-item-chat-child"),
-      ),
-    ).toBe(true);
-    expect(
-      isMenuItemUnavailable(
-        screen.getByTestId("epic-sidebar-rename-chat-child"),
-      ),
-    ).toBe(true);
+    expect(isMenuItemUnavailable(dropdownItem("archive-item-chat-child"))).toBe(
+      true,
+    );
+    expect(isMenuItemUnavailable(dropdownItem("rename-chat-child"))).toBe(true);
 
-    fireEvent.click(screen.getByTestId("epic-sidebar-copy-id-chat-child"));
+    const copyItem = dropdownItem("copy-id-chat-child");
+    expect(isMenuItemUnavailable(copyItem)).toBe(false);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    fireEvent.click(copyItem);
     expect(writeText).toHaveBeenCalledWith("chat-child");
 
     // The read-only lock must still render - do not let the menu change become
@@ -4646,7 +4699,8 @@ describe("chat row archive", () => {
       "chat-child": indicator({ unreadDone: true }),
     };
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
-    fireEvent.click(screen.getByTestId("epic-sidebar-rename-chat-child"));
+    openRowMore("chat-child");
+    fireEvent.click(dropdownItem("rename-chat-child"));
     expect(
       screen.getByTestId("epic-sidebar-rename-input-chat-child"),
     ).toBeTruthy();
@@ -4750,7 +4804,7 @@ describe("chat row archive", () => {
     const view = render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
     expect(screen.queryByTestId("epic-sidebar-archive-chat-root")).toBeNull();
 
-    fireEvent.click(screen.getByTestId("epic-sidebar-archive-item-chat-root"));
+    fireEvent.click(dropdownItem("archive-item-chat-root"));
     testState.archiveRowPending = true;
     view.rerender(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
@@ -4768,7 +4822,7 @@ describe("chat row archive", () => {
     testState.archiveVisibility = "all";
     const view = render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
-    fireEvent.click(screen.getByTestId("epic-sidebar-archive-item-chat-root"));
+    fireEvent.click(dropdownItem("archive-item-chat-root"));
     testState.archiveRowPending = true;
     view.rerender(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
@@ -5017,9 +5071,7 @@ describe("chat row archive", () => {
     expect(screen.queryByTestId("epic-sidebar-archive-chat-root")).toBeNull();
 
     // The menu entry stays available: it does not touch the status slot.
-    expect(
-      screen.getByTestId("epic-sidebar-archive-item-chat-root"),
-    ).toBeTruthy();
+    expect(dropdownItem("archive-item-chat-root")).toBeTruthy();
   });
 
   it("reveals archived rows instead of hiding them once the host is KNOWN to lack archive support (B4/B10)", () => {
@@ -5080,9 +5132,7 @@ describe("chat row archive", () => {
       testState.indicatorChats = { "chat-root": indicator(attention) };
       view.rerender(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
       expect(
-        isMenuItemUnavailable(
-          screen.getByTestId("epic-sidebar-archive-item-chat-root"),
-        ),
+        isMenuItemUnavailable(dropdownItem("archive-item-chat-root")),
       ).toBe(true);
     }
 
@@ -5094,11 +5144,9 @@ describe("chat row archive", () => {
       "chat-root": indicator({ pendingApproval: true }),
     };
     view.rerender(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
-    expect(
-      isMenuItemUnavailable(
-        screen.getByTestId("epic-sidebar-archive-item-chat-root"),
-      ),
-    ).toBe(false);
+    expect(isMenuItemUnavailable(dropdownItem("archive-item-chat-root"))).toBe(
+      false,
+    );
   });
 
   /**
@@ -5125,7 +5173,7 @@ describe("chat row archive", () => {
 
     const view = render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
-    const turnItem = screen.getByTestId("epic-sidebar-archive-item-chat-root");
+    const turnItem = dropdownItem("archive-item-chat-root");
     expect(isMenuItemUnavailable(turnItem)).toBe(true);
     expect(tooltipTextIn(turnItem)).toBe(
       "Can't archive while this agent is working. Stopping it ends a turn, but not a detached subagent or workflow. Wait for it to go idle, or stop it, then archive.",
@@ -5139,7 +5187,7 @@ describe("chat row archive", () => {
 
     testState.activityTierById = new Map([["chat-root", "background"]]);
     view.rerender(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
-    const bgItem = screen.getByTestId("epic-sidebar-archive-item-chat-root");
+    const bgItem = dropdownItem("archive-item-chat-root");
     expect(tooltipTextIn(bgItem)).toBe(
       "Can't archive while this agent has background items running. Stopping the agent won't clear them — wait for them to finish, or stop them from its chat.",
     );
@@ -5154,7 +5202,7 @@ describe("chat row archive", () => {
     // the menu owns it in every state. Nesting it under a presentational node
     // would have un-owned it the moment its tooltip opened.
     expect(bgItem.parentElement).toBe(
-      screen.getByTestId("epic-sidebar-rename-chat-root").parentElement,
+      dropdownItem("rename-chat-root").parentElement,
     );
 
     // On an idle row there is no tooltip at all: an available action must carry
@@ -5165,11 +5213,11 @@ describe("chat row archive", () => {
     testState.activeAgentIds = new Set<string>();
     testState.activityTierById = new Map();
     view.rerender(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
-    const idleItem = screen.getByTestId("epic-sidebar-archive-item-chat-root");
+    const idleItem = dropdownItem("archive-item-chat-root");
     expect(isMenuItemUnavailable(idleItem)).toBe(false);
     expect(tooltipTextIn(idleItem)).toBeNull();
     expect(idleItem.parentElement).toBe(
-      screen.getByTestId("epic-sidebar-rename-chat-root").parentElement,
+      dropdownItem("rename-chat-root").parentElement,
     );
   });
 
@@ -5184,7 +5232,7 @@ describe("chat row archive", () => {
 
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
-    const entry = screen.getByTestId("epic-sidebar-archive-item-chat-root");
+    const entry = dropdownItem("archive-item-chat-root");
     expect(entry.textContent).toContain("Unarchive");
     expect(isMenuItemUnavailable(entry)).toBe(false);
   });
@@ -5202,7 +5250,7 @@ describe("chat row archive", () => {
 
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
-    const item = screen.getByTestId("epic-sidebar-archive-item-chat-root");
+    const item = dropdownItem("archive-item-chat-root");
     expect(item.getAttribute("aria-disabled")).toBe("true");
     // NOT the hard-disabled form, which is what removes it from the keyboard.
     expect(item.matches(":disabled")).toBe(false);
@@ -5223,11 +5271,11 @@ describe("chat row archive", () => {
 
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
-    const busyItem = screen.getByTestId("epic-sidebar-archive-item-chat-root");
+    const busyItem = dropdownItem("archive-item-chat-root");
     // Same parent as an entry that has no tooltip: no extra level was
     // introduced for the busy one.
     expect(busyItem.parentElement).toBe(
-      screen.getByTestId("epic-sidebar-rename-chat-root").parentElement,
+      dropdownItem("rename-chat-root").parentElement,
     );
   });
 
@@ -5309,7 +5357,7 @@ describe("chat row archive", () => {
 
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
-    const item = screen.getByTestId("epic-sidebar-archive-item-chat-root");
+    const item = dropdownItem("archive-item-chat-root");
     // Genuinely unavailable...
     expect(isMenuItemUnavailable(item)).toBe(true);
     // ...and hard-disabled, so Radix keeps its own ARIA rather than ours.
@@ -5334,7 +5382,7 @@ describe("chat row archive", () => {
     // The leading icon has always read the shell; the gate must agree with it,
     // or the row shows "working" beside an Archive that says it is idle.
     expect(leadingStatusKinds("chat-child")).toEqual(["background-activity"]);
-    const entry = screen.getByTestId("epic-sidebar-archive-item-chat-child");
+    const entry = dropdownItem("archive-item-chat-child");
     expect(isMenuItemUnavailable(entry)).toBe(true);
     expect(tooltipTextIn(entry)).toBe(
       "Can't archive while this agent has background items running. Stopping the agent won't clear them — wait for them to finish, or stop them from its chat.",
@@ -5365,7 +5413,7 @@ describe("chat row archive", () => {
     render(<EpicLeftPanelHost epicId={EPIC_ID} tabId={TAB_ID} />);
 
     expect(leadingStatusKinds("chat-child")).toEqual([]);
-    const entry = screen.getByTestId("epic-sidebar-archive-item-chat-child");
+    const entry = dropdownItem("archive-item-chat-child");
     expect(isMenuItemUnavailable(entry)).toBe(false);
     expect(
       screen.getByTestId("epic-sidebar-archive-chat-child"),
@@ -5545,7 +5593,7 @@ describe("chat tree on a mounting surface", () => {
     renderOnSurface(mountedSurface({ onRowActivated: () => (dismissed += 1) }));
 
     fireEvent.click(screen.getByTestId("epic-sidebar-more-chat-root"));
-    fireEvent.click(screen.getByTestId("epic-sidebar-new-child-chat-root"));
+    fireEvent.click(dropdownItem("new-child-chat-root"));
 
     expect(dismissed).toBe(1);
   });
