@@ -248,6 +248,11 @@ export interface ChatLowerComposerState {
   /** The Location / Mode+branch / Environment chip cluster (+ context usage). */
   readonly workspaceControls: ReactNode;
   readonly workspaceAvailability: WorkspaceComposerAvailability;
+  /**
+   * The host's `suggestedPrompt` (`chat.subscribe@1.20`), offered as the
+   * composer's placeholder.
+   */
+  readonly suggestedPrompt: string | undefined;
 }
 
 interface ComposerSurfaceModel {
@@ -869,6 +874,7 @@ function LiveChatComposer(props: {
       providerFallback={model.providerFallback}
       topSpacing={props.topSpacing}
       topSlot={null}
+      suggestedPrompt={model.composer.suggestedPrompt}
     />
   );
 }
