@@ -3115,7 +3115,14 @@ function renderAssistantTurnRows(
       block.type === "text" &&
       block.browserSession === undefined &&
       block.text.trim().length > 0 &&
-      block.providerNotice === null
+      block.providerNotice === null &&
+      // A parented text block is a SUBAGENT's own prose: `nestSubagentChildren`
+      // folds it into its card, so it never becomes a top-level segment and the
+      // timeline-level rule (`isNormalAssistantTextSegment`) cannot see it.
+      // Counting it here made the row-level rule disagree with the timeline-level
+      // one - a slice whose only later text belonged to a subagent folded into
+      // "Earlier activity" with no final response left to show.
+      (block.parentBlockId ?? null) === null
     ) {
       sawText = true;
     }
