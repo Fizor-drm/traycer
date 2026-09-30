@@ -2,6 +2,7 @@ import { createStore, type StoreApi } from "zustand/vanilla";
 import { addWithFifoEviction } from "@/lib/bounded-set";
 import {
   MAX_ACTIVITY_GROUP_OPEN_IDS,
+  type ActivityGroupOpenChoices,
   type ActivityGroupOpenState,
   type ActivityGroupTextCollapseState,
 } from "./activity-group-open-store-context";
@@ -11,8 +12,7 @@ import {
   type ChatTabPersistenceIdentity,
 } from "@/stores/chats/chat-tab-persistence-key";
 
-interface ActivityGroupOpenDurableState {
-  readonly openIds: ReadonlySet<string>;
+interface ActivityGroupOpenDurableState extends ActivityGroupOpenChoices {
   readonly textCollapseStates: ReadonlyMap<
     string,
     ActivityGroupTextCollapseState
@@ -20,17 +20,20 @@ interface ActivityGroupOpenDurableState {
 }
 
 export function createActivityGroupOpenStore(
-  initialOpenIds: ReadonlySet<string> | null,
-  initialTextCollapseStates: ReadonlyMap<
-    string,
-    ActivityGroupTextCollapseState
-  > | null,
+  initial: ActivityGroupOpenDurableState | ActivityGroupOpenChoices | null,
 ): StoreApi<ActivityGroupOpenState> {
+  const initialTextCollapseStates =
+    initial !== null && "textCollapseStates" in initial
+      ? initial.textCollapseStates
+      : null;
+  const initialChoices: ActivityGroupOpenChoices | null = initial;
   return createStore<ActivityGroupOpenState>((set) => ({
-    openIds: initialOpenIds ?? new Set<string>(),
+    openIds: initialChoices?.openIds ?? new Set<string>(),
+    closedIds: initialChoices?.closedIds ?? new Set<string>(),
     setOpen: (groupId, open) =>
       set((state) => {
-        const wasOpen = state.openIds.has(groupId);
+        const chosen = open ? state.openIds : state.closedIds;
+        const other = open ? state.closedIds : state.openIds;
         const currentTextState = state.textCollapseStates.get(groupId);
         let nextTextState = currentTextState;
         if (open && currentTextState === "text-collapsed") {
@@ -38,21 +41,28 @@ export function createActivityGroupOpenStore(
         } else if (!open && currentTextState === "user-open-after-text") {
           nextTextState = "text-collapsed";
         }
-        if (wasOpen === open && nextTextState === currentTextState) {
-          return state;
+        const handChanged = !(chosen.has(groupId) && !other.has(groupId));
+        const textChanged = nextTextState !== currentTextState;
+        if (!handChanged && !textChanged) return state;
+        let nextOpenIds = state.openIds;
+        let nextClosedIds = state.closedIds;
+        if (handChanged) {
+          const nextChosen = new Set(chosen);
+          addWithFifoEviction(nextChosen, groupId, MAX_ACTIVITY_GROUP_OPEN_IDS);
+          const nextOther = new Set(other);
+          nextOther.delete(groupId);
+          if (open) {
+            nextOpenIds = nextChosen;
+            nextClosedIds = nextOther;
+          } else {
+            nextOpenIds = nextOther;
+            nextClosedIds = nextChosen;
+          }
         }
-        const nextOpenIds = new Set(state.openIds);
-        if (open) {
-          addWithFifoEviction(
-            nextOpenIds,
-            groupId,
-            MAX_ACTIVITY_GROUP_OPEN_IDS,
-          );
-        } else {
-          nextOpenIds.delete(groupId);
-        }
-        if (nextTextState === currentTextState) {
-          return { openIds: nextOpenIds };
+        if (!textChanged) {
+          return handChanged
+            ? { openIds: nextOpenIds, closedIds: nextClosedIds }
+            : state;
         }
         const nextTextCollapseStates = new Map(state.textCollapseStates);
         if (nextTextState === undefined) {
@@ -62,6 +72,7 @@ export function createActivityGroupOpenStore(
         }
         return {
           openIds: nextOpenIds,
+          closedIds: nextClosedIds,
           textCollapseStates: nextTextCollapseStates,
         };
       }),
@@ -143,10 +154,7 @@ export function getOrCreateActivityGroupOpenStore(
   const existing = activityGroupOpenStoreRegistry.get(tabKey);
   if (existing !== undefined) return existing;
   const durable = durableActivityGroupOpenCache.get(identity);
-  const store = createActivityGroupOpenStore(
-    durable?.openIds ?? null,
-    durable?.textCollapseStates ?? null,
-  );
+  const store = createActivityGroupOpenStore(durable ?? null);
   activityGroupOpenStoreRegistry.set(tabKey, store);
   return store;
 }
@@ -171,6 +179,7 @@ export function promoteActivityGroupOpenStoreToDurable(
   const state = store.getState();
   durableActivityGroupOpenCache.set(identity, {
     openIds: state.openIds,
+    closedIds: state.closedIds,
     textCollapseStates: state.textCollapseStates,
   });
 }

@@ -33,6 +33,10 @@ import { createActivityGroupOpenStore } from "@/stores/chats/activity-group-open
 import { ChatFindForceStoreProvider } from "@/stores/chats/chat-find-force-store";
 import { ChatOpenStoreScopeProvider } from "@/stores/chats/open-store-scope";
 import { WithTestQueryClient } from "@/__tests__/with-test-query-client";
+import {
+  DEFAULT_LAYOUT_SNAPSHOT,
+  useLayoutStore,
+} from "@/stores/layout/layout-store";
 
 // A file-change body lazy-fetches its before/after by hash and renders a themed
 // diff. Stub both so an expanded one renders synchronously, without a
@@ -361,7 +365,7 @@ describe("<ActivityGroupSegment /> live window", () => {
   });
 
   it("collapses after an unmounted row receives later text and preserves a later manual reopen", () => {
-    const store = createActivityGroupOpenStore(null, null);
+    const store = createActivityGroupOpenStore(null);
     const beforeText: ActivityGroupModel = {
       ...SOLE_REASONING_GROUP,
       followedByText: false,
@@ -1310,7 +1314,7 @@ describe("<ActivityGroupSegment /> live window", () => {
   // remount - the same defect, just past a threshold nobody would hit while
   // testing.
   it("keeps a header latched past the open-id cap", () => {
-    const store = createActivityGroupOpenStore(null, null);
+    const store = createActivityGroupOpenStore(null);
     const mount = (group: ActivityGroupModel) => (
       <ChatOpenStoreScopeProvider value="activity-group-cap-tile">
         <ActivityGroupOpenStoreProvider store={store}>
@@ -1341,7 +1345,7 @@ describe("<ActivityGroupSegment /> live window", () => {
   // reasoning in it never renders one, so marking it is meaningless - and while
   // the set was capped, it was unrelated activity spending a real latch's budget.
   it("does not mark a group that has no reasoning header to show", () => {
-    const store = createActivityGroupOpenStore(null, null);
+    const store = createActivityGroupOpenStore(null);
     render(
       <ChatOpenStoreScopeProvider value="activity-group-mark-tile">
         <ActivityGroupOpenStoreProvider store={store}>
@@ -1370,7 +1374,7 @@ describe("<ActivityGroupSegment /> live window", () => {
     // does (the registry hands the tile back its existing store, decision #17).
     // `ChatExpansionTestProviders` passes `store={null}` and would hand out a
     // fresh one, hiding the whole defect.
-    const store = createActivityGroupOpenStore(null, null);
+    const store = createActivityGroupOpenStore(null);
     const mount = (group: ActivityGroupModel) => (
       <ChatOpenStoreScopeProvider value="activity-group-remount-tile">
         <ActivityGroupOpenStoreProvider store={store}>
@@ -1513,5 +1517,106 @@ describe("<ActivityGroupSegment /> shared child ids", () => {
     );
     expect(sameKey).toEqual([]);
     errors.mockRestore();
+  });
+});
+
+const REASONING_ONLY_SEGMENT: ReasoningSegment = {
+  id: "reasoning-only-1",
+  kind: "reasoning",
+  markdown: "Weighing the approach.",
+  isStreaming: false,
+  durationMs: 4000,
+};
+
+const REASONING_ONLY_GROUP: ActivityGroupModel = {
+  id: deriveActivityGroupRenderId(REASONING_ONLY_SEGMENT.id),
+  segments: [REASONING_ONLY_SEGMENT],
+  isActive: false,
+  isStreaming: false,
+  followedByText: false,
+  label: "Thought for 4s",
+  summary: "Thought for 4s",
+  activeStartedAt: null,
+};
+
+// Chat display settings (audit R1, R3): an untouched group's default open
+// state follows Layout > Chat > Tool activity (or Thinking, for a
+// reasoning-only run) rather than always starting collapsed.
+describe("<ActivityGroupSegment /> default open follows the Chat display settings", () => {
+  afterEach(() => {
+    cleanup();
+    useLayoutStore.setState({ ...DEFAULT_LAYOUT_SNAPSHOT });
+  });
+
+  it("renders a settled tool run collapsed by default, and open when Tool activity is full", () => {
+    renderActivityGroup(GROUP);
+    expect(screen.queryByText("echo hi")).toBeNull();
+    cleanup();
+
+    useLayoutStore.getState().setRegionValues("toolActivity", { size: "full" });
+    renderActivityGroup(GROUP);
+
+    expect(screen.getByText("echo hi")).toBeTruthy();
+  });
+
+  it("follows Thinking's size, not Tool activity's, for a reasoning-only run", () => {
+    useLayoutStore.getState().setRegionValues("toolActivity", { size: "full" });
+    renderActivityGroup(REASONING_ONLY_GROUP);
+    // Tool activity is full, but this run is reasoning-only, so it stays
+    // collapsed on Thinking's default (chip).
+    expect(screen.queryByText("Weighing the approach.")).toBeNull();
+    cleanup();
+
+    useLayoutStore.getState().setRegionValues("thinking", { size: "full" });
+    renderActivityGroup(REASONING_ONLY_GROUP);
+
+    expect(screen.getByText("Weighing the approach.")).toBeTruthy();
+  });
+
+  it("a click to close under Expanded stays closed after the setting changes back to Expanded", () => {
+    useLayoutStore.getState().setRegionValues("toolActivity", { size: "full" });
+    renderActivityGroup(GROUP);
+    expect(screen.getByText("echo hi")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /Ran 1 command/ }));
+    expect(screen.queryByText("echo hi")).toBeNull();
+
+    // The setting moves away and back to Expanded, which alone would open
+    // the group - the reader's own close has to win regardless.
+    act(() => {
+      useLayoutStore
+        .getState()
+        .setRegionValues("toolActivity", { size: "chip" });
+    });
+    act(() => {
+      useLayoutStore
+        .getState()
+        .setRegionValues("toolActivity", { size: "full" });
+    });
+
+    expect(screen.queryByText("echo hi")).toBeNull();
+  });
+
+  it("a click to open under Collapsed stays open after changing it back to Collapsed", () => {
+    renderActivityGroup(GROUP);
+    expect(screen.queryByText("echo hi")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /Ran 1 command/ }));
+    expect(screen.getByText("echo hi")).toBeTruthy();
+
+    // The setting moves away and back to Collapsed, which alone would close
+    // the group - the reader's own open has to win regardless.
+    act(() => {
+      useLayoutStore
+        .getState()
+        .setRegionValues("toolActivity", { size: "full" });
+    });
+    act(() => {
+      useLayoutStore
+        .getState()
+        .setRegionValues("toolActivity", { size: "chip" });
+    });
+
+    expect(screen.getByText("echo hi")).toBeTruthy();
   });
 });

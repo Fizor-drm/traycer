@@ -4,6 +4,8 @@ import {
   lastAssistantTextSegmentId,
   type ChatActivityTimelineItem,
 } from "@/components/chat/chat-activity-groups";
+import { useRegionShown } from "@/lib/layout-overrides";
+import { useRegionGhost } from "@/components/layout-editor/use-layout-region";
 import { BrowserSessionRow } from "./segments/browser-session-row";
 import { chatFindSegmentUnitId } from "@/components/chat/chat-find";
 import { ChatBlockNavigationAnchor } from "@/components/chat/chat-navigation-highlight";
@@ -280,7 +282,10 @@ export function AssistantMessageBody({
     () => deriveEarlierActivityCollapsibleKey(tileInstanceId, messageId),
     [messageId, tileInstanceId],
   );
-  const userShowEarlierActivity = useActivityGroupOpen(earlierActivityKey.id);
+  const userShowEarlierActivity = useActivityGroupOpen(
+    earlierActivityKey.id,
+    false,
+  );
   const findForcedOpen = useChatFindForcedOpen(earlierActivityKey);
   const setActivityGroupOpen = useSetActivityGroupOpen();
   const setFindForcedOpen = useSetChatFindForcedOpen();
@@ -296,6 +301,9 @@ export function AssistantMessageBody({
     [earlierActivityKey, setActivityGroupOpen, setFindForcedOpen],
   );
   const activityTimelineTurnState = turnComplete ? "complete" : "active";
+  // A ghost while the editor points at hidden Thinking (L-14).
+  const thinkingShown = useRegionShown("thinking");
+  const thinkingGhost = useRegionGhost("thinking");
   const queuePauseReasonSupport = useTranscriptQueuePauseReasonSupport();
   // What this row draws: the host's notices this client keeps off screen are
   // gone before anything is built from the list (`hidden-transcript-notices`).
@@ -313,8 +321,15 @@ export function AssistantMessageBody({
       buildChatActivityTimeline(shownSegments, {
         turnState: activityTimelineTurnState,
         promotedToolBlockIds: backgroundToolBlockIds,
+        hideReasoning: !(thinkingShown || thinkingGhost),
       }),
-    [activityTimelineTurnState, backgroundToolBlockIds, shownSegments],
+    [
+      activityTimelineTurnState,
+      backgroundToolBlockIds,
+      shownSegments,
+      thinkingGhost,
+      thinkingShown,
+    ],
   );
   const finalTextId = useMemo(
     () => lastAssistantTextSegmentId(shownSegments),
@@ -634,6 +649,7 @@ function renderAssistantTimelineItem(
         {isHidden ? null : (
           <SubagentSegment
             id={item.id}
+            cardId={item.segment.id}
             name={item.segment.name}
             agentType={item.segment.agentType}
             task={item.segment.task}
@@ -1382,7 +1398,7 @@ function IntermediateContentDisclosure(props: {
   );
 }
 
-interface AssistantSegmentProps {
+export interface AssistantSegmentProps {
   id: string;
   segment: MessageSegment;
   backgroundToolBlockIds: ReadonlySet<string>;
@@ -1423,9 +1439,11 @@ function ApprovalSegmentCard({
 }
 
 // Renders one of many assistant segment kinds; the branch count is the segment
-// taxonomy (one arm per kind), not reducible nesting.
+// taxonomy (one arm per kind), not reducible nesting. Exported because a
+// subagent card draws its own conversation through this same renderer
+// (`SubagentConversation`), so a child reads exactly as it would top-level.
 // eslint-disable-next-line complexity
-function AssistantSegment({
+export function AssistantSegment({
   id,
   segment,
   backgroundToolBlockIds,
@@ -1545,6 +1563,7 @@ function AssistantSegment({
       return (
         <SubagentSegment
           id={id}
+          cardId={segment.id}
           name={segment.name}
           agentType={segment.agentType}
           task={segment.task}

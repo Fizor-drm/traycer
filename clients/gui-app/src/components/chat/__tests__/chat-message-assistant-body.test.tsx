@@ -21,6 +21,11 @@ import {
   useChatCollapsibleTileInstanceId,
   useSetChatFindForcedOpen,
 } from "@/stores/chats/chat-find-force-store-context";
+import {
+  OpenSubagentAsChatContext,
+  queryOpenAsChatControl,
+  type OpenSubagentAsChat,
+} from "@/components/chat/segments/subagent-open-as-chat";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WithTestQueryClient } from "@/__tests__/with-test-query-client";
 import { formatMessageTimeWithSeconds } from "@/lib/relative-time";
@@ -30,6 +35,7 @@ import type {
   ChatMessageStoppedInfo,
   ApprovalSegment,
   MessageSegment,
+  SubagentSegment as SubagentSegmentModel,
   ToolSegment,
 } from "@/stores/composer/chat-store";
 
@@ -162,6 +168,33 @@ const ERROR_SEGMENT: MessageSegment = {
   // No typed failure: this fixture is a plain provider-stream error, and the
   // fallback affordances on the row are gated on one being present.
   failure: null,
+};
+
+const PROMOTED_SUBAGENT_SEGMENT: SubagentSegmentModel = {
+  id: "subagent-from-transcript",
+  kind: "subagent",
+  name: "reviewer",
+  agentType: null,
+  task: "Review the implementation",
+  progressUpdates: [],
+  result: null,
+  isStreaming: false,
+  endState: null,
+  stopped: false,
+  startedAt: null,
+  durationMs: null,
+  spawnToolCallId: null,
+  parentId: null,
+  workflowMeta: null,
+  children: [
+    {
+      id: "subagent-transcript-text",
+      kind: "text",
+      markdown: "Child transcript",
+      isStreaming: false,
+      parentId: "subagent-from-transcript",
+    },
+  ],
 };
 
 const STOPPED: ChatMessageStoppedInfo = {
@@ -905,6 +938,35 @@ describe("AssistantMessageBody intermediate text", () => {
     );
 
     expect(screen.queryByRole("button", { name: /Ran 1 command/ })).toBeNull();
+  });
+});
+
+describe("AssistantMessageBody promoted subagent controls", () => {
+  it("opens by the transcript id and exposes that id's control for focus restoration", () => {
+    const open = vi.fn<OpenSubagentAsChat>();
+    const { container } = render(
+      <OpenSubagentAsChatContext.Provider value={open}>
+        <AssistantMessageBody
+          turnId={null}
+          {...bodyProps({ segments: [PROMOTED_SUBAGENT_SEGMENT] })}
+        />
+      </OpenSubagentAsChatContext.Provider>,
+    );
+
+    const button = screen.getByRole("button", { name: "Open as chat" });
+    fireEvent.click(button);
+
+    expect(open).toHaveBeenCalledTimes(1);
+    expect({
+      openedId: open.mock.calls[0]?.[0],
+      focusControl: queryOpenAsChatControl(
+        container,
+        PROMOTED_SUBAGENT_SEGMENT.id,
+      ),
+    }).toEqual({
+      openedId: PROMOTED_SUBAGENT_SEGMENT.id,
+      focusControl: button,
+    });
   });
 });
 

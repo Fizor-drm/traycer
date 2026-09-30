@@ -525,6 +525,19 @@ describe("ticket 15 dual-key registries (round 3: sweep-simulated promotion)", (
     );
   });
 
+  it("activity-group open: reopen-after-close restores both open and closed ids", () => {
+    const closed = chatIdIdentity("reg-activity");
+    const before = getOrCreateActivityGroupOpenStore(closed).getState();
+    before.setOpen("group-1", true);
+    before.setOpen("group-2", false);
+    promoteActivityGroupOpenStoreToDurable(closed);
+    evictActivityGroupOpenStores([closed.tileInstanceId]);
+    const reopened = chatIdIdentity("reopen-new");
+    const after = getOrCreateActivityGroupOpenStore(reopened).getState();
+    expect(after.openIds.has("group-1")).toBe(true);
+    expect(after.closedIds.has("group-2")).toBe(true);
+  });
+
   it("tool open: reopen-after-close restores segment ids via the sweep's promotion", () => {
     const closed = chatIdIdentity("reg-tool");
     useToolOpenStore

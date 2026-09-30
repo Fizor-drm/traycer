@@ -1,5 +1,280 @@
 import { describe, expect, it } from "vitest";
-import { deriveToolInputSummary, toSummaryLine } from "../tool-input-summary";
+import {
+  deriveToolInputSummary,
+  toolHeaderLine,
+  toSummaryLine,
+} from "../tool-input-summary";
+
+const EXISTING_REGISTRY_SNAPSHOTS = [
+  {
+    toolName: "read_file",
+    input: { path: "src/a.ts", startLine: 3, endLine: 9 },
+    expectedSummary: "src/a.ts:3-9",
+  },
+  {
+    toolName: "write_file",
+    input: { path: "src/new.ts" },
+    expectedSummary: "src/new.ts",
+  },
+  {
+    toolName: "edit_file",
+    input: { filePath: "src/edit.ts", start: 2, end: 4 },
+    expectedSummary: "src/edit.ts:2-4",
+  },
+  {
+    toolName: "list_files",
+    input: { dir: "src/components" },
+    expectedSummary: "src/components",
+  },
+  {
+    toolName: "glob",
+    input: { pattern: "**/*.ts" },
+    expectedSummary: "**/*.ts",
+  },
+  {
+    toolName: "grep",
+    input: { query: "TODO", path: "src" },
+    expectedSummary: "TODO in src",
+  },
+  {
+    toolName: "bash",
+    input: { metadata: { command: "git status" } },
+    expectedSummary: "git status",
+  },
+  {
+    toolName: "run_command",
+    input: { cmd: "bun run test" },
+    expectedSummary: "bun run test",
+  },
+  {
+    toolName: "web_fetch",
+    input: { url: "https://example.com" },
+    expectedSummary: "https://example.com",
+  },
+  {
+    toolName: "web_search",
+    input: { query: "release notes", path: "docs" },
+    expectedSummary: "release notes in docs",
+  },
+  {
+    toolName: "traycer_list_comment_threads",
+    input: { artifactPaths: ["a/index.md", "b/index.md"], status: "open" },
+    expectedSummary: "2 artifacts, open",
+  },
+  {
+    toolName: "traycer_set_comment_thread_status",
+    input: {
+      updates: [{ threadIds: ["t1", "t2"], status: "resolved" }],
+    },
+    expectedSummary: "2 threads -> resolved",
+  },
+] as const;
+
+const NEW_REGISTRY_SAMPLES = [
+  {
+    toolName: "CronCreate",
+    input: {
+      cron: "0 9 * * 1",
+      prompt: "Review open pull requests",
+      recurring: true,
+      durable: true,
+    },
+    expectedSummary: "0 9 * * 1 · Review open pull requests",
+  },
+  {
+    toolName: "CronList",
+    input: {},
+    expectedSummary: "Lists scheduled tasks",
+  },
+  {
+    toolName: "CronDelete",
+    input: { id: "job-123" },
+    expectedSummary: "Deletes scheduled task job-123",
+  },
+  {
+    toolName: "EnterWorktree",
+    input: { name: "feature/cleanup" },
+    expectedSummary: "feature/cleanup",
+  },
+  {
+    toolName: "ExitWorktree",
+    input: { action: "keep" },
+    expectedSummary: "Keeps the worktree",
+  },
+  {
+    toolName: "EnterPlanMode",
+    input: {},
+    expectedSummary: "Enters plan mode",
+  },
+  {
+    toolName: "TaskGet",
+    input: { taskId: "task-123" },
+    expectedSummary: "Reads task task-123",
+  },
+  {
+    toolName: "ReportFindings",
+    input: {
+      level: "high",
+      findings: [
+        {
+          file: "src/a.ts",
+          line: 42,
+          summary: "Reject invalid origins",
+          failure_scenario:
+            "A request with an untrusted origin is accepted without validation.",
+        },
+        {
+          file: "src/b.ts",
+          summary: "Prevent stale writes",
+          failure_scenario:
+            "An older revision overwrites a newer revision after a delayed save.",
+        },
+      ],
+    },
+    expectedSummary: "2 findings",
+  },
+  {
+    toolName: "Artifact",
+    input: {
+      action: "publish",
+      file_path: "/tmp/migration-review.html",
+      title: "Migration Review",
+      icon: "map",
+    },
+    expectedSummary: "Migration Review",
+  },
+  {
+    toolName: "PushNotification",
+    input: {
+      message: "The deployment finished successfully.",
+      status: "proactive",
+    },
+    expectedSummary: "The deployment finished successfully.",
+  },
+  {
+    toolName: "RemoteTrigger",
+    input: { action: "run", trigger_id: "trigger-42" },
+    expectedSummary: "run trigger trigger-42",
+  },
+  {
+    toolName: "SendFeedback",
+    input: {
+      type: "idea",
+      title: "Support custom themes",
+      details: [
+        "What happened: Custom colors reset after restart.",
+        "What the user said: Keep the selected colors.",
+        "Repro: Select custom colors and restart the app.",
+        "Evidence: None",
+      ].join("\n"),
+    },
+    expectedSummary: "Support custom themes",
+  },
+  {
+    toolName: "ProposeGoal",
+    input: { condition: "All protocol tests pass", ask_user: true },
+    expectedSummary: "All protocol tests pass",
+  },
+  {
+    toolName: "ReadNotifications",
+    input: {},
+    expectedSummary: "Reads notifications",
+  },
+  {
+    toolName: "SubagentHandback",
+    input: { message: "Reviewed the workspace; all invariants hold." },
+    expectedSummary:
+      "Hands a report back to the caller: Reviewed the workspace; all invariants hold.",
+  },
+] as const;
+
+const EXACT_ALIAS_SAMPLES = [
+  ["Read", { path: "src/a.ts", startLine: 3, endLine: 9 }, "src/a.ts:3-9"],
+  ["Write", { path: "src/new.ts" }, "src/new.ts"],
+  ["Edit", { filePath: "src/edit.ts", start: 2, end: 4 }, "src/edit.ts:2-4"],
+  ["Glob", { pattern: "**/*.ts" }, "**/*.ts"],
+  ["Grep", { pattern: "TODO", path: "src" }, "TODO in src"],
+  ["Bash", { metadata: { command: "git status" } }, "git status"],
+  ["WebFetch", { url: "https://example.com" }, "https://example.com"],
+  [
+    "WebSearch",
+    { query: "release notes", path: "docs" },
+    "release notes in docs",
+  ],
+] as const;
+
+describe("tool summary registry compatibility", () => {
+  it.each(EXISTING_REGISTRY_SNAPSHOTS)(
+    "keeps the pre-change summary from old-shape persisted input for $toolName",
+    ({ toolName, input, expectedSummary }) => {
+      // Old-shape tool-call blocks persisted the raw `input`; migration reads
+      // that field before removing it and derives the summary again.
+      const oldShapeBlock = { toolName, input, output: "persisted result" };
+      expect(
+        deriveToolInputSummary(oldShapeBlock.toolName, oldShapeBlock.input),
+      ).toBe(expectedSummary);
+    },
+  );
+
+  it.each(NEW_REGISTRY_SAMPLES)(
+    "summarizes realistic $toolName input",
+    ({ toolName, input, expectedSummary }) => {
+      expect(deriveToolInputSummary(toolName, input)).toBe(expectedSummary);
+    },
+  );
+
+  it("summarizes an Artifact by its file name when it has no title", () => {
+    expect(
+      deriveToolInputSummary("Artifact", {
+        action: "upload_asset",
+        url: "https://artifacts.example/review",
+        file_paths: ["/tmp/diagram.png"],
+      }),
+    ).toBe("diagram.png");
+  });
+
+  it.each(EXACT_ALIAS_SAMPLES)(
+    "resolves the exact Claude alias %s",
+    (toolName, input, expectedSummary) => {
+      expect(deriveToolInputSummary(toolName, input)).toBe(expectedSummary);
+    },
+  );
+
+  it("does not apply a registry alias to an MCP-prefixed name ending in its target", () => {
+    expect(
+      deriveToolInputSummary("mcp__server__web_search", {
+        query: "release notes",
+        path: "docs",
+      }),
+    ).toBe("docs");
+  });
+
+  it("keeps TaskOutput and REPL on the generic fallback", () => {
+    expect(
+      deriveToolInputSummary("TaskOutput", {
+        task_id: "task-123",
+        block: true,
+        timeout: 30_000,
+      }),
+    ).toBeNull();
+    expect(
+      deriveToolInputSummary("REPL", {
+        title: "Check the page",
+        code: "await page.title()",
+      }),
+    ).toBe("Check the page");
+  });
+
+  it("keeps SubagentHandback's fixed prefix and applies the 80-unit cap", () => {
+    const summary = deriveToolInputSummary("SubagentHandback", {
+      message: "x".repeat(60),
+    });
+    expect(summary).toBe(
+      `Hands a report back to the caller: ${"x".repeat(44)}…`,
+    );
+    expect(summary?.length).toBe(80);
+  });
+});
 
 describe("deriveToolInputSummary", () => {
   it("summarizes OpenCode shell approvals from nested metadata command", () => {
@@ -284,5 +559,79 @@ describe("the 80-unit cap never cuts through a surrogate pair", () => {
       }),
     );
     expect(summary).toBe(`/repo/${"d".repeat(72)}\u2026`);
+  });
+});
+
+describe("toolHeaderLine", () => {
+  // Multi-line, runs of spaces, and well past the 80-unit summary cap.
+  const LONG_COMMAND =
+    "cd /repo &&\n  bun run --filter @traycer/protocol vitest run   src/host/agent/gui/__tests__/tool-input-summary.test.ts\n  && echo done and then some more trailing words";
+  const LONG_LINE = LONG_COMMAND.trim().replace(/\s+/g, " ");
+
+  function bashSummary(command: string): string | null {
+    return deriveToolInputSummary("Bash", { command });
+  }
+
+  it("returns the whole collapsed command when the summary is its capped cut", () => {
+    const summary = bashSummary(LONG_COMMAND);
+    expect(summary?.endsWith("\u2026")).toBe(true);
+
+    const line = toolHeaderLine(summary, {
+      kind: "command",
+      command: LONG_COMMAND,
+    });
+
+    expect(line).toBe(LONG_LINE);
+    expect(line?.includes("\u2026")).toBe(false);
+  });
+
+  it("returns a short command's summary unchanged", () => {
+    const summary = bashSummary("git status");
+    expect(
+      toolHeaderLine(summary, { kind: "command", command: "git status" }),
+    ).toBe("git status");
+  });
+
+  it("keeps a summary that is not the cap of the detail's input", () => {
+    const detail = { kind: "command", command: LONG_COMMAND } as const;
+    expect(toolHeaderLine("Run the protocol tests", detail)).toBe(
+      "Run the protocol tests",
+    );
+    // Also a capped summary of a DIFFERENT long command.
+    const other = bashSummary(
+      `${LONG_COMMAND} --different`.replace("cd", "ls"),
+    );
+    expect(toolHeaderLine(other, detail)).toBe(other);
+  });
+
+  it("returns the whole value of a single-entry fields detail", () => {
+    const summary = bashSummary(LONG_COMMAND);
+    expect(
+      toolHeaderLine(summary, {
+        kind: "fields",
+        entries: [{ key: "command", label: "Command", value: LONG_COMMAND }],
+      }),
+    ).toBe(LONG_LINE);
+  });
+
+  it("keeps the summary for a multi-entry fields detail", () => {
+    const summary = bashSummary(LONG_COMMAND);
+    expect(
+      toolHeaderLine(summary, {
+        kind: "fields",
+        entries: [
+          { key: "command", label: "Command", value: LONG_COMMAND },
+          { key: "cwd", label: "Cwd", value: "/repo" },
+        ],
+      }),
+    ).toBe(summary);
+  });
+
+  it("passes a null summary or null detail through", () => {
+    expect(
+      toolHeaderLine(null, { kind: "command", command: LONG_COMMAND }),
+    ).toBeNull();
+    const summary = bashSummary(LONG_COMMAND);
+    expect(toolHeaderLine(summary, null)).toBe(summary);
   });
 });
