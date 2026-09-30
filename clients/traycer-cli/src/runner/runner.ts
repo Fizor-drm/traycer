@@ -1,5 +1,7 @@
 import * as Sentry from "@sentry/node";
+import { HOST_UPDATE_SERVICE_UNSTARTABLE_EXIT_CODE } from "@traycer/protocol/host/lifecycle-constants";
 import { errorFromUnknown } from "../logger";
+import { withBoundedWaitProgress } from "./bounded-wait-progress";
 import {
   CLI_ERROR_CODES,
   type CliError,
@@ -91,7 +93,9 @@ export async function runCommand(
   // that exit happens. See `finishAfterProcessFatal` in exit.ts.
   markCommandStarted();
   try {
-    result = await fn(ctx);
+    // The waits deep inside the body report through `ctx.progress` too, so
+    // Desktop's idle timer sees each one begin (bounded-wait-progress.ts).
+    result = await withBoundedWaitProgress(ctx.progress, () => fn(ctx));
   } catch (err) {
     markCommandSettled();
     const cliErr = toCliError(err);
@@ -108,15 +112,29 @@ export async function runCommand(
         data: { code: cliErr.code },
       });
     }
-    runtime.logger.error(
-      "CLI command failed",
-      {
+    // An automatic update parked over a service this account cannot start
+    // again is an expected state, not a failure: one INFO line naming the
+    // code (which says why - disabled, or another account's task), never an
+    // ERROR with a stack. The park stays visible in the log once per run, and
+    // the host's reconciler latches on the exit, so it runs about once per
+    // state change (`host/update-service-unstartable.ts`).
+    if (cliErr.exitCode === HOST_UPDATE_SERVICE_UNSTARTABLE_EXIT_CODE) {
+      runtime.logger.info("CLI command deferred", {
         code: cliErr.code,
         exitCode: cliErr.exitCode,
         emittedAsJson: runtime.json,
-      },
-      errorFromUnknown(err),
-    );
+      });
+    } else {
+      runtime.logger.error(
+        "CLI command failed",
+        {
+          code: cliErr.code,
+          exitCode: cliErr.exitCode,
+          emittedAsJson: runtime.json,
+        },
+        errorFromUnknown(err),
+      );
+    }
     output.emitError(cliErr.code, cliErr.message, cliErr.details);
     // The log line and the envelope go out before the repeat gate's file read,
     // the first yield on this path: a process-fatal handler that fires inside
