@@ -1,3 +1,4 @@
+import { PROFILE_COPY_RPC_METHODS } from "./profile-copy-contracts";
 import {
   organizationReadV10,
   organizationReadV11,
@@ -744,6 +745,7 @@ import {
   terminalSubscribeV14,
   terminalSubscribeV15,
   terminalSubscribeV16,
+  terminalSubscribeV17,
 } from "@traycer/protocol/host/terminal/contracts";
 import {
   browserSavedLoginSitesV10,
@@ -7850,6 +7852,7 @@ const HOST_RPC_REGISTRY_BASE_DEFINITION = {
 // `_NoOverlappingHostRpcMethods` assertion below is what keeps a method from
 // silently existing in more than one of them.
 const HOST_RPC_REGISTRY_BASE_TAIL_DEFINITION = {
+  ...PROFILE_COPY_RPC_METHODS,
   // Optional (non-floor) capability: narrow profile-only update of a chat's
   // persisted run settings - the host patches its own authoritative tuple, so
   // clients never rebuild (and stale-patch) the full tuple to move a chat's
@@ -11606,7 +11609,7 @@ export type HostRpcRegistry = typeof hostRpcRegistry;
  *
  * One manifest per `/stream` WS: `epic.subscribe@1.1`,
  * `chat.subscribe@1.6`, `notifications.subscribe@1.1`,
- * `terminal.subscribe@1.6`, `git.subscribeStatus@1.3`,
+ * `terminal.subscribe@1.7`, `git.subscribeStatus@1.3`,
  * `browser.sessions@1.0`, `browser.screencast@1.0`,
  * `resources.subscribe@1.4`, `agent.inbox.subscribe@1.2`,
  * `epic.communicationGraph.subscribe@1.0`, `speech.dictate@1.0`,
@@ -11871,7 +11874,7 @@ const HOST_STREAM_RPC_REGISTRY_OTHER_DEFINITION = {
   },
   "terminal.subscribe": {
     1: {
-      latestMinor: 6,
+      latestMinor: 7,
       versions: {
         0: {
           contract: terminalSubscribeV10,
@@ -11893,6 +11896,9 @@ const HOST_STREAM_RPC_REGISTRY_OTHER_DEFINITION = {
         },
         6: {
           contract: terminalSubscribeV16,
+        },
+        7: {
+          contract: terminalSubscribeV17,
         },
       },
     },
